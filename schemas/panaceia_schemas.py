@@ -12,7 +12,7 @@ Author: Rafael Kaher
 """
 
 from pydantic import BaseModel, StrictStr, StrictFloat, Field
-from typing import List, Optional
+from typing import List, Optional, ConfigDict
 
 class IngredientSchema(BaseModel):
     """
@@ -33,9 +33,12 @@ class IngredientSchema(BaseModel):
         )
         ```
     """
+    model_config = ConfigDict(extra="ignore")
+    
     name: StrictStr
-    quantity: StrictFloat
-    unit: StrictStr
+    quantity: Optional[StrictFloat] = None
+    unit: Optional[StrictStr] = None
+
 
 class RecipeSchema(BaseModel):
     """
@@ -60,11 +63,13 @@ class RecipeSchema(BaseModel):
         )
         ```
     """
+    model_config = ConfigDict(extra="ignore")
 
     name: StrictStr
     steps: StrictStr
     ingredients: List[IngredientSchema]
     spices: List[StrictStr] = []
+    
 
 
 class SpiceSchema(BaseModel):

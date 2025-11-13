@@ -2,7 +2,7 @@
 import re
 import hashlib
 
-from datetime import datetime
+from datetime import datetime, timezone
 from schemas.panaceia_schemas import RecipeSchema, IngredientSchema, UNIT_MAP, UNICODE_FRACTIONS
 
 def parse_ingredient_line(line: str) -> dict:
@@ -187,6 +187,8 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
     normalized["spices"] = []
 
     try:
+        allowed_keys = {"name", "steps", "ingredients", "spices"}
+        normalized = {k: v for k, v in normalized.items() if k in allowed_keys}
         model = RecipeSchema(**normalized)
     except Exception as e:
         return {
@@ -205,14 +207,15 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
     canonical_json = str(validated).encode("utf-8")
     checksum = hashlib.sha1(canonical_json).hexdigest()
 
+    normalized_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
     validated["_metadata"] = {
         "schema_version": schema_version,
         "module_version": module_version,
-        "normalized_at": datetime.utcnow().isoformat() + "Z",
+        "normalized_at": normalized_at,
         "checksum": checksum,
         "warnings": warnings or None
     }
-
 
     # ------------------------------------------
     # 6) FINAL RETURN (STANDARD API SHAPE)

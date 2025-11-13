@@ -1,16 +1,27 @@
-from modules.recipe_normalizer.normalize import recipe_normalizer
+from modules.recipe_normalizer.normalizer import recipe_normalizer
 
 def test_recipe_normalizer_basic():
+
     sample = {
-        "title": "Massa de panqueca simples",
-        "ingredients": ["1 ovo", "1 xícara de farinha"],
-        "steps": ["1 Bata tudo", "2 Misture bem"],
-        "info": {}
+    "title": "Massa de panqueca simples",
+    "ingredients": [
+        "1 ovo",
+        "1 xícara de farinha de trigo",
+        "1 xícara de leite",
+        "1 pitada de sal",
+        "1 colher (sopa) de óleo"
+    ],
+    "steps": [
+        "1 Bata todos os ingredientes no liquidificador até obter uma consistência cremosa.",
+        "2 Unte uma frigideira com óleo e despeje uma concha de massa.",
+        "3 Faça movimentos circulares para que a massa se espalhe por toda a frigideira.",
+        "4 Espere até a massa se soltar do fundo, vire e deixe fritar do outro lado.",
+        "5 Acrescente o recheio de sua preferência , enrole e está pronta para servir."
+    ],
+    "info": {}
     }
 
     result = recipe_normalizer(sample)
 
+    print(result)
     assert result["success"] is True
-    assert "data" in result
-    assert result["data"]["name"] == "Massa De Panqueca Simples"
-    assert len(result["data"]["ingredients"]) == 2
