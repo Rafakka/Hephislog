@@ -11,8 +11,8 @@ Author: Rafael Kaher
 
 """
 
-from pydantic import BaseModel, StrictStr, StrictFloat, Field
-from typing import List, Optional, ConfigDict
+from pydantic import BaseModel, StrictStr, StrictFloat, Field, ConfigDict
+from typing import List, Optional
 
 class IngredientSchema(BaseModel):
     """
