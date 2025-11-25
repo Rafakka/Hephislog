@@ -20,3 +20,9 @@ def normalize_chords(chord):
         return ""
 
     return chord[0].upper() + chord[1:]
+
+def slugify(text):
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]+", "_", text)
+    return text.strip("_")

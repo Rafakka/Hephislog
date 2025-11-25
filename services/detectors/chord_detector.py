@@ -1,6 +1,10 @@
-from schemas.music_schemas.ChordSheetSchema import ROOTS, QUALITIES, ACCIDENTALS
-from utils.data_cleaner import normalize_chords, clean_text, normalize_line
+from schemas.music_schemas import ChordSheetSchema
+from services.cleaners.data_cleaner import normalize_chords, clean_text, normalize_line
 import re
+
+ROOTS = ChordSheetSchema.ROOTS
+QUALITIES = ChordSheetSchema.QUALITIES
+ACCIDENTALS = ChordSheetSchema.ACCIDENTALS
 
 ############# HELPERS ############################
 
@@ -13,7 +17,7 @@ def is_root(token):
 def is_bass(token):
     if token[0] not in ROOTS:
         return False
-    if len == 1:
+    if len(token) == 1:
         return True
     if len(token) == 2 and token[1] in ACCIDENTALS:
         return True
@@ -40,22 +44,22 @@ def is_main_chord(token):
 
     if not clean_token:
         return False
-    
-    if clean_token[0] not in ROOTS:
+
+    if not is_root(clean_token[0]):
         return False
 
-    if len(clean_token) > 1 and clean_token[1] in ACCIDENTALS:
+    if is_accidental(clean_token):
         remainder = clean_token[2:]
     else:
         remainder = clean_token[1:]
 
     if not remainder:
         return True
-        
-    if remainder in QUALITIES:
+
+    if is_quality(remainder):
         return True
-    else:
-        return False
+
+    return False
     
 def is_chord(token):
 
