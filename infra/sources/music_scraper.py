@@ -1,31 +1,46 @@
 from bs4 import BeautifulSoup
 import requests
+from utils.data_cleaner import clean_text
+from services.chord_detector import looks_like_chord_line, extract_chords_from_tokens
 
-page_to_scrape = requests.get("http://bettyloumusic.com/takeonme.htm")
-soup = BeautifulSoup(page_to_scrape.text, "html.parser")
-section = soup.find("div", class_="Section1")
-paragraphs = section.find_all("p", class_="MsoNormal")
+## http://bettyloumusic.com/takeonme.htm
 
-pending_chords = None
-final_lines = []
+def extract_chords_and_lyrics(html):
 
-for p in paragraphs:
+    page_to_scrape = requests.get(html)
+    print(page_to_scrape.text[:500])
+    soup = BeautifulSoup(page_to_scrape.text, "html.parser")
+    section = soup.find("div", class_="Section1")
+    paragraphs = section.find_all("p", class_="MsoNormal")
 
-    chord_spans = p.find_all("span", class_="taggedChord")
+    pending_chords = None
+    final_lines = []
 
-    if chord_spans:
-        raw_chords = [span["data-original-chord"] for span in chord_spans]
-        pending_chords = [normalize_chords(ch) for ch in raw_chords]
-        continue
+    for p in paragraphs:
 
-    lyrics_text = clean_text(p)
+        cleaned_text = clean_text(p)
 
-    if not lyrics_text.strip():
-        continue
-    
-    if pending_chords:
-        final_lines.append({
-            "chords": pending_chords,
-            "lyrics": lyrics_text
-        })
-        pending_chords = None
+        chord_spans = p.find_all("span", class_="taggedChord")
+        if chord_spans:
+            raw_chords = [span["data-original-chord"] for span in chord_spans]
+            pending_chords = [normalize_chords(ch) for ch in raw_chords]
+            continue
+
+        if looks_like_chord_line(cleaned_text):
+            pending_chords = extract_chords_from_tokens(cleaned_text)
+            continue
+
+        if not cleaned_text.strip():
+            if pending_chords:
+                continue
+            else:
+                continue 
+
+        if pending_chords:
+            final_lines.append({
+                "chords": pending_chords,
+                "lyrics": cleaned_text
+            })
+            pending_chords = None
+
+    return final_lines
