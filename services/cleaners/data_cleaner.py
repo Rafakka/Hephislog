@@ -1,4 +1,5 @@
 import re
+import unicodedata
 
 _MULTI_SPACE = re.compile(r"[ \t]{2,}")
 

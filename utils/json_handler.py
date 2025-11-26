@@ -2,18 +2,21 @@
 import re
 import unicodedata
 import os
-from services.cleaners import slugify
+from services.cleaners.data_cleaner import slugify
 
-def save_json(json_text, domain, title):
+def save_json(json_data, domain, title, base_path=None):
 
-    filename = slugify(title) + ".json"
+    if base_path is None:
+        base_path = Path("data")
 
-    folder = os.path.join("data", "ingested", domain)
-    os.makedirs(folder, exist_ok=True)
+    slug = slugify(title)
 
-    path = os.path.join(folder, filename)
+    dir_path = base_path / domain / slug
+    dir_path.mkdir(parents=True, exist_ok=True)
 
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(json_text)
+    file_path = dir_path / f"{domain}_{slug}.json"
 
-    return path
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(json_data, f, ensure_ascii=False, indent=4)
+
+    return file_path
