@@ -1,34 +1,45 @@
+
 from services.cleaners.data_cleaner import clean_text, normalize_chords
-from services.detectors.chord_detector import looks_like_chord_line, extract_chords_from_tokens
+from services.detectors.chord_detector import (
+    looks_like_chord_line,
+    extract_chords_from_tokens,
+    is_chord
+)
 
-def music_organizer(paragraphs):
-
+def music_organizer(paragraph_tags):
     pending_chords = None
     final_lines = []
 
-    for p in paragraphs:
+    for p in paragraph_tags:
 
         cleaned_text = clean_text(p)
 
-        chord_spans = p.find_all("span", class_="taggedChord")
-        if chord_spans:
-            raw_chords = [span["data-original-chord"] for span in chord_spans]
-            pending_chords = [normalize_chords(ch) for ch in raw_chords]
-            continue
-
-        if looks_like_chord_line(cleaned_text):
-            pending_chords = extract_chords_from_tokens(cleaned_text)
-            continue
-
         if not cleaned_text.strip():
-            if pending_chords:
-                continue
-            else:
-                continue 
+            continue
+
+        span_chords = []
+        if hasattr(p, "find_all"):
+            spans = p.find_all("span", class_="taggedChord")
+            for sp in spans:
+                raw = sp.get("data-original-chord", "").strip()
+                if raw:
+                    normalized = normalize_chords(raw)
+                    if is_chord(normalized):
+                        span_chords.append(normalized)
+
+        if span_chords:
+            pending_chords = span_chords
+            continue
+
+        text_chords = extract_chords_from_tokens(cleaned_text)
+
+        if text_chords:
+            pending_chords = text_chords
+            continue
 
         if pending_chords:
             final_lines.append({
-                "chords": pending_chords,
+                "chords": pending_chords.copy(),
                 "lyrics": cleaned_text
             })
             pending_chords = None

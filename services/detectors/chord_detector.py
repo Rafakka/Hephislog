@@ -6,35 +6,40 @@ ROOTS = ChordSheetSchema.ROOTS
 QUALITIES = ChordSheetSchema.QUALITIES
 ACCIDENTALS = ChordSheetSchema.ACCIDENTALS
 
+_CHORD_RE = re.compile(
+    r"""^
+    [A-G]                # root
+    (?:[#b])?            # optional accidental
+    (?:                  # optional quality/extensions group
+        (?:
+            m|maj|maj7|m7|7|sus2|sus4|sus|dim|aug|add9|add2|
+            add11|6|9|11|13|ø|°|sus4\(?\d*\)?  # common forms (extend as needed)
+        )
+        (?:\d*)?         # optional numbers (e.g., maj7, m7)
+        (?:\([^\)]*\))?  # optional parenthesis parts like sus(2) - not typical but safe
+    )?
+    (?:[^\s]*)?          # allow small additional chars (e.g., "7b9") but conservative
+    (?:\/[A-G](?:[#b])?)? # optional slash bass like C/G or G/B
+    $""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
 ############# HELPERS ############################
 
-def is_root(token):
-    if token in ROOTS:
-        return True
-    else:
-        return False
+def is_root(token: str) -> bool:
+    return bool(re.match(r"^[A-G](?:[#b])?$", token.strip(), re.IGNORECASE))
 
-def is_bass(token):
-    if token[0] not in ROOTS:
-        return False
-    if len(token) == 1:
-        return True
-    if len(token) == 2 and token[1] in ACCIDENTALS:
-        return True
-    else:
-        return False
+def is_accidental(token: str) -> bool:
+    return len(token) > 1 and token[1] in ("#", "b")
 
-def is_accidental(token):
-    if len(token) >1 and token[1] in ACCIDENTALS:
-        return True
-    else:
-        return False
+def is_quality(token: str) -> bool:
+    # a quick set membership test for known qualities (lowercase comparison)
+    Qual = {"m","maj","maj7","m7","7","sus","sus2","sus4","dim","aug","add9","6","9","11","13","°","ø"}
+    return token.strip().lower() in Qual
 
-def is_quality(token):
-    if token in QUALITIES:
-        return True
-    else:
-        return False
+def is_bass(token: str) -> bool:
+    return bool(re.match(r"^[A-G](?:[#b])?$", token.strip(), re.IGNORECASE))
+
 
 ########## MAIN FUNCTIONS #########################################
 
@@ -61,63 +66,42 @@ def is_main_chord(token):
 
     return False
     
-def is_chord(token):
-
-    clean_token = normalize_chords(token)
-
-    if "/" in clean_token:
-        parts = clean_token.split("/")
-        if len(parts) != 2:
-            return False
-        main, bass = parts
-        if is_main_chord(main) and is_bass(bass):
-            return True
-        else:
-            return False
-        
-    return is_main_chord(clean_token)
-
-def looks_like_chord_line(text):
-
-    cleaned_text = normalize_line(text)
-
-    tokens = cleaned_text.split()
-
-    clean_tokens = []
-
-    for token in tokens:
-        if not token:
-            continue
-        if token == "-":
-            continue
-        clean_tokens.append(token)
-    
-    if not clean_tokens:
+def is_chord(token: str) -> bool:
+    if not token or not isinstance(token, str):
         return False
-    
-    for token in clean_tokens:
-        if not is_chord(token):
-            return False
-    
-    return True
+    t = token.strip()
+    t = re.sub(r"\(.*\)$", "", t).strip()
+    t = re.sub(r"-+$", "", t).strip()
+    t = re.sub(r"[,\.\:]+$", "", t).strip()
+    return bool(_CHORD_RE.match(t))
 
-def extract_chords_from_tokens(text):
+def looks_like_chord_line(text: str, min_ratio: float = 0.6) -> bool:
+    if not text:
+        return False
+    s = re.sub(r"\(.*?\)", "", text)
+    s = re.sub(r"[,\|\-]+", " ", s)
+    tokens = [t for t in s.split() if t.strip()]
+    if not tokens:
+        return False
+    chord_count = sum(1 for t in tokens if is_chord(t))
+    return (chord_count / len(tokens)) >= min_ratio
 
-    final_list = []
+def extract_chords_from_tokens(text: str) -> list[str]:
+    if not text:
+        return []
+    s = re.sub(r"\s-\s", " ", text)
+    s = re.sub(r"[,\|]+", " ", s)
+    s = re.sub(r"\s{2,}", " ", s).strip()
 
-    cleaned_text = normalize_line(text)
-
-    tokens = cleaned_text.split()
-
-    for token in tokens:
-        if not token:
+    tokens = s.split(" ")
+    final = []
+    for tok in tokens:
+        if not tok or tok == "-":
             continue
-        if token == "-":
+        tok = tok.strip()
+        if re.match(r"^\(.*\)$", tok):
             continue
-        if token == "+":
-            continue
-        if is_chord(token):
-            normalized = normalize_chords(token)
-            final_list.append(normalized)
-
-    return final_list
+        if is_chord(tok):
+            clean = re.sub(r"[,\-]+$", "", tok).strip()
+            final.append(clean)
+    return final

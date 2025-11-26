@@ -1,25 +1,28 @@
 import re
 
 def clean_text(tag):
-    text = tag.get_text(" ", strip=True)
-    text = re.sub(r"&nbsp;", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
+    if tag is None:
+        return ""
+
+    text = tag.get_text(" ", strip=False)
+    text = text.replace("\xa0", " ").replace("&nbsp;", " ")
+    text = re.sub(r"[ ]{2,}", " ", text).strip()
+    return text
 
 def normalize_line(text):
-   normalized_text = re.sub(r"-"," ",text)
-   normalized_text = re.sub(r"\s+"," ", normalized_text)
-   return normalized_text.strip()
+    if not text:
+        return ""
+    text = re.sub(r"\s-\s", " ", text)
+    text = re.sub(r"[ ]{3,}", "  ", text)
+    return text.strip()
 
 def normalize_chords(chord):
-    chord = re.sub(r"&nbsp;|\s+", " ", chord)
-    chord = re.sub(r"-+\s*$", "", chord)
-    chord = chord.strip()
-
     if not chord:
         return ""
 
-    return chord[0].upper() + chord[1:]
+    chord = chord.strip()
+    chord = re.sub(r"-+$", "", chord).strip()
+    return chord
 
 def slugify(text):
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")

@@ -1,12 +1,12 @@
 
 from services.detectors.chord_detector import (is_root, is_accidental, is_quality, 
-is_bass, is_main_chord, is_chord, extract_chords_from_tokens, looks_like_chord_line,)
+is_main_chord, is_chord, extract_chords_from_tokens, looks_like_chord_line,is_bass)
 import pytest
 
 @pytest.mark.parametrize("token, expected", [
     ("A", True),
     ("Z", False),
-    ("Bb", False),
+    ("Bb", True),
 ])
 def test_is_root(token, expected):
     assert is_root(token) == expected
