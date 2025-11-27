@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from urllib.parse import urlparse, urlunparse
 
 _MULTI_SPACE = re.compile(r"[ \t]{2,}")
 
@@ -27,7 +28,6 @@ def clean_text(tag):
     raw = _MULTI_SPACE.sub(" ", raw)
     return raw.strip()
 
-
 def normalize_line(text: str) -> str:
     """
     Very light normalization for a line representing chords.
@@ -39,7 +39,6 @@ def normalize_line(text: str) -> str:
     s = re.sub(r"\s*-\s*", " ", s)
     s = _MULTI_SPACE.sub(" ", s)
     return s.strip()
-
 
 def normalize_chords(chord: str) -> str:
     """
@@ -56,37 +55,29 @@ def normalize_chords(chord: str) -> str:
     s = _TRAILING_PUNCT.sub("", s).strip()
     return s
 
-
 def slugify(text):
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
     text = text.lower()
     text = re.sub(r"[^a-z0-9]+", "_", text)
     return text.strip("_")
 
-def is_url(text):
-    if not isinstance (text, str):
-        return False
-    
-    normalized = text.strip()
-    lower_normalized = normalized.lower()
-
-    if lower_normalized.startswith(("http://", "https://")):
-        continue
-    else:
-        return False
-    
-    after_protocol = lower_normalized.replace("http://", "", 1)
-    after_protocol = after_protocol.replace("https://", "", 1)
-
-    if "." not in after_protocol:
-        return False       # needs at least domain.tld
-
-    if after_protocol.startswith ("/"):
+def is_url(text: str) -> bool:
+    if not isinstance(text, str):
         return False
 
-    return True
+    stripped = text.strip()
 
-def normalize_url(text):
-    if text.startswith(("http://", "https://")):
-        normalized_text= text.lower().strip()
-        return normalized_text
+    result = urlparse(stripped)
+
+    return all([result.scheme in ("http", "https"), result.netloc])
+
+def normalize_url(text: str) -> str:
+    stripped = text.strip()
+    parsed = urlparse(stripped)
+
+    normalized = parsed._replace(
+        scheme=parsed.scheme.lower(),
+        netloc=parsed.netloc.lower()
+    )
+
+    return urlunparse(normalized)

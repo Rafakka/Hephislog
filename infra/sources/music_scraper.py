@@ -7,11 +7,11 @@ import requests
 def extract_paragraph_from_soup(soup):
     section = soup.find("div", class_="Section1")
     if section:
-        paragraphs = section.find_all("p", class_="MsoNormal")
-        if paragraphs:
-            return paragraphs
-    paragraphs = soup.find_all("p")
-    return paragraphs
+        ps = section.find_all("p", class_="MsoNormal")
+        if ps:
+            return ps
+
+    return soup.find_all("p") or []
 
 def extract_chords_and_lyrics(source):
 
