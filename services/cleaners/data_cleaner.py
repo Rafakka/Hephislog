@@ -62,3 +62,31 @@ def slugify(text):
     text = text.lower()
     text = re.sub(r"[^a-z0-9]+", "_", text)
     return text.strip("_")
+
+def is_url(text):
+    if not isinstance (text, str):
+        return False
+    
+    normalized = text.strip()
+    lower_normalized = normalized.lower()
+
+    if lower_normalized.startswith(("http://", "https://")):
+        continue
+    else:
+        return False
+    
+    after_protocol = lower_normalized.replace("http://", "", 1)
+    after_protocol = after_protocol.replace("https://", "", 1)
+
+    if "." not in after_protocol:
+        return False       # needs at least domain.tld
+
+    if after_protocol.startswith ("/"):
+        return False
+
+    return True
+
+def normalize_url(text):
+    if text.startswith(("http://", "https://")):
+        normalized_text= text.lower().strip()
+        return normalized_text

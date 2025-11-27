@@ -1,14 +1,32 @@
 from bs4 import BeautifulSoup
+from services.cleaners.data_cleaner import is_url, normalize_url
 import requests
 
 ## http://bettyloumusic.com/takeonme.htm
 
-def extract_chords_and_lyrics(html):
-
-    page_to_scrape = requests.get(html)
-    print(page_to_scrape.text[:500])
-    soup = BeautifulSoup(page_to_scrape.text, "html.parser")
+def extract_paragraph_from_soup(soup):
     section = soup.find("div", class_="Section1")
-    paragraphs = section.find_all("p", class_="MsoNormal")
-
+    if section:
+        paragraphs = section.find_all("p", class_="MsoNormal")
+        if paragraphs:
+            return paragraphs
+    paragraphs = soup.find_all("p")
     return paragraphs
+
+def extract_chords_and_lyrics(source):
+
+    if isinstance (source, str):
+        if is_url(source):
+            cleaned_url=normalize_url(source)
+            page_to_scrape = requests.get(cleaned_url)
+            soup = BeautifulSoup(page_to_scrape.text, "html.parser")
+            return extract_paragraph_from_soup(soup)
+        else:
+            soup = BeautifulSoup(source, 'html.parser')
+            return extract_paragraph_from_soup(soup)
+
+    elif isinstance (source, BeautifulSoup):
+        return extract_paragraph_from_soup(source)
+
+    else:
+        return []

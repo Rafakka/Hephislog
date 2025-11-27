@@ -1,13 +1,13 @@
-
-import re
-import unicodedata
-import os
+from pathlib import Path
+import json
 from services.cleaners.data_cleaner import slugify
 
 def save_json(json_data, domain, title, base_path=None):
 
     if base_path is None:
         base_path = Path("data")
+    else:
+        base_path = Path(base_path)
 
     slug = slugify(title)
 
