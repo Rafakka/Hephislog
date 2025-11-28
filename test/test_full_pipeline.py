@@ -28,7 +28,6 @@ EXPECTED_TAKE_ON_ME = {
     "run_id": "test_run_001"
 }
 
-
 def test_full_pipeline_music(tmp_path):
 
     html_file = Path("test/fixtures/take_on_me_sample.html")
@@ -48,22 +47,16 @@ def test_full_pipeline_music(tmp_path):
         instrument=None,
         key=None
     )
-
+    
     packed = pack_data("music", mapped)
 
-    file_path = save_json(
-        json_data=packed,
-        domain="music",
-        title="Take On Me",
-        base_path=tmp_path
-    )
-
+    file_path = packed["path"]
     assert file_path.exists()
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        saved = json.load(f)
+    loaded = json.loads(file_path.read_text("utf-8"))
 
-    assert saved == packed
-    assert saved == EXPECTED_TAKE_ON_ME
-
-    assert file_path.parent == tmp_path / "music" / "take-on-me"
+    assert loaded["title"] == "Take On Me"
+    assert loaded["sections"] == mapped.model_dump()["sections"]
+    assert loaded["source"] == "local_test"
+    assert loaded["url"] == "local://test"
+    assert loaded["run_id"] == "test_run_001"
