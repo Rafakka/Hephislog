@@ -26,6 +26,25 @@ def extract_chords_preserving_order(p, cleaned_text):
 
     return chords
 
+def finalize_line(lyrics, pending_chords):
+    if not pending_chords:
+        return None
+    return {
+        "chords": pending_chords.copy(),
+        "lyrics": lyrics
+    }
+
+def return_pending_chords(pending_chords, combined):
+    if not combined:
+        return pending_chords
+    if not pending_chords:
+        return combined.copy()
+    else:
+        new_list = pending_chords.copy()
+        for c in combined:
+            if c not in new_list:
+                new_list.append(c)
+        return new_list
 
 
 def music_organizer(paragraph_tags):
@@ -41,23 +60,13 @@ def music_organizer(paragraph_tags):
 
         combined = extract_chords_preserving_order(p, cleaned)
 
-        # is chord-line?
         if combined:
-            if pending_chords:
-                # merge without duplicates
-                for c in combined:
-                    if c not in pending_chords:
-                        pending_chords.append(c)
-            else:
-                pending_chords = combined.copy()
+            pending_chords = return_pending_chords(pending_chords, combined)
             continue
 
-        # lyric-line
-        if pending_chords:
-            final_lines.append({
-                "chords": pending_chords.copy(),
-                "lyrics": cleaned
-            })
+        line = finalize_line(cleaned, pending_chords)
+        if line:
+            final_lines.append(line)
             pending_chords = None
 
     return final_lines
