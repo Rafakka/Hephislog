@@ -2,6 +2,39 @@ from pathlib import Path
 import json
 from services.cleaners.data_cleaner import slugify
 
+def serialize_json(validated_object):
+
+    json_dict = validated_object.model_dump()
+    return json_dict
+
+def resolve_output_path(title, domain, base_path):
+    slug = slugify(title)
+    dir = base_path / domain / slug
+    file = dir / f"{domain}_{slug}.json"
+    return file
+
+def write_json_file(path,json_data):
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(json_data, f, ensure_ascii=False, indent=4)
+    return path
+
+def extract_json_data(json_dict):
+
+    title = json_dict.get("title", "untitled")
+    url = json_dict.get("url", "")
+    source = json_dict.get("source", "")
+    run_id = json_dict.get("run_id", "")
+
+    return {
+        "title": title,
+        "url": url,
+        "source": source,
+        "run_id": run_id
+    }
+
 def save_json(json_data, domain, title, base_path=None):
 
     if base_path is None:
@@ -9,14 +42,8 @@ def save_json(json_data, domain, title, base_path=None):
     else:
         base_path = Path(base_path)
 
-    slug = slugify(title)
+    file_path = resolve_output_path(title, domain, base_path)
 
-    dir_path = base_path / domain / slug
-    dir_path.mkdir(parents=True, exist_ok=True)
+    written_path = write_json_file(file_path, json_data)
 
-    file_path = dir_path / f"{domain}_{slug}.json"
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(json_data, f, ensure_ascii=False, indent=4)
-
-    return file_path
+    return written_path
