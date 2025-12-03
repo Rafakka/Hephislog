@@ -3,7 +3,6 @@ import json
 from services.cleaners.data_cleaner import slugify
 
 def serialize_json(validated_object):
-
     json_dict = validated_object.model_dump()
     return json_dict
 
