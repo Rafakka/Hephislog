@@ -1,4 +1,4 @@
-from schemas.music_schemas import ChordSheetSchema
+from hephis_core.schemas.music_schemas import ChordSheetSchema
 
 def map_music_data(
     title: str,

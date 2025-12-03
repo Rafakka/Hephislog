@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from services.cleaners.data_cleaner import is_url, normalize_url
+from hephis_core.services.cleaners.data_cleaner import is_url, normalize_url
 import requests
 
 ## http://bettyloumusic.com/takeonme.htm

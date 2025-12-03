@@ -1,5 +1,5 @@
-from schemas.music_schemas import ChordSheetSchema
-from services.cleaners.data_cleaner import normalize_chords, clean_text, normalize_line
+from hephis_core.schemas.music_schemas import ChordSheetSchema
+from hephis_core.services.cleaners.data_cleaner import normalize_chords, clean_text, normalize_line
 import re
 
 ROOTS = ChordSheetSchema.ROOTS

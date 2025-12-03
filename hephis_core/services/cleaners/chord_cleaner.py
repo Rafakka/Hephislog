@@ -1,7 +1,7 @@
-from services.cleaners.data_cleaner import clean_text
-from services.detectors.chord_detector import is_chord, extract_chords_from_tokens
+from hephis_core.services.cleaners.data_cleaner import clean_text
+from hephis_core.services.detectors.chord_detector import is_chord, extract_chords_from_tokens
 from bs4.element import NavigableString, Tag
-from services.cleaners.data_cleaner import normalize_chords
+from hephis_core.services.cleaners.data_cleaner import normalize_chords
 
 
 def extract_chords_preserving_order(p, cleaned_text):
