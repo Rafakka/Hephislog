@@ -15,6 +15,12 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    if ROOT_DIR not in sys.path:
+        sys.path.insert(0, ROOT_DIR)
+
     execute_from_command_line(sys.argv)
 
 

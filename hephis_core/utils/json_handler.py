@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from services.cleaners.data_cleaner import slugify
+from hephis_core.services.cleaners.data_cleaner import slugify
 
 def serialize_json(validated_object):
     json_dict = validated_object.model_dump()

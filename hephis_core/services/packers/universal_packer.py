@@ -1,6 +1,6 @@
 
-from services.cleaners.data_cleaner import slugify
-from utils.json_handler import serialize_json, extract_json_data, save_json
+from hephis_core.services.cleaners.data_cleaner import slugify
+from hephis_core.utils.json_handler import serialize_json, extract_json_data, save_json
 
 def pack_data(domain: str, validated_object):
     """
