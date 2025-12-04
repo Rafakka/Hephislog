@@ -1,72 +1,136 @@
+from bs4 import BeautifulSoup
+from bs4.element import Tag, NavigableString
 from hephis_core.services.cleaners.data_cleaner import clean_text
-from hephis_core.services.detectors.chord_detector import is_chord, extract_chords_from_tokens
-from bs4.element import NavigableString, Tag
-from hephis_core.services.cleaners.data_cleaner import normalize_chords
+from hephis_core.services.detectors.chord_detector import (
+    extract_chords_from_tokens,
+    is_main_chord,
+)
+import re
+from hephis_core.schemas.music_schemas import ChordSheetSchema
 
+CHORD_TOKEN = r"[A-G](#|b)?(m|maj7|maj|min7|m7|dim|aug|sus2|sus4|add9|6|9|11|13)?"
 
-def extract_chords_preserving_order(p, cleaned_text):
+def ensure_tag(obj):
+    # If it's already a BeautifulSoup tag, return as is
+    if isinstance(obj, Tag):
+        return obj
 
+    # If it's a list/ResultSet, pick the first valid Tag
+    if isinstance(obj, (list, tuple)):
+        for item in obj:
+            if isinstance(item, Tag):
+                return item
+        # If no Tag found, wrap the whole thing
+        return BeautifulSoup(f"<p>{str(obj)}</p>", "html.parser").p
+
+    # If it's a string, parse it
+    if isinstance(obj, str):
+        soup = BeautifulSoup(obj, "html.parser")
+        tag = soup.find("p")
+        if tag:
+            return tag
+        return BeautifulSoup(f"<p>{obj}</p>", "html.parser").p
+
+    # Fallback: wrap anything else
+    return BeautifulSoup(f"<p>{str(obj)}</p>", "html.parser").p
+
+def normalize_chord_line(text):
+    """Normalize messy chord lines into Am D G C Bm and remove span-induced duplicates."""
+
+    # Base cleanup
+    t = re.sub(r"\s+", " ", text)
+    t = t.replace("-", " ")
+    t = re.sub(r"\([^)]*\)", "", t)
+
+    # Extract all chords (including duplicated)
+    chords = [m.group(0) for m in re.finditer(CHORD_TOKEN, t)]
+
+    # Collapse span-induced duplicates WHILE preserving order
+    clean = []
+    seen = set()
+    for c in chords:
+        if not clean or clean[-1] != c:      # removes adjacent duplicates (span repetition)
+            clean.append(c)
+
+    return " ".join(clean)
+
+def extract_inline_chords(p_tag):
+    """Extract chords from <span> tags AND plaintext."""
     chords = []
 
-    for node in p.contents:
+    for node in p_tag.contents:
 
-        # span chords
-        if isinstance(node, Tag) and node.name == "span" and node.get("class") == ["taggedChord"]:
+        # Tagged chords
+        if isinstance(node, Tag) and node.get("class") == ["taggedChord"]:
             raw = node.get("data-original-chord", "").strip()
-            if raw and is_chord(raw):
-                chords.append(normalize_chords(raw))
+            if raw and is_main_chord(raw):
+                chords.append(raw)
 
-        # plaintext chords
+        # Plaintext chords in NavigableString
         elif isinstance(node, NavigableString):
-            text = node.strip()
-            if text:
-                extracted = extract_chords_from_tokens(text)
-                for c in extracted:
-                    chords.append(c)
+            extracted = extract_chords_from_tokens(str(node))
+            chords.extend(extracted)
 
     return chords
 
-def finalize_line(lyrics, pending_chords):
-    if not pending_chords:
-        return None
-    return {
-        "chords": pending_chords.copy(),
-        "lyrics": lyrics
-    }
-
-def return_pending_chords(pending_chords, combined):
-    if not combined:
-        return pending_chords
-    if not pending_chords:
-        return combined.copy()
-    else:
-        new_list = pending_chords.copy()
-        for c in combined:
-            if c not in new_list:
-                new_list.append(c)
-        return new_list
-
-
-def music_organizer(paragraph_tags):
-
+def music_organizer(paragraphs):
+    lines = []
     pending_chords = None
-    final_lines = []
 
-    for p in paragraph_tags:
+    for p in paragraphs:
+        p_tag = ensure_tag(p)
+        raw = clean_text(p_tag).strip()
 
-        cleaned = clean_text(p)
-        if not cleaned:
+        if not raw:
             continue
 
-        combined = extract_chords_preserving_order(p, cleaned)
+        # STEP 1: Extract inline chords FIRST
+        # (because this site does NOT use taggedChord spans)
+        inline_chords = extract_chords_from_tokens(raw.replace("-", " "))
 
-        if combined:
-            pending_chords = return_pending_chords(pending_chords, combined)
+        # PURE CHORD LINE (ex: "Am - D - G - C - Bm")
+        if inline_chords and all(is_main_chord(tok) for tok in raw.replace("-", " ").split()):
+            # remove consecutive duplicates from span flattening
+            unique = []
+            for c in inline_chords:
+                if not unique or unique[-1] != c:
+                    unique.append(c)
+
+            lines.append({
+                "lyrics": "",
+                "chords": unique.copy()
+            })
+            pending_chords = unique.copy()
             continue
 
-        line = finalize_line(cleaned, pending_chords)
-        if line:
-            final_lines.append(line)
+        # MIXED LINE: lyrics + chords in same paragraph
+        if inline_chords and not all(is_main_chord(tok) for tok in raw.split()):
+            # separate chords from lyrics
+            lyric_only = raw
+            for c in inline_chords:
+                lyric_only = lyric_only.replace(c, "")
+            lyric_only = re.sub(r'\s+', ' ', lyric_only).strip()
+
+            lines.append({
+                "lyrics": lyric_only,
+                "chords": inline_chords.copy()
+            })
             pending_chords = None
+            continue
 
-    return final_lines
+        # LYRIC FOLLOWING CHORD BLOCK
+        if pending_chords:
+            lines.append({
+                "lyrics": raw,
+                "chords": pending_chords.copy()
+            })
+            pending_chords = None
+            continue
+
+        # PURE LYRICS
+        lines.append({
+            "lyrics": raw,
+            "chords": []
+        })
+
+    return lines
