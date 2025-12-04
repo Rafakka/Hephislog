@@ -46,3 +46,20 @@ def save_json(json_data, domain, title, base_path=None):
     written_path = write_json_file(file_path, json_data)
 
     return written_path
+
+def find_json_files(folder_path):
+    from pathlib import Path
+
+    base = Path(folder_path)
+
+    if not base.exists():
+        return []
+
+    results = []
+
+    for sub in base.iterdir():
+        if sub.is_dir():
+            for file in sub.rglob("*.json"):  # rglob = recursive
+                results.append(file)
+
+    return results

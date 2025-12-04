@@ -1,10 +1,12 @@
 
 import json
 import asyncio
-import json
+
+from pathlib import Path
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from hephis_core.infra.sources.t_g_scraper import fetch_and_extract
 from hephis_core.infra.sources.music_scraper import extract_chords_and_lyrics
 from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
@@ -135,3 +137,43 @@ def import_music_chords_and_lyrics(request):
         },
         safe=False,
     )
+
+@csrf_exempt
+def list_music_chords_and_lyrics(request):
+
+    if request.method != "GET":
+        return JsonResponse({"error": "GET required"}, status=405)
+
+    music_folder = Path("data/music")
+
+    if not music_folder.exists():
+        return JsonResponse({
+            "success": False,
+            "message": "No music data folder found.",
+            "items": []
+        })
+    
+    from hephis_core.utils.json_handler import find_json_files
+
+    files = find_json_files("data/music")
+
+    results = []
+
+    for f in files:
+        with open(f, "r", encoding="utf-8") as fp:
+            data = json.load(fp)
+
+        title = data.get("title", "Unknown Title")
+        slug = f.parent.name
+
+        results.append({
+            "title": title,
+            "slug": slug,
+            "path": str(f)
+        })
+
+    return JsonResponse({
+        "success": True,
+        "count": len(results),
+        "items": results
+    })
