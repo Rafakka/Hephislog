@@ -10,6 +10,51 @@ from hephis_core.schemas.music_schemas import ChordSheetSchema
 
 CHORD_TOKEN = r"[A-G](#|b)?(m|maj7|maj|min7|m7|dim|aug|sus2|sus4|add9|6|9|11|13)?"
 
+def clean_duplicate_chord_blocks(text):
+    """
+    Removes duplicated chord blocks created by MS Word HTML.
+    Example:
+        'G Bm Em C G Bm Em C Take on me...' 
+    becomes:
+        'G Bm Em C Take on me...'
+    """
+    tokens = text.split()
+    chords = [t for t in tokens if is_main_chord(t)]
+
+    # No chords or only one chord group? Nothing to fix
+    if len(chords) < 4:
+        return text
+
+    # Detect repeating chord sequences (ABCDABCD pattern)
+    mid = len(chords) // 2
+    first = chords[:mid]
+    second = chords[mid:mid*2]
+
+    if first == second:
+        # Remove second occurrence from the text
+        cleaned = []
+        skip = False
+        chord_iter = iter(chords[mid:mid*2])
+        next_chord = None
+        try:
+            next_chord = next(chord_iter)
+        except StopIteration:
+            next_chord = None
+
+        for t in tokens:
+            if next_chord and t == next_chord:
+                # skip tokens of the duplicated block
+                try:
+                    next_chord = next(chord_iter)
+                except StopIteration:
+                    next_chord = None
+                continue
+            cleaned.append(t)
+
+        return " ".join(cleaned)
+
+    return text
+
 def ensure_tag(obj):
     # If it's already a BeautifulSoup tag, return as is
     if isinstance(obj, Tag):
@@ -80,6 +125,7 @@ def music_organizer(paragraphs):
     for p in paragraphs:
         p_tag = ensure_tag(p)
         raw = clean_text(p_tag).strip()
+        raw = clean_duplicate_chord_blocks(raw)
 
         if not raw:
             continue
