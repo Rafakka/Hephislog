@@ -14,6 +14,11 @@ from hephis_core.services.packers.universal_packer import pack_data
 from hephis_core.services.cleaners.chord_cleaner import music_organizer
 from hephis_core.schemas.mappers.music_mapper import map_music_data
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from hephis_core.utils.json_handler import find_json_files
+
+
 def ping(request):
     return JsonResponse({"message": "alive"})
 
@@ -138,42 +143,26 @@ def import_music_chords_and_lyrics(request):
         safe=False,
     )
 
-@csrf_exempt
-def list_music_chords_and_lyrics(request):
+class MusicListView(APIView):
+    def get(self, request):
+        files = find_json_files("data/music")
+        results = []
 
-    if request.method != "GET":
-        return JsonResponse({"error": "GET required"}, status=405)
+        for f in files:
+            with open(f, "r", encoding="utf-8") as fp:
+                data = json.load(fp)
 
-    music_folder = Path("data/music")
+            title = data.get("title", "Unknown")
+            slug = f.parent.name
 
-    if not music_folder.exists():
-        return JsonResponse({
-            "success": False,
-            "message": "No music data folder found.",
-            "items": []
+            results.append({
+                "title": title,
+                "slug": slug,
+                "path": str(f)
+            })
+
+        return Response({
+            "success": True,
+            "count": len(results),
+            "items": results
         })
-    
-    from hephis_core.utils.json_handler import find_json_files
-
-    files = find_json_files("data/music")
-
-    results = []
-
-    for f in files:
-        with open(f, "r", encoding="utf-8") as fp:
-            data = json.load(fp)
-
-        title = data.get("title", "Unknown Title")
-        slug = f.parent.name
-
-        results.append({
-            "title": title,
-            "slug": slug,
-            "path": str(f)
-        })
-
-    return JsonResponse({
-        "success": True,
-        "count": len(results),
-        "items": results
-    })
