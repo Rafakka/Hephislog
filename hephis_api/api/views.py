@@ -18,6 +18,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from hephis_core.utils.json_handler import find_json_files
 
+from hephis_api.api.repositories.music_repository import MusicRepository
+from hephis_api.api.repositories.recipe_repository import RecipeRepository
+
 
 def ping(request):
     return JsonResponse({"message": "alive"})
@@ -143,26 +146,49 @@ def import_music_chords_and_lyrics(request):
         safe=False,
     )
 
-class MusicListView(APIView):
+
+class RecipeListView(APIView):
     def get(self, request):
-        files = find_json_files("data/music")
-        results = []
+        items = RecipeRepository.list()
+        return Response({
+            "success": True,
+            "count": len(items),
+            "items": items
+        })
 
-        for f in files:
-            with open(f, "r", encoding="utf-8") as fp:
-                data = json.load(fp)
+class RecipeDetailView(APIView):
+    def get(self, request, slug):
+        info = RecipeRepository.load(slug)
 
-            title = data.get("title", "Unknown")
-            slug = f.parent.name
-
-            results.append({
-                "title": title,
-                "slug": slug,
-                "path": str(f)
-            })
+        if not info["success"]:
+            return Response(info, status=404)
 
         return Response({
             "success": True,
-            "count": len(results),
-            "items": results
+            "slug": slug,
+            "file": info["file_path"],
+            "data": info["data"]
+        })
+
+class MusicListView(APIView):
+    def get(self, request):
+        items = MusicRepository.list()
+        return Response({
+            "success": True,
+            "count": len(items),
+            "items": items
+        })
+
+class MusicDetailView(APIView):
+    def get(self, request, slug):
+        info = MusicRepository.load(slug)
+
+        if not info["success"]:
+            return Response(info, status=404)
+
+        return Response({
+            "success": True,
+            "slug": slug,
+            "file": info["file_path"],
+            "data": info["data"]
         })
