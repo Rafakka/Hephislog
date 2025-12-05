@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     ping, normalize_recipe_view, import_recipe_view, 
     import_music_chords_and_lyrics, MusicListView, MusicDetailView,
-    RecipeDetailView, RecipeListView,
+    RecipeDetailView, RecipeListView,RecipeImportView
     )
 
 urlpatterns = [
@@ -16,4 +16,5 @@ urlpatterns = [
 
     path("recipes/list/", RecipeListView.as_view()),
     path("recipes/detail/<slug:slug>/", RecipeDetailView.as_view()),
-]
+    path("recipes/import/", RecipeImportView.as_view()),
+}

@@ -1,6 +1,7 @@
 from pathlib import Path
 from hephis_core.utils.file_setter import file_finder
 
+
 class RecipeRepository:
     BASE = Path("data/recipes")
 
@@ -23,3 +24,9 @@ class RecipeRepository:
                         "path": info["file_path"]
                     })
         return results
+    
+    @classmethod
+    def import_from_url(cls, url):
+        from hephis_api.api.importers.recipe_import_repository import RecipeImporter
+        importer = RecipeImporter()
+        return importer.run(url, domain="recipes")

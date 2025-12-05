@@ -41,41 +41,6 @@ def normalize_recipe_view(request):
 def run_scraper_sync(url: str):
     return asyncio.run(fetch_and_extract(url))
 
-@csrf_exempt
-def import_recipe_view(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=405)
-
-    try:
-        body = json.loads(request.body)
-        url = body["url"]
-    except Exception:
-        return JsonResponse({"error": "Invalid JSON or missing 'url'"}, status=400)
-
-    scraped = run_scraper_sync(url)
-    if scraped is None:
-        return JsonResponse({"error": "Scraper failed"}, status=500)
-
-    normalized = recipe_normalizer(scraped)
-    if not normalized.get("success"):
-        return JsonResponse(normalized, safe=False, status=400)
-
-    from hephis_core.schemas.panaceia_schemas import RecipeSchema
-    
-    model = RecipeSchema(**normalized["data"])
-    packed = pack_data("recipes", model)
-
-    packed["path"] = str(packed["path"])
-
-    return JsonResponse(
-        {
-            "success": True,
-            "scraped": scraped,
-            "normalized": normalized["data"],
-            "packed": packed,
-        },
-        safe=False
-    )
 
 @csrf_exempt
 def import_music_chords_and_lyrics(request):
@@ -169,6 +134,17 @@ class RecipeDetailView(APIView):
             "file": info["file_path"],
             "data": info["data"]
         })
+
+class RecipeImportView(APIView):
+    def post(self, request):
+        url = request.data.get("url")
+
+        if not url:
+            return Response({"error": "Missing url"}, status=400)
+
+        info = RecipeRepository.import_from_url(url)
+
+        return Response(info)
 
 class MusicListView(APIView):
     def get(self, request):
