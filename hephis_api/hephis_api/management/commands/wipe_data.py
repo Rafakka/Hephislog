@@ -10,7 +10,7 @@ class Command(BaseCommand):
         parser.add_argument("--dry-run", action="store_true")
 
     def handle(self, *args, **options):
-
+        
         target = options["target"]
         dry_run = options["dry_run"]
 

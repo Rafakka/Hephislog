@@ -74,6 +74,29 @@ TEMPLATES = [
     },
 ]
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "handlers": {
+        "deletion_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs/deletions.log",
+        },
+    },
+
+    "loggers": {
+        "hephislog.deletion": {
+            "handlers": ["deletion_file"],
+            "level": "INFO",
+            "propagate": False,
+        }
+    }
+}
+
+
+
 WSGI_APPLICATION = 'hephis_api.wsgi.application'
 
 
