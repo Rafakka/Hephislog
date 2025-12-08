@@ -14,6 +14,10 @@ def ensure_processed_folder(domain: str, title: str) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     return folder
 
+def get_processed_folder(domain, title):
+    slug = slugify(title)
+    folder = BASE_PROCESSED_DIR /domain/slug
+    return folder
 
 def write_processed_json(domain: str, title: str, json_dict: dict) -> Path:
     """
