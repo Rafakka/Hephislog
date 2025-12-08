@@ -4,11 +4,11 @@ import requests
 
 ## http://bettyloumusic.com/takeonme.htm
 
-def extract_title(soup):
+def extract_title_from_page(soup):
+    """Extracts song title from <title> tag or fallback."""
     if soup.title and soup.title.string:
-        text = soup.title.string
-        # Example: "Take On Me - Chords and Lyrics"
-        return text.split("-")[0].strip()
+        raw = soup.title.string.strip()
+        return raw.split("-")[0].strip()
     return "Unknown Title"
 
 def extract_paragraph_from_soup(soup):
@@ -27,23 +27,33 @@ def extract_chords_and_lyrics(source):
             cleaned_url=normalize_url(source)
             page_to_scrape = requests.get(cleaned_url)
             soup = BeautifulSoup(page_to_scrape.text, "html.parser")
+            paragraphs = extract_paragraph_from_soup(soup)
+            title = extract_title_from_page(soup)
             return {
-                "paragraphs": extract_paragraph_from_soup(soup),
-                "title": extract_title(soup),
-            }
-                        
+                    "paragraphs": paragraphs,
+                    "title": title
+                }
         else:
             soup = BeautifulSoup(source, 'html.parser')
+            paragraphs = extract_paragraph_from_soup(soup)
+            title = extract_title_from_page(soup)
+
             return {
-                "paragraphs": extract_paragraph_from_soup(soup),
-                "title": extract_title(soup),
+                "paragraphs": paragraphs,
+                "title": title
             }
 
-    elif isinstance (source, BeautifulSoup):
+    elif isinstance(source, BeautifulSoup):
+        paragraphs = extract_paragraph_from_soup(source)
+        title = extract_title_from_page(source)
+
         return {
-                "paragraphs": extract_paragraph_from_soup(soup),
-                "title": extract_title(soup),
-            }
+            "paragraphs": paragraphs,
+            "title": title
+        }
 
     else:
-        return []
+        return {
+            "paragraphs": [],
+            "title": "Unknown Title"
+        }
