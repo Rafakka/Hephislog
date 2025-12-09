@@ -4,6 +4,7 @@ from pathlib import Path
 import send2trash as stt
 
 from hephis_core.utils.output_manager import get_processed_folder
+from hephis_core.utils.logger_decorators import log_action
 
 BASE_PROCESSED_DIR = Path("data")
 
@@ -11,21 +12,12 @@ BASE_PROCESSED_DIR = Path("data")
 # 1. DELETE ONE ENTRY (music/<title>/ or recipes/<title>/)
 # -----------------------------------------------------------
 
+@log_action("delete_one_entry", meta_fields=("domain", "title"))
 def delete_one_entry(domain: str, title: str):
-
-    from hephis_core.utils.logger import log_deletion
 
     folder = get_processed_folder(domain, title)
 
     if not folder.exists():
-        log_deletion(
-            event="Delete entry failed (folder not found)",
-            domain=domain,
-            title=title,
-            path=str(folder),
-            dry_run=False,
-            success=False,
-        )
         return {
             "success": False,
             "file_path": None,
@@ -35,16 +27,6 @@ def delete_one_entry(domain: str, title: str):
 
     try:
         stt.send2trash(folder)
-
-        log_deletion(
-            event="Deleted entry",
-            domain=domain,
-            title=title,
-            path=str(folder),
-            dry_run=False,
-            success=True,
-        )
-
         return {
             "success": True,
             "file_path": str(folder),
@@ -52,17 +34,6 @@ def delete_one_entry(domain: str, title: str):
         }
 
     except OSError as e:
-
-        log_deletion(
-            event="Delete entry failed (OS error)",
-            domain=domain,
-            title=title,
-            path=str(folder),
-            dry_run=False,
-            success=False,
-            error=str(e),
-        )
-
         return {
             "success": False,
             "file_path": None,
@@ -75,21 +46,12 @@ def delete_one_entry(domain: str, title: str):
 # 2. DELETE A DOMAIN FOLDER (data/music/ or data/recipes/)
 # -----------------------------------------------------------
 
+@log_action("delete_data_folder", meta_fields=("domain",))
 def delete_data_folder(domain: str, dry_run: bool = False):
-
-    from hephis_core.utils.logger import log_deletion
 
     folder = BASE_PROCESSED_DIR / domain
 
     if not folder.exists():
-        log_deletion(
-            event="Delete domain folder failed (folder not found)",
-            domain=domain,
-            title=None,
-            path=str(folder),
-            dry_run=False,
-            success=False,
-        )
         return {
             "success": False,
             "domain": domain,
@@ -111,16 +73,6 @@ def delete_data_folder(domain: str, dry_run: bool = False):
 
     try:
         stt.send2trash(folder)
-
-        log_deletion(
-            event="Deleted domain folder",
-            domain=domain,
-            title=None,
-            path=str(folder),
-            dry_run=False,
-            success=True,
-        )
-
         return {
             "success": True,
             "dry_run": False,
@@ -130,17 +82,6 @@ def delete_data_folder(domain: str, dry_run: bool = False):
         }
 
     except OSError as e:
-
-        log_deletion(
-            event="Delete domain folder failed (OS error)",
-            domain=domain,
-            title=None,
-            path=str(folder),
-            dry_run=False,
-            success=False,
-            error=str(e),
-        )
-
         return {
             "success": False,
             "dry_run": False,
@@ -154,21 +95,12 @@ def delete_data_folder(domain: str, dry_run: bool = False):
 # 3. DELETE ALL (wipe the entire data/ directory)
 # -----------------------------------------------------------
 
+@log_action("delete_all")
 def delete_all(dry_run: bool = False):
-
-    from hephis_core.utils.logger import log_deletion
 
     folder = BASE_PROCESSED_DIR
 
     if not folder.exists():
-        log_deletion(
-            event="Delete all failed (folder not found)",
-            domain="all",
-            title=None,
-            path=str(folder),
-            dry_run=False,
-            success=False,
-        )
         return {
             "success": False,
             "error": "NotFound",
@@ -187,16 +119,6 @@ def delete_all(dry_run: bool = False):
 
     try:
         stt.send2trash(folder)
-
-        log_deletion(
-            event="Deleted all data",
-            domain="all",
-            title=None,
-            path=str(folder),
-            dry_run=False,
-            success=True,
-        )
-
         return {
             "success": True,
             "dry_run": False,
@@ -205,17 +127,6 @@ def delete_all(dry_run: bool = False):
         }
 
     except OSError as e:
-
-        log_deletion(
-            event="Delete all failed (OS error)",
-            domain="all",
-            title=None,
-            path=str(folder),
-            dry_run=False,
-            success=False,
-            error=str(e),
-        )
-
         return {
             "success": False,
             "dry_run": False,
