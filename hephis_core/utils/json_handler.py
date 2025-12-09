@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 from hephis_core.services.cleaners.data_cleaner import slugify
+from hephis_core.utils.logger_decorator import log_action
 
 def serialize_json(validated_object):
     json_dict = validated_object.model_dump()
@@ -34,6 +35,7 @@ def extract_json_data(json_dict):
         "run_id": run_id
     }
 
+@log_action(action="save json", meta_fields=["domain","title"])
 def save_json(json_data, domain, title, base_path=None):
 
     if base_path is None:

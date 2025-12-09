@@ -12,7 +12,7 @@ BASE_PROCESSED_DIR = Path("data")
 # 1. DELETE ONE ENTRY (music/<title>/ or recipes/<title>/)
 # -----------------------------------------------------------
 
-@log_action("delete_one_entry", meta_fields=("domain", "title"))
+@log_action(action="delete_one_entry", meta_fields=["domain", "title"])
 def delete_one_entry(domain: str, title: str):
 
     folder = get_processed_folder(domain, title)
@@ -46,7 +46,7 @@ def delete_one_entry(domain: str, title: str):
 # 2. DELETE A DOMAIN FOLDER (data/music/ or data/recipes/)
 # -----------------------------------------------------------
 
-@log_action("delete_data_folder", meta_fields=("domain",))
+@log_action(action="delete_data_folder", meta_fields=["domain"])
 def delete_data_folder(domain: str, dry_run: bool = False):
 
     folder = BASE_PROCESSED_DIR / domain
@@ -95,7 +95,7 @@ def delete_data_folder(domain: str, dry_run: bool = False):
 # 3. DELETE ALL (wipe the entire data/ directory)
 # -----------------------------------------------------------
 
-@log_action("delete_all")
+@log_action(action="delete_all")
 def delete_all(dry_run: bool = False):
 
     folder = BASE_PROCESSED_DIR
