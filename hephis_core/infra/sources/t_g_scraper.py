@@ -5,7 +5,6 @@ t_g_scraper.py
 Playwright + BeautifulSoup
 Baixa e extrai automaticamente receitas do TG.
 """
-
 import asyncio
 import os
 import re
@@ -13,6 +12,7 @@ import json
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
+from hephis_core.utils.logger_decorator import log_action
 
 # --------------------------------------------------
 # 🔧 Helpers
@@ -30,6 +30,7 @@ def save_text(path, text):
 # 🧠 Extrator específico do TG
 # --------------------------------------------------
 
+@log_action(action="extract_recipe")
 def extract_tg_recipe(html):
     soup = BeautifulSoup(html, "html.parser")
 

@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 from hephis_core.services.cleaners.data_cleaner import is_url, normalize_url
+from hephis_core.utils.logger_decorator import log_action
+
 import requests
 
 ## http://bettyloumusic.com/takeonme.htm
@@ -20,6 +22,7 @@ def extract_paragraph_from_soup(soup):
 
     return soup.find_all("p") or []
 
+@log_action(action=extract_chords_and_lyrics)
 def extract_chords_and_lyrics(source):
 
     if isinstance (source, str):
