@@ -1,46 +1,5 @@
 from bs4 import BeautifulSoup
-from hephis_core.services.cleaners.data_cleaner import is_url, normalize_url
-from hephis_core.services.detectors.chord_detector import looks_like_chord_line, extract_chords_from_block, block_contains_chords
-from hephis_core.utils.logger_decorator import log_action
-
-import requests
-
-## http://bettyloumusic.com/takeonme.htm
-
-def extract_chords_from_html(html:str) -> dict:
-
-    soup = BeautifulSoup(html, "html.parser")
-    title_tag = soup.find("h1") or soup.find("title")
-    title = title_tag.get_text(strip=True) if title_tag else "Sem título"
-    candidates = soup.find_all(["p","pre","div"])
-
-    paragraphs = []
-
-    for block in candidates:
-        text = block.get_text("\n",strip=True)
-        
-    if not block_contains_chords(text):
-            continue
-
-    for line in lines:
-        clean = line.strip()
-
-        if not clean:
-            continue
-        
-        if len(clean) < 2:
-            continue
-
-        paragraphs.append(clean)
-
-    if paragraphs:
-        return {
-            "title": title,
-            "paragraphs": paragraphs,
-            "source": "html_raw"
-        }
-    else:
-        return None
+from hephis_core.services.cleaners.data_cleaner import normalize_url, is_url
 
 def extract_title_from_page(soup):
     """Extracts song title from <title> tag or fallback."""
