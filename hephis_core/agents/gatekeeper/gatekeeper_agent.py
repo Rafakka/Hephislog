@@ -1,5 +1,5 @@
 
-from hephis_core.services.cleaners.data_cleaner import is_url
+from hephis_core.events.registry import event_bus as announcer
 
 class GatekeeperAgent:
 
@@ -7,13 +7,8 @@ class GatekeeperAgent:
         self.announcer = announcer
 
     def process(self, incoming):
-
-        if is_url(incoming):
-
-            self.announcer.announce(
-                domain="system",
-                action="url_received",
-                data={"url": incoming}
-            )
-            return
-    
+        self.announcer.announce(
+            domain="system",
+            action="input_received",
+            data={"input":incoming}
+        )

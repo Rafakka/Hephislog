@@ -1,5 +1,9 @@
-from hephis_core.infra.sources.t_g_scraper import fetch_and_extract
-from hephis_core.infra.sources.music_scraper import extract_chords_and_lyrics
+from hephis_core.events.decorators import on_event
+from hephis_core.events.registry import event_bus as announcer
+from hephis_core.services.detectors.raw_detectors import is_url
+from hephis_core.infra.sources.t_g_scraper import fetch_and_extract, extract_tg_recipe
+from hephis_core.infra.sources.music_scraper import extract_chords_and_lyrics, extract_chords_from_html
+
 
 class ExtractorAgent:
 
@@ -34,6 +38,22 @@ class ExtractorAgent:
 
         return ("system", None)
 
+    def extract_from_html(self, html):
+        try:
+            raw_recipe = extract_tg_recipe(html)
+            if self.is_valid_recipe(raw_recipe):
+                return("recipe", raw_recipe)
+        except:
+            pass
+
+        try:
+            raw_music = extract_chords_from_html(html)
+            if self.is_valid_music(raw_music):
+                return("music",raw_music)
+        except:
+            pass
+
+
     @on_event("system.url_received")
     def handle_url(self, payload):
 
@@ -46,6 +66,21 @@ class ExtractorAgent:
             action="raw_extracted",
             data={
                 "url": url,
+                "raw": raw
+            }
+        )
+    
+    @on_event("system.html_received")
+    def handle_html(self, payload):
+
+        html = payload["html"]
+        domain, raw = self.extract_from_html(html)
+
+        announcer.announce(
+            domain=domain,
+            action="raw_extracted",
+            data={
+                "url": None,
                 "raw": raw
             }
         )

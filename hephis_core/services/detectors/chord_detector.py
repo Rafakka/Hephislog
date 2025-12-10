@@ -125,3 +125,18 @@ def looks_like_chord_line(text: str, min_ratio: float = 0.6) -> bool:
 
     chord_count = sum(1 for t in tokens if is_chord(t))
     return (chord_count / len(tokens)) >= min_ratio
+
+def block_contains_chords(text:str) -> bool:
+    lines = text.split("/n")
+    for lines in lines:
+        if looks_like_chord_line(line):
+            return True
+    return False
+
+def extract_chords_from_block(text:str) -> list[str]:
+    chord_lines = []
+    lines = text.split("\n")
+    for line in lines:
+        if looks_like_chord_line(line):
+            chord_lines.append(line)
+    return chord_lines
