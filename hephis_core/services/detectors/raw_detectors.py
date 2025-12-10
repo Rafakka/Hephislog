@@ -1,4 +1,5 @@
 
+import json
 from urllib.parse import urlparse
 from pathlib import Path
 
@@ -62,17 +63,17 @@ def is_file(input):
 
     return False
 
-def is_json(input):
+def is_json(value):
     if not isinstance(value, str):
         return False
     try:
-        json.load(value)
+        json.loads(value)
         return True
     except:
         return False
 
 def is_text(input):
-    
+
     if not isinstance(value, str):
         return False
 
