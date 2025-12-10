@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from hephis_core.services.detectors.chord_detector import block_contains_chords
 
-def extract_chords_from_html(html:str) -> dict:
+def extract_music_from_html(html:str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
     title_tag = soup.find("h1") or soup.find("title")
     title = title_tag.get_text(strip=True) if title_tag else "Sem título"

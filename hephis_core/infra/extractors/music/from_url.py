@@ -18,7 +18,7 @@ def extract_paragraph_from_soup(soup):
     return soup.find_all("p") or []
 
 @log_action(action=extract_chords_and_lyrics)
-def extract_chords_and_lyrics(source):
+def extract_music_from_url(source):
 
     if isinstance (source, str):
         if is_url(source):
