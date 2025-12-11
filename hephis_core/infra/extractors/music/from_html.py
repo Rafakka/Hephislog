@@ -1,6 +1,10 @@
 from bs4 import BeautifulSoup
 from hephis_core.services.detectors.chord_detector import block_contains_chords
+from hephis_core.infra.extractors.registry import extractor
+from hephis_core.utils.logger_decorator import log_action
 
+@log_action(action=extract_music_from_html)
+@extractor(domain="music", input_type="html")
 def extract_music_from_html(html:str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
     title_tag = soup.find("h1") or soup.find("title")

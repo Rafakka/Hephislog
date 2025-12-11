@@ -1,7 +1,11 @@
 from hephis_core.services.detectors.chord_detector import(
     block_contains_chords, extract_chords_from_block
 )
+from hephis_core.infra.extractors.registry import extractor
+from hephis_core.utils.logger_decorator import log_action
 
+@extractor(domain="music", input_type="text")
+@log_action(action=extract_music_from_text)
 def extract_music_from_text(text:str) -> dict | None:
     
     if not isinstance(text,str):

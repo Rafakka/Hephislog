@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 from hephis_core.services.cleaners.data_cleaner import normalize_url, is_url
+from hephis_core.infra.extractors.registry import extractor
+from hephis_core.utils.logger_decorator import log_action
 
 def extract_title_from_page(soup):
     """Extracts song title from <title> tag or fallback."""
@@ -17,7 +19,9 @@ def extract_paragraph_from_soup(soup):
 
     return soup.find_all("p") or []
 
-@log_action(action=extract_chords_and_lyrics)
+
+@extractor(domain="music", input_type="url")
+@log_action(action=extract_music_from_url)
 def extract_music_from_url(source):
 
     if isinstance (source, str):

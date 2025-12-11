@@ -1,14 +1,12 @@
 
-from .registry import event_bus
+from .registry import exact_handlers, wildcard_handlers
 
-def on_event(event_name: str):
-    """
-    Decorator that automatically registers the function
-    as a handler for the given event.
-    """
+class EventBus:
+    def emit(self, event_name, payload):
+        for fn in exact_handlers.get(event_name, []):
+            fn(payload)
 
-    def decorator(func):
-        event_bus.subscribe(event_name, func)
-        return func
-
-    return decorator
+        for pattern, handlers in wildcard_handlers.items():
+            if self.matches(pattern, event_name):
+                for fn in handlers:
+                    fn(payload)
