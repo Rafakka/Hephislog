@@ -1,0 +1,2 @@
+from .loader import autodiscover_retrievers
+autodiscover_retrievers()
