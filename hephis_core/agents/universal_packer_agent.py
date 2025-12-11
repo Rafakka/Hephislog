@@ -1,12 +1,9 @@
 from hephis_core.services.packers.universal_packer import pack_data
 from hephis_core.events.decorators import on_event
-from hephis_core.events.registry import event_bus as announcer
+from hephis_core.events.registry import event_bus
+
 
 class UniversalPackerAgent:
-
-    @on_event("universal.normalized")
-    def pack(self, payload, event_name=None):
-        pass
 
     @on_event("music.normalized")
     def handle_music(self, payload):
@@ -14,17 +11,30 @@ class UniversalPackerAgent:
 
     @on_event("recipe.normalized")
     def handle_recipe(self, payload):
-        self._pack_domain("recipe",payload)
+        self._pack_domain("recipe", payload)
 
-    def _pack_domain(self, domain:str, payload:dict):
+    def _pack_domain(self, domain: str, payload: dict):
 
         normalized = payload["normalized"]
-        url = payload["url"]
+        source = payload["source"]
 
-        packed = pack_data(domain, normalized)
+        if isinstance(normalized, dict) and "data" in normalized:
+            normalized_content = normalized["data"]
+        else:
+            normalized_content = normalized
 
-        announcer.emit("{domain}.pipeline_finished", {
-            "url": url,
-            "normalized": normalized.model_dump(),
-            "packed": packed
-        })
+        if hasattr(normalized_content, "model_dump"):
+            serialized = normalized_content.model_dump()
+        else:
+            serialized = normalized_content
+
+        packed = pack_data(domain, normalized_content)
+
+        event_bus.emit(
+            f"{domain}.pipeline_finished",
+            {
+                "source": source,
+                "normalized": serialized,
+                "packed": packed
+            }
+        )
