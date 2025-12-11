@@ -1,6 +1,6 @@
 
 from hephis_core.events.decorators import on_event
-from hephis_core.events.registry import event_bus
+from hephis_core.events.event_bus import event_bus
 from hephis_core.services.detectors.raw_detectors import detect_raw_type
 
 class IdentifierAgent:

@@ -1,5 +1,4 @@
-
-from hephis_core.events.registry import event_bus
+from hephis_core.events.event_bus import event_bus
 
 class GatekeeperAgent:
 
