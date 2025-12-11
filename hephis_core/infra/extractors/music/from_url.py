@@ -19,9 +19,8 @@ def extract_paragraph_from_soup(soup):
 
     return soup.find_all("p") or []
 
-
+@log_action(action="extract_music_from_url")
 @extractor(domain="music", input_type="url")
-@log_action(action=extract_music_from_url)
 def extract_music_from_url(source):
 
     if isinstance (source, str):

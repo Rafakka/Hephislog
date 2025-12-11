@@ -9,9 +9,9 @@ from .from_text import extract_music_from_text
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
 
-@log_action(action=extract_music_from_file)
+@log_action(action="extract_music_from_file")
 @extractor(domain="music", input_type="file")
-def extract_music_from_file(path:str)->dict|None:
+def extract_music_from_file(path: str) -> dict | None:
     file_path = Path(path)
 
     if not file_path.exists() or not file_path.is_file():

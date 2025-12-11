@@ -3,7 +3,7 @@ from hephis_core.services.detectors.chord_detector import block_contains_chords
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
 
-@log_action(action=extract_music_from_html)
+@log_action(action="extract_music_from_html")
 @extractor(domain="music", input_type="html")
 def extract_music_from_html(html:str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
@@ -15,20 +15,19 @@ def extract_music_from_html(html:str) -> dict:
 
     for block in candidates:
         text = block.get_text("\n",strip=True)
-        
-    if not block_contains_chords(text):
-            continue
+        if not block_contains_chords(text):
+                continue
+        lines = text.split("\n")
+        for line in lines:
+            clean = line.strip()
 
-    for line in lines:
-        clean = line.strip()
+            if not clean:
+                continue
+            
+            if len(clean) < 2:
+                continue
 
-        if not clean:
-            continue
-        
-        if len(clean) < 2:
-            continue
-
-        paragraphs.append(clean)
+            paragraphs.append(clean)
 
     if paragraphs:
         return {
