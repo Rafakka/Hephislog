@@ -2,7 +2,6 @@ import os
 import json
 
 def file_finder(folder_name: str):
-
     if os.path.exists(folder_name):
         file_path = None
         data = None

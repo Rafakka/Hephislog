@@ -1,17 +1,11 @@
 from django.urls import path
 from .views import (
-    ping,MusicListView, MusicDetailView, MusicImportView,
-    RecipeDetailView, RecipeListView,RecipeImportView
+    MusicLocalListView, MusicLocalViewFileByName, RecipeLocalListView, RecipeLocalViewFileByName
     )
 
 urlpatterns = [
-    path("ping/", ping),
-
-    path("music/list/", MusicListView.as_view()),
-    path("music/detail/<slug:slug>/", MusicDetailView.as_view()),
-    path("music/import/", MusicImportView.as_view()),
-
-    path("recipes/list/", RecipeListView.as_view()),
-    path("recipes/detail/<slug:slug>/", RecipeDetailView.as_view()),
-    path("recipes/import/", RecipeImportView.as_view()),
+    path("music/local/", MusicLocalListView.as_view(), name="music-local-list"),
+    path("music/local/<slug:slug>/", MusicLocalViewFileByName.as_view(),name="find-music-local-file"),
+    path("recipe/local/", RecipeLocalListView.as_view(), name="recipe-local-list"),
+    path("recipe/local/<slug:slug>/", RecipeLocalViewFileByName.as_view(),name="find-recipe-local-file")
 ]

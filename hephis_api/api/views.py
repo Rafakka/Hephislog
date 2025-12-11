@@ -1,84 +1,27 @@
-
-import json
-import asyncio
-from pathlib import Path
-
-from django.http import JsonResponse
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from hephis_core.infra.retrievers.caller import call_retrievers
 
-from hephis_api.api.repositories.music_repository import MusicRepository
-from hephis_api.api.repositories.recipe_repository import RecipeRepository
-
-
-def ping(request):
-    return JsonResponse({"message": "alive"})
-
-class RecipeListView(APIView):
+class MusicLocalListView(APIView):
     def get(self, request):
-        items = RecipeRepository.list()
-        return Response({
-            "success": True,
-            "count": len(items),
-            "items": items
-        })
+        results = call_retrievers(domain="music", input_type="list")
+        return Response(results)
 
-class RecipeDetailView(APIView):
+class MusicLocalViewFileByName(APIView):
     def get(self, request, slug):
-        info = RecipeRepository.load(slug)
+        results = call_retrievers(domain="music", input_type="file",value=slug)
+        if not results:
+            return Response({"error":"Not found"}, status=404)
+        return Response(results[0])
 
-        if not info["success"]:
-            return Response(info, status=404)
-
-        return Response({
-            "success": True,
-            "slug": slug,
-            "file": info["file_path"],
-            "data": info["data"]
-        })
-
-class RecipeImportView(APIView):
-    def post(self, request):
-        url = request.data.get("url")
-
-        if not url:
-            return Response({"error": "Missing url"}, status=400)
-
-        info = RecipeRepository.import_from_url(url)
-
-        return Response(info)
-
-class MusicListView(APIView):
+class RecipeLocalListView(APIView):
     def get(self, request):
-        items = MusicRepository.list()
-        return Response({
-            "success": True,
-            "count": len(items),
-            "items": items
-        })
+        results = call_retrievers(domain="recipe", input_type="list")
+        return Response(results)
 
-class MusicDetailView(APIView):
+class RecipeLocalViewFileByName(APIView):
     def get(self, request, slug):
-        info = MusicRepository.load(slug)
-
-        if not info["success"]:
-            return Response(info, status=404)
-
-        return Response({
-            "success": True,
-            "slug": slug,
-            "file": info["file_path"],
-            "data": info["data"]
-        })
-
-class MusicImportView(APIView):
-    def post(self, request):
-        url = request.data.get("url")
-
-        if not url:
-            return Response({"error": "Missing url"}, status=400)
-
-        info = MusicRepository.import_from_url(url)
-
-        return Response(info)
+        results = call_retrievers(domain="recipe", input_type="file",value=slug)
+        if not results:
+            return Response({"error":"Not found"}, status=404)
+        return Response(results[0])

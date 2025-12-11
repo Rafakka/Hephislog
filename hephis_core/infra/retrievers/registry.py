@@ -1,17 +1,17 @@
-RETRIVER_REGISTRY = {}
+RETRIEVER_REGISTRY = {}
 
-def retriver(domain: str, input_type: str):
+def retriever(domain: str, input_type: str):
     """
     Decorator that registers an extractor function for a given domain and input type.
     """
     def decorator(func):
-        if input_type not in RETRIVER_REGISTRY:
-            RETRIVER_REGISTRY[input_type] = {}
+        if input_type not in RETRIEVER_REGISTRY:
+            RETRIEVER_REGISTRY[input_type] = {}
 
-        if domain not in RETRIVER_REGISTRY[input_type]:
-            RETRIVER_REGISTRY[input_type][domain] = []
+        if domain not in RETRIEVER_REGISTRY[input_type]:
+            RETRIEVER_REGISTRY[input_type][domain] = []
 
-        RETRIVER_REGISTRY[input_type][domain].append(func)
+        RETRIEVER_REGISTRY[input_type][domain].append(func)
 
         return func
 
