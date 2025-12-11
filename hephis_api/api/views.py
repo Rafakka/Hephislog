@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from hephis_core.infra.retrievers.caller import call_retrievers
+from hephis_core.events.event_bus import event_bus
 
 class MusicLocalListView(APIView):
     def get(self, request):
@@ -25,3 +26,16 @@ class RecipeLocalViewFileByName(APIView):
         if not results:
             return Response({"error":"Not found"}, status=404)
         return Response(results[0])
+
+class UniversalInput(APIView):
+    def post(self, request):
+        raw = request.data.get("input")
+        if not raw and "input_file" in request.FILES:
+            raw = request.FILES["input_lines"].read().decode("uft-8")
+
+            if raw is None:
+                return Response({"error":"Missing input"},status=400)
+
+                event_bus.emit("system.input_received",{"input":raw})
+
+                return Response({"status":"accepted"})
