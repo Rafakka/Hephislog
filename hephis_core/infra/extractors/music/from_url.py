@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import requests
 from hephis_core.services.cleaners.data_cleaner import normalize_url, is_url
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
@@ -30,6 +31,8 @@ def extract_music_from_url(source):
             soup = BeautifulSoup(page_to_scrape.text, "html.parser")
             paragraphs = extract_paragraph_from_soup(soup)
             title = extract_title_from_page(soup)
+            paragraphs = [p.get_text("\n", strip=True) for p in paragraphs]
+            
             return {
                     "paragraphs": paragraphs,
                     "title": title
@@ -38,6 +41,7 @@ def extract_music_from_url(source):
             soup = BeautifulSoup(source, 'html.parser')
             paragraphs = extract_paragraph_from_soup(soup)
             title = extract_title_from_page(soup)
+            paragraphs = [p.get_text("\n", strip=True) for p in paragraphs]
 
             return {
                 "paragraphs": paragraphs,
@@ -47,6 +51,7 @@ def extract_music_from_url(source):
     elif isinstance(source, BeautifulSoup):
         paragraphs = extract_paragraph_from_soup(source)
         title = extract_title_from_page(source)
+        paragraphs = [p.get_text("\n", strip=True) for p in paragraphs]
 
         return {
             "paragraphs": paragraphs,

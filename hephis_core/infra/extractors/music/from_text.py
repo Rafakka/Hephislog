@@ -35,7 +35,7 @@ def extract_music_from_text(text:str) -> dict | None:
     ]
 
     return {
-        "title":"Unkown Title",
+        "title":"Unknown Title",
         "paragraphs":paragraphs,
         "source":"text_raw"
     }

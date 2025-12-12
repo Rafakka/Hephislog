@@ -5,6 +5,8 @@ import json
 from playwright.async_api import async_playwright
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.infra.extractors.registry import extractor
+from hephis_core.utils.cleaners.data_cleaner import slugify
+from hephis_core.utils.file_setter import save_text
 
 @log_action(action="extract_recipe_from_url")
 @extractor(domain="recipe", input_type="url")

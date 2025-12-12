@@ -19,19 +19,39 @@ class UniversalExtractorAgent:
             }
         )
 
-    def extract_any(self, input_value, input_type):
+    def extract_any(self, input_value, input_type, debug=False):
+
         extractors = EXTRACTOR_REGISTRY.get(input_type, {})
+
+        if debug:
+            print(f"[PRIMARY] Trying {fn.__name__} for domain {domain}")
 
         for domain, extractor_functions in extractors.items():
             for fn in extractor_functions:
                 try:
                     raw = fn(input_value)
+                    if raw is None:
+                        continue
                 except Exception:
                     continue
+                validator = self.validators.get(domain)
+                if validator and validator(raw):
+                    return domain, raw
 
-                if raw is None:
+        html_content = to_html(input_value, input_type)
+        html_extractors = EXTRACTOR_REGISTRY.get("html",{})
+
+        if debug:
+            print("[FALLBACK] Converting to HTML…")
+
+        for domain, extractor_functions in html_extractors.items():
+            for fn in extractor_functions:
+                try:
+                    raw = fn(html_content)
+                    if raw is None:
+                        continue
+                except Exception:
                     continue
-
                 validator = self.validators.get(domain)
                 if validator and validator(raw):
                     return domain, raw
