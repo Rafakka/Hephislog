@@ -1,3 +1,4 @@
+import os
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
 
