@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 import json
 import re
 from typing import Optional, List, Dict
@@ -120,28 +121,34 @@ class RecipeDetector:
     # -------------------------------
     @staticmethod
     def detect_from_text(text: str) -> Optional[dict]:
-        lines = text.lower().splitlines()
+
+        lower_lines = text.lower().splitlines()
+        orig_lines = text.splitlines()
+
         ingredients = []
         steps = []
         mode = None
 
-        for line in lines:
-            if "ingrediente" in line:
+        for low, orig in zip(lower_lines, orig_lines):
+
+            if "ingrediente" in low:
                 mode = "ing"
                 continue
-            if "preparo" in line or "modo" in line or "passo" in line:
+
+            if "preparo" in low or "modo" in low or "passo" in low:
                 mode = "steps"
                 continue
 
-            line = line.strip("-• ").strip()
-            if not line:
+            cleaned_line = orig.strip("-• ").strip()
+            if not cleaned_line:
                 continue
 
             if mode == "ing":
-                ingredients.append(line)
+                ingredients.append(cleaned_line)
+
             elif mode == "steps":
-                cleaned = re.sub(r"^\d+[\.\)]?\s*", "", line)
-                steps.append(cleaned)
+                step_text = re.sub(r"^\d+[\.\)]?\s*", "", cleaned_line)
+                steps.append(step_text)
 
         if ingredients or steps:
             return {
@@ -152,6 +159,7 @@ class RecipeDetector:
             }
 
         return None
+
     
     @staticmethod
     def _extract_json_ld_recipe(soup: BeautifulSoup) -> Optional[dict]:
@@ -285,32 +293,32 @@ class RecipeDetector:
             3) Generic headings ("Ingredientes", "Modo de Preparo", etc.)
             Returns None if no structure is detected.
         """
-    soup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
 
-    # -------------------------------------------
-    # 1) JSON-LD extraction (most reliable)
-    # -------------------------------------------
-    ld_json = RecipeDetector._extract_json_ld_recipe(soup)
-    if ld_json:
-        return ld_json
+        # -------------------------------------------
+        # 1) JSON-LD extraction (most reliable)
+        # -------------------------------------------
+        ld_json = RecipeDetector._extract_json_ld_recipe(soup)
+        if ld_json:
+            return ld_json
 
-    # -------------------------------------------
-    # 2) Microdata extraction (itemprop attributes)
-    # -------------------------------------------
-    micro = RecipeDetector._extract_microdata_recipe(soup)
-    if micro:
-        return micro
+        # -------------------------------------------
+        # 2) Microdata extraction (itemprop attributes)
+        # -------------------------------------------
+        micro = RecipeDetector._extract_microdata_recipe(soup)
+        if micro:
+            return micro
 
-    # -------------------------------------------
-    # 3) Generic HTML structure extraction
-    #    (fallback heuristic)
-    # -------------------------------------------
-    generic = RecipeDetector._extract_generic_html_recipe(soup)
-    if generic:
-        return generic
+        # -------------------------------------------
+        # 3) Generic HTML structure extraction
+        #    (fallback heuristic)
+        # -------------------------------------------
+        generic = RecipeDetector._extract_generic_html_recipe(soup)
+        if generic:
+            return generic
 
-    return None
-    
+        return None
+        
 
     ROUTES = {
     "json": detect_from_json,
