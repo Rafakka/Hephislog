@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from hephis_core.services.detectors.chord_detector import block_contains_chords
+from hephis_core.services.detectors.chord_detector import ChordDetector
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
 
@@ -15,7 +15,7 @@ def extract_music_from_html(html:str) -> dict:
 
     for block in candidates:
         text = block.get_text("\n",strip=True)
-        if not block_contains_chords(text):
+        if not ChordDetector.block_contains_chords(text):
                 continue
         lines = text.split("\n")
         for line in lines:

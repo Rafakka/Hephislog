@@ -1,6 +1,4 @@
-from hephis_core.services.detectors.chord_detector import(
-    block_contains_chords, extract_chords_from_block
-)
+from hephis_core.services.detectors.chord_detector import ChordDetector
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
 
@@ -17,7 +15,7 @@ def extract_music_from_text(text:str) -> dict | None:
     current_block=[]
 
     for line in lines:
-        if block_contains_chords(line):
+        if ChordDetector.block_contains_chords(line):
             current_block.append(line)
         else:
             if current_block:
@@ -30,7 +28,7 @@ def extract_music_from_text(text:str) -> dict | None:
         return None
     
     paragraphs = [
-        extract_chords_from_block(block)
+        ChordDetector.extract_chords_from_block(block)
         for block in chord_blocks
     ]
 

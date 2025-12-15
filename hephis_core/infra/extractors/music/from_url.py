@@ -1,65 +1,20 @@
-from bs4 import BeautifulSoup
-import requests
-from hephis_core.services.cleaners.data_cleaner import normalize_url, is_url
 from hephis_core.infra.extractors.registry import extractor
 from hephis_core.utils.logger_decorator import log_action
+import requests
 
-def extract_title_from_page(soup):
-    """Extracts song title from <title> tag or fallback."""
-    if soup.title and soup.title.string:
-        raw = soup.title.string.strip()
-        return raw.split("-")[0].strip()
-    return "Unknown Title"
-
-def extract_paragraph_from_soup(soup):
-    section = soup.find("div", class_="Section1")
-    if section:
-        ps = section.find_all("p", class_="MsoNormal")
-        if ps:
-            return ps
-
-    return soup.find_all("p") or []
 
 @log_action(action="extract_music_from_url")
 @extractor(domain="music", input_type="url")
-def extract_music_from_url(source):
+def extract_music_from_url(url: str):
 
-    if isinstance (source, str):
-        if is_url(source):
-            cleaned_url=normalize_url(source)
-            page_to_scrape = requests.get(cleaned_url)
-            soup = BeautifulSoup(page_to_scrape.text, "html.parser")
-            paragraphs = extract_paragraph_from_soup(soup)
-            title = extract_title_from_page(soup)
-            paragraphs = [p.get_text("\n", strip=True) for p in paragraphs]
-            
-            return {
-                    "paragraphs": paragraphs,
-                    "title": title
-                }
-        else:
-            soup = BeautifulSoup(source, 'html.parser')
-            paragraphs = extract_paragraph_from_soup(soup)
-            title = extract_title_from_page(soup)
-            paragraphs = [p.get_text("\n", strip=True) for p in paragraphs]
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    except Exception:
+        return None
 
-            return {
-                "paragraphs": paragraphs,
-                "title": title
-            }
-
-    elif isinstance(source, BeautifulSoup):
-        paragraphs = extract_paragraph_from_soup(source)
-        title = extract_title_from_page(source)
-        paragraphs = [p.get_text("\n", strip=True) for p in paragraphs]
-
-        return {
-            "paragraphs": paragraphs,
-            "title": title
-        }
-
-    else:
-        return {
-            "paragraphs": [],
-            "title": "Unknown Title"
-        }
+    return {
+        "raw_html": response.text,
+        "url": url,
+        "source": "url"
+    }
