@@ -1,5 +1,5 @@
 from hephis_core.schemas.music_schemas import ChordSheetSchema
-from hephis_core.services.cleaners.data_cleaner import normalize_chords, clean_text, normalize_line
+from hephis_core.services.cleaners.data_cleaner import normalize_chords
 from bs4 import BeautifulSoup
 from hephis_core.infra.extractors.music.from_betty import extract_paragraphs_from_betty
 import re
@@ -58,17 +58,16 @@ class ChordDetector:
     ########## MAIN FUNCTIONS #########################################
 
     @staticmethod
-    def is_main_chord(token):
-
+    def is_main_chord(token: str) -> bool:
         clean_token = normalize_chords(token)
 
         if not clean_token:
             return False
 
-        if not is_root(clean_token[0]):
+        if not ChordDetector.is_root(clean_token[0]):
             return False
 
-        if is_accidental(clean_token):
+        if ChordDetector.is_accidental(clean_token):
             remainder = clean_token[2:]
         else:
             remainder = clean_token[1:]
@@ -76,7 +75,7 @@ class ChordDetector:
         if not remainder:
             return True
 
-        if is_quality(remainder):
+        if ChordDetector.is_quality(remainder):
             return True
 
         return False
@@ -87,10 +86,10 @@ class ChordDetector:
             return False
 
         t = token.strip()
-        t = _PAREN_REM.sub("", t).strip()
+        t = ChordDetector._PAREN_REM.sub("", t).strip()
         t = re.sub(r"[,.;:\-]+$", "", t).strip()
 
-        return bool(_CHORD_RE.match(t))
+        return bool(ChordDetector._CHORD_RE.match(t))
 
     @staticmethod
     def extract_chords_from_tokens(text: str) -> list[str]:
@@ -102,10 +101,10 @@ class ChordDetector:
 
         s = str(text)
 
-        s = _PAREN_REM.sub("", s)          # remove (3x)
-        s = _SEP.sub(" ", s)               # replace , | with space
+        s = ChordDetector._PAREN_REM.sub("", s)          # remove (3x)
+        s = ChordDetector._SEP.sub(" ", s)               # replace , | with space
         s = re.sub(r"\s*-\s*", " ", s)     # turn dashes into separators
-        s = _MULTI_SPACE.sub(" ", s).strip()
+        s = ChordDetector._MULTI_SPACE.sub(" ", s).strip()
 
         tokens = [tok.strip() for tok in s.split() if tok.strip()]
 
@@ -113,7 +112,7 @@ class ChordDetector:
         for tok in tokens:
             if re.fullmatch(r"[-,.;:]+", tok):
                 continue
-            if is_chord(tok):
+            if ChordDetector.is_chord(tok):
                 final.append(normalize_chords(tok))
 
         return final
@@ -126,22 +125,22 @@ class ChordDetector:
         if not text:
             return False
 
-        s = _PAREN_REM.sub("", text)
-        s = _SEP.sub(" ", s)
+        s = ChordDetector._PAREN_REM.sub("", text)
+        s = ChordDetector._SEP.sub(" ", s)
         s = re.sub(r"\s*-\s*", " ", s)
 
         tokens = [t for t in s.split() if t.strip()]
         if not tokens:
             return False
 
-        chord_count = sum(1 for t in tokens if is_chord(t))
+        chord_count = sum(1 for t in tokens if ChordDetector.is_chord(t))
         return (chord_count / len(tokens)) >= min_ratio
 
     @staticmethod
     def block_contains_chords(text:str) -> bool:
-        lines = text.split("/n")
-        for lines in lines:
-            if looks_like_chord_line(line):
+        lines = text.split("\n")
+        for line in lines:
+            if ChordDetector.looks_like_chord_line(line):
                 return True
         return False
 
@@ -150,7 +149,7 @@ class ChordDetector:
         chord_lines = []
         lines = text.split("\n")
         for line in lines:
-            if looks_like_chord_line(line):
+            if ChordDetector.looks_like_chord_line(line):
                 chord_lines.append(line)
         return chord_lines
     
@@ -179,10 +178,10 @@ class ChordDetector:
 
         lines = text.splitlines()
 
-        chord_lines = []
-        for line in lines:
-            if ChordDetector.looks_like_chord_line(line):
-                chord_lines.append(line)
+        chord_lines = [
+            line for line in lines
+            if ChordDetector.looks_like_chord_line(line)
+        ]
 
         if not chord_lines:
             return None
