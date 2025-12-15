@@ -5,5 +5,5 @@ from hephis_core.services.detectors.chord_detector import ChordDetector
 
 @log_action(action="extract_music_from_json")
 @extractor(domain="music", input_type="json")
-def extract_music_from_json_music(obj: dict) -> dict | None:
+def extract_music_from_json(obj: dict) -> dict | None:
     return ChordDetector.detect(obj, "json")

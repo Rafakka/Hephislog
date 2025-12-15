@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from hephis_core.infra.retrievers.caller import call_retrievers
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.event_bus import EventBus
 
 class MusicLocalListView(APIView):
     def get(self, request):
@@ -29,12 +29,11 @@ class RecipeLocalViewFileByName(APIView):
 
 class UniversalInput(APIView):
     def post(self, request):
+        event_bus = EventBus()
         raw = request.data.get("input")
         if not raw and "input_file" in request.FILES:
             raw = request.FILES["input_file"].read().decode("utf-8")
-
         if raw is None:
             return Response({"error": "Missing input"}, status=400)
-
         event_bus.emit("system.input_received", {"input": raw})
         return Response({"status": "accepted"})
