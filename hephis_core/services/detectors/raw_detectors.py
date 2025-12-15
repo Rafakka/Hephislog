@@ -3,28 +3,26 @@ import json
 from urllib.parse import urlparse
 from pathlib import Path
 
-def is_str(input) -> bool:
-    if not isinstance(input, str):
-        raise TypeError("Expected a string, got:" +str(type(input)))
-        return input
+def is_str(value) -> bool:
+    return isinstance(value, str)
 
-def is_url(text: str) -> bool:
+def is_url(value: str) -> bool:
 
-    if not is_str(input):
+    if not is_str(value):
         return False
 
-    text = input.strip()
+    text = value.strip()
 
     result = urlparse(text)
 
     return all([result.scheme in ("http", "https"), result.netloc])
 
-def is_html(input):
+def is_html(value):
 
-    if not is_str(input):
+    if not is_str(value):
         return False
 
-    text = input.strip()
+    text = value.strip()
 
     if is_url(text):
         return False
@@ -39,14 +37,14 @@ def is_html(input):
         if tag in text.lower():
             return True
 
-    return True
+    return False
 
-def is_file(input):
+def is_file(value):
 
-    if not is_str(input):
+    if not is_str(value):
         return False
 
-    path = input.strip()
+    path = value.strip()
 
     if is_url(path):
         return False
@@ -72,7 +70,7 @@ def is_json(value):
     except:
         return False
 
-def is_text(input):
+def is_text(value):
 
     if not isinstance(value, str):
         return False

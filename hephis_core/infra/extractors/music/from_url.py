@@ -12,8 +12,4 @@ def extract_music_from_url(url: str):
     except Exception:
         return None
 
-    return {
-        "raw_html": response.text,
-        "url": url,
-        "source": "url"
-    }
+    return response.text

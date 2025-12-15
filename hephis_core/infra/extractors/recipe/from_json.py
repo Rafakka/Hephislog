@@ -4,5 +4,5 @@ from hephis_core.services.detectors.recipe_detector import RecipeDetector
 
 @log_action(action="extract_recipe_from_json")
 @extractor(domain="recipe", input_type="json")
-def extract_recipe_from_json(obj):
+def extract_recipe_from_json_recipe(obj):
     return RecipeDetector.detect_from_json(obj)
