@@ -82,16 +82,29 @@ def is_text(value):
 
     return True
 
-def detect_raw_type(value):
+def detect_raw_type(value, env):
+
+    smells = env.smells
+
+    if smells.get("html", 0) > 0.8 and is_html(value):
+        return "html"
+
+    if smells.get("json", 0) > 0.8 and is_json(value):
+        return "json"
+
     if is_url(value):
         return "url"
+
     if is_html(value):
         return "html"
-    if is_file(value):
-        return "file"
+
     if is_json(value):
         return "json"
+
+    if is_file(value):
+        return "file"
+
     if is_text(value):
         return "text"
 
-    return "unknown_input"
+    return "unknown"
