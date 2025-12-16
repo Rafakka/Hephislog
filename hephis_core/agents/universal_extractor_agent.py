@@ -1,5 +1,5 @@
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.event_bus import EventBus
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 
@@ -10,9 +10,9 @@ class UniversalExtractorAgent:
         "music": MUSIC
     }
 
-    def emit_result(self, domain, raw, source_info):
-        event_bus.emit(
-            f"{domain}.raw_extracted",
+    def emit_result(self, raw, source_info):
+        EventBus.emit(
+            "system.extraction.completed",
             {
                 "raw": raw,
                 "source": source_info

@@ -1,42 +1,66 @@
+import json
+from hephis_core.events.decorators import on_event
 from hephis_core.environment import ENV
 
 class SnifferAgent:
 
     def sniff(self, raw):
         if not isinstance(raw, str):
-            return ENV.smells
+            return
 
         text = raw.lower()
 
-        # --- HTML smell ---
-        if "<html" in text or "<div" in text:
-            ENV.add_smell("html", 0.9)
-
-        # --- Recipe smell ---
+        if"<html" in text or "<div" in text:
+            ENV.add_smell("html",0.9)
+        
         if "ingrediente" in text:
-            ENV.add_smell("recipe", 0.6)
+            ENV.add_smell("recipe",0.6)
         
         if "modo de preparo" in text or "preparo" in text:
-            ENV.add_smell("recipe", 0.8)
-
-        # --- json smell ---
-        if (text.startswith("{") and text.endswith("}")) or \
-           (text.startswith("[") and text.endswith("]")):
+            ENV.add_smell("recipe",0.8)
+        
+        if text.strip().startswith(("{","[")):
             try:
                 json.loads(text)
-                ENV.add_smell("json", 0.9)
-            except Exception:
-                ENV.add_smell("json", 0.4)
+                ENV.add_smell("json",0.9)
+            except:
+                ENV.add_smell("json",0.4)
 
-        # --- Music smell ---
-        if "[" in text and "]" in text:
-            ENV.add_smell("music", 0.5)
+        if any(chord in text for chord in["am","em","g","c"]):
+            ENV.add_smell("music",0.5)        
 
-        if any(chord in text for chord in [" am ", " em ", " g ", " c "]):
-            ENV.add_smell("music", 0.4)
-
-        # --- Risk smell ---
         if len(text) > 100_000:
-            ENV.add_smell("huge_input", 1.0)
+            ENV.add_smell("huge_input",1.0)
+    
+    @on_event("system.text_received")
+    @on_event("system.html_received")
+    @on_event("system.json_received")
+    def sniff_input(self, payload):
+        raw = payload.get("data")
 
-        return ENV.smells
+        ENV.smells.clear()
+
+        self.sniff(raw)
+
+        from hephis_core.events.event_bus import event_bus
+        event_bus.emit(
+            "system.smells_updated",
+            {
+                "smells":ENV.smells,
+                "snapshots":ENV.snapshot()
+            }
+        )
+
+    @on_event("system.extraction.completed")
+    def sniff_after_extraction(self, payload):
+        raw = payload["raw"]
+        self.sniff(raw)
+
+        from hephis_core.events.event_bus import event_bus
+        event_bus.emit(
+            "system.smells.post.extraction",
+            {
+                "smells":ENV.smells,
+                "snapshots":ENV.snapshot()
+            }
+        )
