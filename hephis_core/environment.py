@@ -1,7 +1,5 @@
 from datetime import datetime
 
-ENV = Environment()
-
 class Environment:
     def __init__(self):
         self.reset()
@@ -31,3 +29,5 @@ class Environment:
             "metadata": self.metadata,
             "smells": self.smells,
         }
+
+ENV = Environment()

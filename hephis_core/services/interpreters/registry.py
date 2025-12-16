@@ -1,5 +1,5 @@
-from hephis_core.services.interpreters.recipe import RecipeInterpreter
-from hephis_core.services.interpreters.music import MusicInterpreter
+from hephis_core.services.interpreters.recipe_interpreter import RecipeInterpreter
+from hephis_core.services.interpreters.music_interpreter import MusicInterpreter
 
 INTERPRETER_MAP = {
     "recipe": RecipeInterpreter(),

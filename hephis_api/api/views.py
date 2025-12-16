@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from hephis_core.infra.retrievers.caller import call_retrievers
 from hephis_core.events.event_bus import EventBus
-from hephis_core.pipeline import process_input
+from hephis_core.pipe_line import process_input
 from rest_framework import status
 
 
