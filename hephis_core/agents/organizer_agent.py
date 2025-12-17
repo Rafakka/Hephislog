@@ -1,34 +1,39 @@
 from hephis_core.services.cleaners.chord_cleaner import music_organizer
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.event_bus import EventBus
 
 class OrganizerAgent:
 
-    @on_event("music.raw_extracted")
-    def handle_music_raw(self, payload):
-
+    @on_event("intent.organize.music")
+    def handle_music(self, payload):
         raw = payload["raw"]
-        source = payload["source"]
+        source = payload.get("source")
+        run_id = payload.get("run_id")
+        confidence = payload.get("confidence")
 
         paragraphs = raw.get("paragraphs", [])
+
         sections = music_organizer(paragraphs)
 
-        event_bus.emit("music.organized", {
+        EventBus.emit("music.organized", {
+            "domain": "music",
             "sections": sections,
             "source": source,
-            "run_id": "organizer-agent"
+            "confidence": confidence,
+            "run_id": run_id,
         })
     
-    @on_event("recipe.raw_extracted")
+    @on_event("intend.organize.recipe")
     def handle_recipe(self, payload):
-
         raw = payload["raw"]
         source = payload["source"]
+        run_id = payload.get("run_id")
+        confidence = payload.get("confidence")
 
-        recipe = raw
-
-        event_bus.emit("recipe.organized", {
-            "recipe": recipe,
+        EventBus.emit("recipe.organized", {
+            "domain": "recipe",
+            "recipe": raw,
             "source": source,
-            "run_id": "organizer-agent"
+            "confidence": confidence,
+            "run_id": run_id,
         })

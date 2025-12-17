@@ -1,40 +1,50 @@
 from hephis_core.modules.music_normalizer.normalizer import music_normalizer
 from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.event_bus import EventBus
 from hephis_core.events.decorators import on_event
 
 class NormalizerAgent:
 
     @on_event("music.organized")
     def normalize_music(self, payload):
-        
+
         sections = payload["sections"]
         source = payload["source"]
+        run_id = payload.get("run_id")
+        confidence = payload.get("confidence")
 
         normalized = music_normalizer(
             raw_lines=sections,
             url=source,
-            run_id="pipeline-agent"
+            run_id=run_id or "pipeline-agent"
         )
 
-        event_bus.emit("music.normalized", {
+        EventBus.emit("music.normalized", {
+            "domain": "music",
             "normalized": normalized,
-            "source": source
+            "source": source,
+            "confidence": confidence,
+            "run_id": run_id,
         })
-    
+
     @on_event("recipe.organized")
     def normalize_recipe(self, payload):
 
-        recipe = payload["recipe"]
+        sections = payload["sections"]
         source = payload["source"]
+        run_id = payload.get("run_id")
+        confidence = payload.get("confidence")
 
         normalized = recipe_normalizer(
-            recipe=recipe,
-            schema_version="1.0",
-            module_version="1.0"
+        recipe,
+        schema_version="1.0",
+        module_version="1.0"
         )
 
-        event_bus.emit("recipe.normalized", {
-            "normalized": normalized,
-            "source": source
-        })
+    EventBus.emit("recipe.normalized", {
+        "domain": "recipe",
+        "normalized": normalized,
+        "source": source,
+        "confidence": confidence,
+        "run_id": run_id,
+    })
