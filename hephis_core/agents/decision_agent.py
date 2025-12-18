@@ -7,7 +7,7 @@ CONFIDENCE = ConfidenceAgent()
 
 class DecisionAgent:
 
-    THRESLHOLD = 0.7
+    THRESHOLD = 0.7
 
     @on_event("system.smells.post.extraction")
     def decide(self,payload):
@@ -19,7 +19,7 @@ class DecisionAgent:
         candidates = {
             domain:score
             for domain, score in smells.items()
-            if score >= self.THRESLHOLD
+            if score >= self.THRESHOLD
         }
 
         if not candidates:

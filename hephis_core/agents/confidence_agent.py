@@ -1,6 +1,7 @@
 from collections import defaultdict
 from hephis_core.events.decorators import on_event
 from hephis_core.events.event_bus import EventBus
+
 class ConfidenceAgent:
 
     def __init__(self):
