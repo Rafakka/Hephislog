@@ -1,9 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from hephis_core.infra.retrievers.caller import call_retrievers
 from hephis_core.events.event_bus import EventBus
 from hephis_core.pipe_line import process_input
-from rest_framework import status
+from hephis_core.pipeline.results import get_result, pop_result
+import time
+import uuid
+
 
 
 class MusicLocalListView(APIView):
@@ -32,29 +36,48 @@ class RecipeLocalViewFileByName(APIView):
 
 class UniversalInput(APIView):
 
+    MAX_WAIT_SECONDS = 10
+    POLL_INTERVAL = 0.05
+
+
     def post(self, request):
         raw = request.data.get("input")
         if not raw and "input_file" in request.FILES:
             raw = request.FILES["input_file"].read().decode("utf-8")
 
-        if raw is None:
+        if not raw:
             return Response({"error": "Missing input"}, status=status.HTTP_400_BAD_REQUEST)
 
-        event_bus = EventBus()
-        event_bus.emit("system.input_received", {"input": raw})
+        run_id =str(uuid.uuid4())
 
-        try:
-            result = process_input(raw)
-        except Exception as e:
+        EventBus.emit(
+            "system.input_received",{
+                "input": raw,
+                "run_id":run_id,
+                "source":"api",
+            }
+        )
+
+        start_time = time.time()
+
+        while (time.time() - start_time) < self.MAX_WAIT_SECONDS:
+            result = get_result(run_id)
+
+            if result is not None:
+                pop_result(run_id)
+
             return Response(
-                {"error": "Internal processing error", "detail": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                result,
+                status=status.HTTP_200_OK,
             )
 
-        if not result:
-            return Response(
-                {"status": "no_match"},
-                status=status.HTTP_202_ACCEPTED
-            )
+        time.sleep(self.POLL_INTERVAL)
 
-        return Response(result, status=status.HTTP_200_OK)
+        return Response (
+            {
+                "status":"processing",
+                "run_id":run_id,
+                "message":"Pipeline still running",
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
