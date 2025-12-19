@@ -1,6 +1,7 @@
 import json
 from hephis_core.events.decorators import on_event
 from hephis_core.environment import ENV
+from hephis_core.utils.logger_decorator import log_action
 
 class SnifferAgent:
 
@@ -35,6 +36,7 @@ class SnifferAgent:
     @on_event("system.text_received")
     @on_event("system.html_received")
     @on_event("system.json_received")
+    @log_action(action="agt-sniffing-payload")
     def sniff_input(self, payload):
         raw = payload.get("data")
 
@@ -52,6 +54,7 @@ class SnifferAgent:
         )
 
     @on_event("system.extraction.completed")
+    @log_action(action="agt-sniffing-extracted-payload")
     def sniff_after_extraction(self, payload):
         raw = payload["raw"]
         self.sniff(raw)

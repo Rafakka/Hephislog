@@ -1,10 +1,12 @@
 from hephis_core.services.cleaners.chord_cleaner import music_organizer
 from hephis_core.events.decorators import on_event
 from hephis_core.events.event_bus import EventBus
+from hephis_core.utils.logger_decorator import log_action
 
 class OrganizerAgent:
 
     @on_event("intent.organize.music")
+    @log_action(action="agt-organizing-music")
     def handle_music(self, payload):
         raw = payload["raw"]
         source = payload.get("source")
@@ -24,6 +26,7 @@ class OrganizerAgent:
         })
     
     @on_event("intend.organize.recipe")
+    @log_action(action="agt-organizing-recipe")
     def handle_recipe(self, payload):
         raw = payload["raw"]
         source = payload["source"]

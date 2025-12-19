@@ -1,5 +1,6 @@
 from hephis_core.events.decorators import on_event
 from hephis_core.events.event_bus import EventBus
+from hephis_core.utils.logger_decorator import log_action
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 
@@ -59,6 +60,7 @@ class UniversalExtractorAgent:
         return "system", None
 
     @on_event("system.*_received")
+    @log_action(action="agt-extracting-payload")
     def handle_input(self, payload):
         input_value = payload["data"]
         input_type  = payload["type"]

@@ -2,10 +2,12 @@ from hephis_core.modules.music_normalizer.normalizer import music_normalizer
 from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
 from hephis_core.events.event_bus import EventBus
 from hephis_core.events.decorators import on_event
+from hephis_core.utils.logger_decorator import log_action
 
 class NormalizerAgent:
 
     @on_event("music.organized")
+    @log_action(action="agt-normalizing-music")
     def normalize_music(self, payload):
 
         sections = payload["sections"]
@@ -28,6 +30,7 @@ class NormalizerAgent:
         })
 
     @on_event("recipe.organized")
+    @log_action(action="agt-normalizing-recipe")
     def normalize_recipe(self, payload):
 
         sections = payload["sections"]

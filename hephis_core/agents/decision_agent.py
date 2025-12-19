@@ -2,14 +2,16 @@ from hephis_core.environment import ENV
 from hephis_core.events.decorators import on_event
 from hephis_core.events.event_bus import EventBus
 from hephis_core.agents.confidence_agent import ConfidenceAgent
+from hephis_core.utils.logger_decorator import log_action
 
 CONFIDENCE = ConfidenceAgent()
 
 class DecisionAgent:
 
     THRESHOLD = 0.7
-
+    
     @on_event("system.smells.post.extraction")
+    @log_action(action="agt-deciding-by-smell")
     def decide(self,payload):
 
         smells = payload.get("smells",{})

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from hephis_core.events.decorators import on_event
 from hephis_core.events.event_bus import EventBus
+from hephis_core.utils.logger_decorator import log_action
 
 class ConfidenceAgent:
 
@@ -8,7 +9,9 @@ class ConfidenceAgent:
         sel.trust = defaultdict(lambda:defaultdict(lambda:{"success":0,"failure":0}))
         sel.pending = {}
 
+    
     @on_event("intent.*")
+    @log_action(action="agt-recording-decisions")
     def record_decisions(self, payload):
         run_id = payload.get("run_id")
         intent = payload.get("intent")
@@ -23,6 +26,7 @@ class ConfidenceAgent:
         }
 
     @on_event("*.pipeline_finished")
+    @log_action(action="agt-learning-from-outcomes")
     def learn_from_outcomes(self, payload):
         run_id = payload.get("run_id")
         domain = payload.get("domain")
