@@ -2,6 +2,7 @@ import json
 from hephis_core.events.decorators import on_event
 from hephis_core.environment import ENV
 from hephis_core.utils.logger_decorator import log_action
+import hephis_core.agents.decision_agent
 
 class SnifferAgent:
 
@@ -33,12 +34,10 @@ class SnifferAgent:
         if len(text) > 100_000:
             ENV.add_smell("huge_input",1.0)
     
-    @on_event("system.text_received")
-    @on_event("system.html_received")
-    @on_event("system.json_received")
+    @on_event("system.input_received")
     @log_action(action="agt-sniffing-payload")
     def sniff_input(self, payload):
-        raw = payload.get("data")
+        raw = payload.get("input")
 
         ENV.smells.clear()
 
@@ -48,8 +47,10 @@ class SnifferAgent:
         event_bus.emit(
             "system.smells_updated",
             {
-                "smells":ENV.smells,
-                "snapshots":ENV.snapshot()
+                "smells": ENV.smells,
+                "snapshots": ENV.snapshot(),
+                "run_id": payload["run_id"],
+                "source": payload.get("source"),
             }
         )
 
@@ -57,13 +58,17 @@ class SnifferAgent:
     @log_action(action="agt-sniffing-extracted-payload")
     def sniff_after_extraction(self, payload):
         raw = payload["raw"]
+        run_id = payload["run_id"]
         self.sniff(raw)
 
         from hephis_core.events.event_bus import event_bus
         event_bus.emit(
-            "system.smells.post.extraction",
-            {
-                "smells":ENV.smells,
-                "snapshots":ENV.snapshot()
-            }
-        )
+        "system.smells.post.extraction",
+        {
+            "smells": ENV.smells,
+            "snapshots": ENV.snapshot(),
+            "run_id": run_id,
+            "source": payload.get("source"),
+            "raw":raw,
+        }
+    )

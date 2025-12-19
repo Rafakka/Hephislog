@@ -25,7 +25,7 @@ class OrganizerAgent:
             "run_id": run_id,
         })
     
-    @on_event("intend.organize.recipe")
+    @on_event("intent.organize.recipe")
     @log_action(action="agt-organizing-recipe")
     def handle_recipe(self, payload):
         raw = payload["raw"]

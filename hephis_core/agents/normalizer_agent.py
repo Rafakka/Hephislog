@@ -33,13 +33,13 @@ class NormalizerAgent:
     @log_action(action="agt-normalizing-recipe")
     def normalize_recipe(self, payload):
 
-        sections = payload["sections"]
+        raw = payload["sections"]
         source = payload["source"]
         run_id = payload.get("run_id")
         confidence = payload.get("confidence")
 
         normalized = recipe_normalizer(
-        recipe,
+        raw,
         schema_version="1.0",
         module_version="1.0"
         )

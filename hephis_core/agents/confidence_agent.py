@@ -5,8 +5,8 @@ from hephis_core.utils.logger_decorator import log_action
 class ConfidenceAgent:
 
     def __init__(self):
-        sel.trust = defaultdict(lambda:defaultdict(lambda:{"success":0,"failure":0}))
-        sel.pending = {}
+        self.trust = defaultdict(lambda:defaultdict(lambda:{"success":0,"failure":0}))
+        self.pending = {}
 
     @on_event("intent.*")
     @log_action(action="agt-recording-decisions")
@@ -20,7 +20,7 @@ class ConfidenceAgent:
         
         self.pending[run_id] = {
             "smell":smell,
-            "intend":intent,
+            "intent":intent,
         }
 
     @on_event("*.pipeline_finished")

@@ -11,12 +11,14 @@ class UniversalExtractorAgent:
         "music": MUSIC
     }
 
-    def emit_result(self, raw, source_info):
+    def emit_result(self, raw, domain, run_id,source):
         event_bus.emit(
             "system.extraction.completed",
-            {
-                "raw": raw,
-                "source": source_info
+            {   
+                "raw":raw,
+                "domain":domain,
+                "run_id": run_id,
+                "source":source,
             }
         )
 
@@ -64,6 +66,8 @@ class UniversalExtractorAgent:
     def handle_input(self, payload):
         input_value = payload["data"]
         input_type  = payload["type"]
+        run_id = payload["run_id"]
+        source = payload["source"]
 
         domain, raw = self.extract_any(input_value, input_type)
-        self.emit_result(domain, raw, input_value)
+        self.emit_result(raw, domain,run_id,source)
