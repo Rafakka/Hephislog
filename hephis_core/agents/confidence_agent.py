@@ -9,7 +9,6 @@ class ConfidenceAgent:
         sel.trust = defaultdict(lambda:defaultdict(lambda:{"success":0,"failure":0}))
         sel.pending = {}
 
-    
     @on_event("intent.*")
     @log_action(action="agt-recording-decisions")
     def record_decisions(self, payload):

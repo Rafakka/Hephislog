@@ -2,13 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from hephis_core.infra.retrievers.caller import call_retrievers
-from hephis_core.events.event_bus import EventBus
+from hephis_core.events.event_bus import event_bus
 from hephis_core.pipe_line import process_input
 from hephis_core.pipeline.results import get_result, pop_result
 import time
 import uuid
-
-
+import os
 
 class MusicLocalListView(APIView):
     def get(self, request):
@@ -36,12 +35,13 @@ class RecipeLocalViewFileByName(APIView):
 
 class UniversalInput(APIView):
 
-    MAX_WAIT_SECONDS = 10
-    POLL_INTERVAL = 0.05
+    MAX_WAIT_SECONDS = float(os.getenv("HEPHIS_MAX_WAIT","10"))
+    POLL_INTERVAL = float(os.getenv("HEPHIS_POLL_INTERVAL","0.05"))
 
 
     def post(self, request):
         raw = request.data.get("input")
+
         if not raw and "input_file" in request.FILES:
             raw = request.FILES["input_file"].read().decode("utf-8")
 
@@ -50,7 +50,7 @@ class UniversalInput(APIView):
 
         run_id =str(uuid.uuid4())
 
-        EventBus.emit(
+        event_bus.emit(
             "system.input_received",{
                 "input": raw,
                 "run_id":run_id,
@@ -65,17 +65,16 @@ class UniversalInput(APIView):
 
             if result is not None:
                 pop_result(run_id)
-
-            return Response(
-                result,
-                status=status.HTTP_200_OK,
-            )
+                return Response(
+                    result,
+                    status=status.HTTP_200_OK,
+                )
 
         time.sleep(self.POLL_INTERVAL)
 
         return Response (
             {
-                "status":"processing",
+                "status":"pending",
                 "run_id":run_id,
                 "message":"Pipeline still running",
             },
