@@ -3,6 +3,10 @@ class EventBus:
     def __init__(self):
         self.exact_handlers = {}       
         self.wildcard_handlers = {}
+    
+    def reset(self):
+        self.exact_handlers.clear()
+        self.wildcard_handlers.clear()
 
     @staticmethod
     def matches(pattern, event):

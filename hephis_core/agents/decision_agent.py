@@ -1,6 +1,6 @@
 from hephis_core.environment import ENV
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import EventBus
+from hephis_core.events.event_bus import event_bus
 from hephis_core.agents.confidence_agent import ConfidenceAgent
 from hephis_core.utils.logger_decorator import log_action
 
@@ -25,7 +25,7 @@ class DecisionAgent:
         }
 
         if not candidates:
-            EventBus.emit(
+            event_bus.emit(
                 "intend.defer",
                 {
                     "source":source,
@@ -48,7 +48,7 @@ class DecisionAgent:
             key=lambda item:item[1]
             )
 
-        EventBus.emit (
+        event_bus.emit (
             f"intent.organize.{domain}",
             {
             "source":source,

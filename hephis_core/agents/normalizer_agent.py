@@ -1,6 +1,6 @@
 from hephis_core.modules.music_normalizer.normalizer import music_normalizer
 from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
-from hephis_core.events.event_bus import EventBus
+from hephis_core.events.event_bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.utils.logger_decorator import log_action
 
@@ -21,7 +21,7 @@ class NormalizerAgent:
             run_id=run_id or "pipeline-agent"
         )
 
-        EventBus.emit("music.normalized", {
+        event_bus.emit("music.normalized", {
             "domain": "music",
             "normalized": normalized,
             "source": source,
@@ -44,7 +44,7 @@ class NormalizerAgent:
         module_version="1.0"
         )
 
-    EventBus.emit("recipe.normalized", {
+    event_bus.emit("recipe.normalized", {
         "domain": "recipe",
         "normalized": normalized,
         "source": source,

@@ -1,5 +1,5 @@
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import EventBus
+from hephis_core.events.event_bus import event_bus
 from hephis_core.infra.retrievers.registry import RETRIEVER_REGISTRY
 from hephis_core.infra.retrievers.validators import RECIPE, MUSIC
 from hephis_core.utils.logger_decorator import log_action
@@ -12,7 +12,7 @@ class UniversalRetrieverAgent:
     }
 
     def emit_result(self, domain, data, source_info):
-        EventBus.emit(
+        event_bus.emit(
             f"{domain}.retrieved",
             {
                 "data": data,

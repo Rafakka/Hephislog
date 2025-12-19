@@ -1,6 +1,5 @@
 from collections import defaultdict
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import EventBus
 from hephis_core.utils.logger_decorator import log_action
 
 class ConfidenceAgent:

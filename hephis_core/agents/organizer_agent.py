@@ -1,6 +1,6 @@
 from hephis_core.services.cleaners.chord_cleaner import music_organizer
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import EventBus
+from hephis_core.events.event_bus import event_bus
 from hephis_core.utils.logger_decorator import log_action
 
 class OrganizerAgent:
@@ -17,7 +17,7 @@ class OrganizerAgent:
 
         sections = music_organizer(paragraphs)
 
-        EventBus.emit("music.organized", {
+        event_bus.emit("music.organized", {
             "domain": "music",
             "sections": sections,
             "source": source,
@@ -33,7 +33,7 @@ class OrganizerAgent:
         run_id = payload.get("run_id")
         confidence = payload.get("confidence")
 
-        EventBus.emit("recipe.organized", {
+        event_bus.emit("recipe.organized", {
             "domain": "recipe",
             "recipe": raw,
             "source": source,

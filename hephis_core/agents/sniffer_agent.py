@@ -44,8 +44,8 @@ class SnifferAgent:
 
         self.sniff(raw)
 
-        from hephis_core.events.event_bus import EventBus
-        EventBus.emit(
+        from hephis_core.events.event_bus import event_bus
+        event_bus.emit(
             "system.smells_updated",
             {
                 "smells":ENV.smells,
@@ -59,8 +59,8 @@ class SnifferAgent:
         raw = payload["raw"]
         self.sniff(raw)
 
-        from hephis_core.events.event_bus import EventBus
-        EventBus.emit(
+        from hephis_core.events.event_bus import event_bus
+        event_bus.emit(
             "system.smells.post.extraction",
             {
                 "smells":ENV.smells,
