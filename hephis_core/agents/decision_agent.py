@@ -19,12 +19,11 @@ class DecisionAgent:
         smells = payload.get("smells",{})
         source = payload.get("source")
         run_id = payload.get("run_id")
-        raw = payload.get("raw")
         domain = payload.get("domain")
 
         candidates = {
-            domain:score
-            for domain, score in smells.items()
+            smell_domain: score
+            for smell_domain, score in smells.items()
             if score >= self.THRESHOLD
         }
 
@@ -41,37 +40,39 @@ class DecisionAgent:
 
         weighted_candidates = {}
 
-        for domain, smell_score in candidates.items():
-            intent = f"organize.{domain}"
-            trust = CONFIDENCE.get_trust(domain, intent)
+        for chosen_domain, smell_score in candidates.items():
+            intent = f"organize.{chosen_domain}"
+            trust = CONFIDENCE.get_trust(chosen_domain, intent)
 
             final_score = smell_score*trust
-            weighted_candidates[domain] = final_score
+            weighted_candidates[chosen_domain] = final_score
             
-        domain, confidence = max (
+        chosen_domain, confidence = max (
             weighted_candidates.items(),
             key=lambda item:item[1]
             )
         
         decision = {
-            "domain": domain,
+            "domain": chosen_domain,
             "confidence": confidence,
             "smells": smells,
             "source": source,
             "run_id": run_id,
         }
 
-        store_decision(run_id, decision)
+        raw = payload.get("raw")
 
-        event_bus.emit (
-            f"intent.organize.{domain}",
+        if raw is None:
+            return
+
+        store_decision(run_id, decision)
+        event_bus.emit(
+            f"intent.organize.{chosen_domain}",
             {
-            "raw":raw,
-            "domain":domain,
-            "source":source,
-            "run_id":run_id,
-            "intent":f"organize.{domain}",
-            "confidence":confidence,
-            "smells":smells,
+                "domain": chosen_domain,
+                "run_id": run_id,
+                "confidence": confidence,
+                "raw": raw,
+                "source": source,
             }
         )

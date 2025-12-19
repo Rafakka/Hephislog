@@ -51,6 +51,7 @@ class SnifferAgent:
                 "snapshots": ENV.snapshot(),
                 "run_id": payload["run_id"],
                 "source": payload.get("source"),
+                "raw": payload.get("input"),
             }
         )
 
@@ -63,12 +64,12 @@ class SnifferAgent:
 
         from hephis_core.events.event_bus import event_bus
         event_bus.emit(
-        "system.smells.post.extraction",
-        {
-            "smells": ENV.smells,
-            "snapshots": ENV.snapshot(),
-            "run_id": run_id,
-            "source": payload.get("source"),
-            "raw":raw,
-        }
-    )
+            "system.smells.post.extraction",
+            {
+                "smells": ENV.smells,
+                "snapshots": ENV.snapshot(),
+                "raw": payload.get("raw"),
+                "run_id": payload["run_id"],
+                "source": payload.get("source"),
+            }
+        )

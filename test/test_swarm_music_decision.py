@@ -1,9 +1,15 @@
 from hephis_core.events.event_bus import event_bus
 from hephis_core.swarm.decisions import get_decision, reset_decisions
-import hephis_core.agents.decision_agent
 
 def setup_function():
     event_bus.reset()
+    reset_decisions()
+
+    import hephis_core.agents.gatekeeper_agent
+    import hephis_core.agents.identifier_agent
+    import hephis_core.agents.sniffer_agent
+    import hephis_core.agents.universal_extractor_agent
+    import hephis_core.agents.decision_agent
 
 def test_clear_music_input_produces_result():
     run_id = "music-clear-1"

@@ -3,9 +3,9 @@ import logging
 import time
 import traceback
 import inspect
+import asyncio
 from functools import wraps
 from typing import Iterable, Optional
-
 
 # ---------------------------------------------------------
 # Helper: determine success from returned dicts
