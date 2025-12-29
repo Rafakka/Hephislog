@@ -133,7 +133,13 @@ def log_action(action=None, *, meta_fields=None, logger_name="hephislog.action")
                 raise
 
         def sync_adapter(*args, **kwargs):
-            return asyncio.run(unified_wrapper(*args, **kwargs))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(unified_wrapper(*args, **kwargs))
+            else:
+                task = loop.create_task(unified_wrapper(*args,**kwargs))
+                return task
 
         if inspect.iscoroutinefunction(func):
             return unified_wrapper

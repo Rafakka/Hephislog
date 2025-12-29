@@ -2,59 +2,54 @@ from collections import defaultdict
 from hephis_core.events.decorators import on_event
 from hephis_core.utils.logger_decorator import log_action
 
-class ConfidenceAgent:
-
+class ConfidenceMemory:
     def __init__(self):
-        self.trust = defaultdict(lambda:defaultdict(lambda:{"success":0,"failure":0}))
+        self.trust = defaultdict(lambda: defaultdict(lambda:{"success":0,"failure":0,}))
         self.pending = {}
-
-    @on_event("intent.*")
-    @log_action(action="agt-recording-decisions")
-    def record_decisions(self, payload):
-        run_id = payload.get("run_id")
-        intent = payload.get("intent")
-        smell = payload.get("smell")
-
-        if not run_id or not intent or not smell:
-            return
-        
-        self.pending[run_id] = {
-            "smell":smell,
-            "intent":intent,
-        }
-
-    @on_event("*.pipeline_finished")
-    @log_action(action="agt-learning-from-outcomes")
-    def learn_from_outcomes(self, payload):
-        run_id = payload.get("run_id")
-        domain = payload.get("domain")
-        success = payload.get("success", True)
-
-        if run_id not in self.pending:
-            return
-        
-        decision = self.pending.pop(run_id)
-        smell = decision["smell"]
-        intent = decision["intent"]
-
-        aligned = domain in intent
-
-        if success and aligned:
-            self.trust[smell][intent]["success"]+=1
-        else:
-            self.trust[smell][intent]["failure"]+=1
     
-    def get_trust(self, smell:str, intent:str) -> float:
-        stats = self.trust.get(smell,{}.get(intent))
+CONFIDENCE = ConfidenceMemory()
 
-        if not stats:
-            return 1.0
-        
-        success = stats["success"]
-        failure = stats["failure"]
-        total = success + failure
+@on_event("intent.*")
+@log_action(action="agt-recording-decisions")
+def record_decisions(payload):
+    run_id = payload["run_id"]
+    if not run_id:
+        return
+    CONFIDENCE.pending[run_id] = payload
 
-        if total == 0:
-            return 1.0
+@on_event("*.pipeline_finished")
+@log_action(action="agt-learning-from-outcomes")
+def learn_from_outcomes(payload):
+    run_id = payload.get("run_id")
+    domain = payload.get("domain")
+    success = payload.get("success", True)
+
+    decision = CONFIDENCE.pending.pop(run_id, None)
+
+    if not decision:
+        return
+            
+        smell = decision.get("smell")
+        intent = decision.get("intent")
+
+        if not smell or not intent:
+            return
+            
+        stats = CONFIDENCE.trust[smell][intent]
+        if success:
+            stats["success"] +=1
+        else:
+            stats["failure"] +=1
+
+    
+def get_trust(smell:str, intent:str) -> float:
+    stats = CONFIDENCE.trust.get(smell,{}.get(intent))
+
+    if not stats:
+        return 1.0
         
-        return success / total
+    total = stats["success"] + stats["failure"]
+    if total == 0:
+        return 1.0
+        
+    return stats["success"] / total

@@ -38,6 +38,7 @@ class SnifferAgent:
     @log_action(action="agt-sniffing-payload")
     def sniff_input(self, payload):
         raw = payload.get("input")
+        run_id = payload["run_id"]
 
         ENV.smells.clear()
 

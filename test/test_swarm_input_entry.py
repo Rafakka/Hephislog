@@ -1,5 +1,8 @@
 from hephis_core.events.event_bus import event_bus
 from hephis_core.events.decorators import on_event
+import hephis_core.agents.gatekeeper_agent
+import hephis_core.agents.identifier_agent
+import hephis_core.agents.decision_agent
 
 def setup_function():
     event_bus.reset()
