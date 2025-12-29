@@ -1,4 +1,4 @@
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.bus import event_bus
 
 def on_event(event_name:str):
     def decorator(func):

@@ -1,8 +1,8 @@
 from hephis_core.environment import ENV
 from hephis_core.events.decorators import on_event
-from hephis_core.events.event_bus import event_bus
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.decisions import store_decision
+from hephis_core.events.bus import event_bus
 
 class DecisionAgent:
 

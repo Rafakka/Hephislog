@@ -1,4 +1,4 @@
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.bus import event_bus
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.decorators import on_event
 

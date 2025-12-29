@@ -2,6 +2,7 @@
 from hephis_core.events.decorators import on_event
 from hephis_core.pipeline.results import store_result
 from hephis_core.utils.logger_decorator import log_action
+from hephis_core.events.bus import event_bus
 
 class FinalizerAgent:
 

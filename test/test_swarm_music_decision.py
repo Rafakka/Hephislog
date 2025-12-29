@@ -1,4 +1,4 @@
-from hephis_core.events.event_bus import event_bus
+from hephis_core.events.bus import event_bus
 from hephis_core.swarm.decisions import get_decision, reset_decisions
 from hephis_core.bootstrap import bootstrap_agents
 

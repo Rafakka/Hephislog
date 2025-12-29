@@ -42,5 +42,3 @@ class EventBus:
             if self.matches(pattern, event_name):
                 for fn in handlers:
                     fn(payload)
-
-event_bus = EventBus()
