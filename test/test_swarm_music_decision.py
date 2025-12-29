@@ -10,7 +10,8 @@ def setup_function():
 def test_clear_music_input_produces_result():
     run_id = "music-clear-1"
 
-    print("HANDLERS:",event_bus.exact_handlers)
+    print("EXACT:", event_bus.exact_handlers)
+    print("WILDCARD:", event_bus.wildcard_handlers)
 
     event_bus.emit(
         "system.smells.post.extraction",
