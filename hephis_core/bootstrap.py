@@ -1,5 +1,5 @@
 
-from hephis_core.agents.confidence_agent import ConfidenceMemory
+from hephis_core.agents.confidence_agent import ConfidenceAgent
 from hephis_core.agents.sniffer_agent import SnifferAgent
 from hephis_core.agents.gatekeeper_agent import GatekeeperAgent
 from hephis_core.agents.identifier_agent import IdentifierAgent
@@ -11,9 +11,10 @@ from hephis_core.agents.universal_packer_agent import UniversalPackerAgent
 from hephis_core.agents.universal_retriever_agent import UniversalRetrieverAgent
 from hephis_core.agents.finalizer_agent import FinalizerAgent
 
+print("BOOSTRAP CALLED")
 
 def bootstrap_agents():
-    ConfidenceMemory
+    ConfidenceAgent()
     SnifferAgent()    
     GatekeeperAgent()
     IdentifierAgent()

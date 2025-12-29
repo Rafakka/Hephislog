@@ -2,7 +2,7 @@ from hephis_core.utils.json_handler import serialize_json, extract_json_data
 from hephis_core.utils.output_manager import write_processed_json
 from hephis_core.utils.logger_decorator import log_action
 
-@log_action(action="pack data", meta_fields=["domain"])
+@log_action(action="pack data")
 def pack_data(domain: str, validated_object):
     """
     Serialize, extract metadata, and save processed JSON using the new output manager.

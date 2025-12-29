@@ -12,8 +12,10 @@ from typing import Iterable, Optional
 # DECORATOR FACTORY
 # ---------------------------------------------------------
 
-def log_action(action=None, *, meta_fields=None, logger_name="hephislog.action"):
+def log_action(action):
+
     def decorator(func):
+
         is_async = inspect.iscoroutinefunction(func)
 
         @wraps(func)
@@ -80,4 +82,9 @@ def log_action(action=None, *, meta_fields=None, logger_name="hephislog.action")
                     raise
             return async_wrapper if is_async else sync_wrapper
 
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+        
     return decorator

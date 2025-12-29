@@ -35,7 +35,7 @@ def extract_json_data(json_dict):
         "run_id": run_id
     }
 
-@log_action(action="save json", meta_fields=["domain","title"])
+@log_action(action="save json")
 def save_json(json_data, domain, title, base_path=None):
 
     if base_path is None:

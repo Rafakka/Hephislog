@@ -7,10 +7,12 @@ from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 class UniversalExtractorAgent:
 
     def __init__(self):
-        for att_name in dir(self):
-            attr = getattr(self, att_name)
-            if callable(attr) and hasattr(attr, "_event_name"):
-                event_bus.subscribe(attr._event_name, attr)
+        print("INIT:",self.__class__.__name__)
+        for attr_name in dir(self):
+            attr = getattr(self,attr_name)
+            fn = getattr(attr,"__func__", None)
+            if fn and hasattr(fn,"__event_name__"):
+                event_bus.subscribe(fn.__event_name__, attr)
 
     validators = {
         "recipe": RECIPE,
@@ -31,9 +33,6 @@ class UniversalExtractorAgent:
     def extract_any(self, input_value, input_type, debug=False):
 
         extractors = EXTRACTOR_REGISTRY.get(input_type, {})
-
-        if debug:
-            print(f"[PRIMARY] Trying {fn.__name__} for domain {domain}")
 
         for domain, extractor_functions in extractors.items():
             for fn in extractor_functions:

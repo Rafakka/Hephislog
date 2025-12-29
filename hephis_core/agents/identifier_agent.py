@@ -9,14 +9,16 @@ from hephis_core.environment import ENV
 class IdentifierAgent:
     
     def __init__(self):
+        print("INIT:",self.__class__.__name__)
         for attr_name in dir(self):
-            attr = getattr(self, attr_name)
-            if callable(attr) and hasattr(attr, "_event_name"):
-                event_bus.subscribe(attr._event_name, attr)
+            attr = getattr(self,attr_name)
+            fn = getattr(attr,"__func__", None)
+            if fn and hasattr(fn,"__event_name__"):
+                event_bus.subscribe(fn.__event_name__, attr)
 
     @log_action("agt-identifies-input")
     @on_event("system.input_received")
-    def identify_input(payload):
+    def identify_input(self,payload):
         incoming = payload["input"]
         source = payload["source"]
         raw_type = detect_raw_type(incoming, ENV)

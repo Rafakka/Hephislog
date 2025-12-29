@@ -20,7 +20,7 @@ def get_processed_folder(domain, title):
     folder = BASE_PROCESSED_DIR /domain/slug
     return folder
 
-@log_action(action="write processed json", meta_fields=["domain", "title"])
+@log_action(action="write processed json")
 def write_processed_json(domain: str, title: str, json_dict: dict) -> Path:
     """
     Save final processed JSON.
