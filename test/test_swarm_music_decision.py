@@ -1,25 +1,32 @@
 from hephis_core.events.event_bus import event_bus
 from hephis_core.swarm.decisions import get_decision, reset_decisions
+from hephis_core.bootstrap import bootstrap_agents
 
 def setup_function():
     event_bus.reset()
     reset_decisions()
-
-    import hephis_core.agents.gatekeeper_agent
-    import hephis_core.agents.identifier_agent
-    import hephis_core.agents.sniffer_agent
-    import hephis_core.agents.universal_extractor_agent
-    import hephis_core.agents.decision_agent
+    bootstrap_agents()
 
 def test_clear_music_input_produces_result():
     run_id = "music-clear-1"
 
+    print("HANDLERS:",event_bus.exact_handlers)
+
     event_bus.emit(
-        "system.input_received",
+        "system.smells.post.extraction",
         {
-            "input":"C G Am F",
             "run_id":run_id,
-            "source":"test",
+            "source":"music",
+            "raw":{
+                "domain":"music",
+                "lyrics":["taking away..."],
+                "chords":["C","G","Am","F"],
+                "text":"taking away...",
+            },
+            "smells":{
+                "music":0.9,
+                "text":0.1,
+            }
         }   
     )
 

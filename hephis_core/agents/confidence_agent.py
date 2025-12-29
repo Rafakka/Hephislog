@@ -9,16 +9,17 @@ class ConfidenceMemory:
     
 CONFIDENCE = ConfidenceMemory()
 
-@on_event("intent.*")
+
 @log_action(action="agt-recording-decisions")
+@on_event("intent.*")
 def record_decisions(payload):
     run_id = payload["run_id"]
     if not run_id:
         return
     CONFIDENCE.pending[run_id] = payload
 
-@on_event("*.pipeline_finished")
 @log_action(action="agt-learning-from-outcomes")
+@on_event("*.pipeline_finished")
 def learn_from_outcomes(payload):
     run_id = payload.get("run_id")
     domain = payload.get("domain")

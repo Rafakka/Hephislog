@@ -9,10 +9,11 @@ class DecisionAgent:
 
     THRESHOLD = 0.4
 
-    @on_event("system.smells_updated")
-    @on_event("system.smells.post.extraction")
     @log_action(action="agt-deciding-by-smell")
+    @on_event("system.smells.post.extraction")
     def decide(payload):
+
+        print("DECISION AGENTE RECEIVED:", payload)
 
         smells = payload.get("smells",{})
         source = payload.get("source")
@@ -43,7 +44,7 @@ class DecisionAgent:
 
         for domain, score in candidates.items():
             intent = f"organize.{domain}"
-            trust = get_trust(domain, intent)
+            trust = CONFIDENCE.get_trust(domain, intent)
             weighted[domain] = score * trust
             
         chosen_domain, confidence = max (

@@ -1,10 +1,16 @@
 from hephis_core.events.decorators import on_event
 from hephis_core.events.event_bus import event_bus
 from hephis_core.infra.retrievers.registry import RETRIEVER_REGISTRY
-from hephis_core.infra.retrievers.validators import RECIPE, MUSIC
+from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 from hephis_core.utils.logger_decorator import log_action
 
 class UniversalRetrieverAgent:
+
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
 
     validators = {
         "recipe": RECIPE,
@@ -38,9 +44,9 @@ class UniversalRetrieverAgent:
                     return domain, result
 
         return "system", None
-
-    @on_event("system.*api_requested")
+        
     @log_action(action="agt-retriving-data-api")
+    @on_event("system.*api_requested")
     def handle_input(self, payload):
         input_value = payload["data"]
         input_type  = payload["type"]

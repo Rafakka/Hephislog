@@ -5,8 +5,14 @@ from hephis_core.utils.logger_decorator import log_action
 
 class OrganizerAgent:
 
-    @on_event("intent.organize.music")
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
+
     @log_action(action="agt-organizing-music")
+    @on_event("intent.organize.music")
     def handle_music(self, payload):
         raw = payload["raw"]
         source = payload.get("source")
@@ -24,9 +30,9 @@ class OrganizerAgent:
             "confidence": confidence,
             "run_id": run_id,
         })
-    
-    @on_event("intent.organize.recipe")
+        
     @log_action(action="agt-organizing-recipe")
+    @on_event("intent.organize.recipe")
     def handle_recipe(self, payload):
         raw = payload["raw"]
         source = payload["source"]

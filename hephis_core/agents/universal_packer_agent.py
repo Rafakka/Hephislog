@@ -5,13 +5,19 @@ from hephis_core.events.decorators import on_event
 
 class UniversalPackerAgent:
 
-    @on_event("music.normalized")
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
+
     @log_action(action="agt-packing-music")
+    @on_event("music.normalized")
     def handle_music(self, payload):
         self._pack_domain("music", payload)
 
-    @on_event("recipe.normalized")
     @log_action(action="agt-packing-recipe")
+    @on_event("recipe.normalized")
     def handle_recipe(self, payload):
         self._pack_domain("recipe", payload)
 

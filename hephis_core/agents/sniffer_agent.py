@@ -2,9 +2,15 @@ import json
 from hephis_core.events.decorators import on_event
 from hephis_core.environment import ENV
 from hephis_core.utils.logger_decorator import log_action
-import hephis_core.agents.decision_agent
+from hephis_core.events.event_bus import event_bus
 
 class SnifferAgent:
+
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
 
     def sniff(self, raw):
         if not isinstance(raw, str):
@@ -34,43 +40,52 @@ class SnifferAgent:
         if len(text) > 100_000:
             ENV.add_smell("huge_input",1.0)
     
-    @on_event("system.input_received")
     @log_action(action="agt-sniffing-payload")
-    def sniff_input(self, payload):
+    @on_event("system.input_received")
+    def sniff_input(self, payload: dict):
         raw = payload.get("input")
-        run_id = payload["run_id"]
+        run_id = payload.get("run_id")
 
-        ENV.smells.clear()
+        if not run_id:
+            return
+        
+        ENV.reset(run_id)
 
         self.sniff(raw)
 
         from hephis_core.events.event_bus import event_bus
+
         event_bus.emit(
             "system.smells_updated",
             {
                 "smells": ENV.smells,
                 "snapshots": ENV.snapshot(),
-                "run_id": payload["run_id"],
+                "run_id":run_id,
                 "source": payload.get("source"),
-                "raw": payload.get("input"),
+                "raw":raw,
             }
         )
 
-    @on_event("system.extraction.completed")
     @log_action(action="agt-sniffing-extracted-payload")
-    def sniff_after_extraction(self, payload):
-        raw = payload["raw"]
-        run_id = payload["run_id"]
+    @on_event("system.extraction.completed")
+    def sniff_after_extraction(self, payload:dict):
+        raw = payload.get("raw")
+        run_id = payload.get("run_id")
+
+        if not run_id:
+            return
+        
         self.sniff(raw)
 
         from hephis_core.events.event_bus import event_bus
+
         event_bus.emit(
             "system.smells.post.extraction",
             {
                 "smells": ENV.smells,
                 "snapshots": ENV.snapshot(),
-                "raw": payload.get("raw"),
-                "run_id": payload["run_id"],
+                "raw":raw,
+                "run_id": run_id,
                 "source": payload.get("source"),
             }
         )

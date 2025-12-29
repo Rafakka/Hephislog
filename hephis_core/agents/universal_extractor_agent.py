@@ -6,6 +6,12 @@ from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 
 class UniversalExtractorAgent:
 
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
+
     validators = {
         "recipe": RECIPE,
         "music": MUSIC
@@ -61,8 +67,8 @@ class UniversalExtractorAgent:
 
         return "system", None
 
-    @on_event("system.*_received")
     @log_action(action="agt-extracting-payload")
+    @on_event("system.*_received")
     def handle_input(self, payload):
         input_value = payload["data"]
         input_type  = payload["type"]

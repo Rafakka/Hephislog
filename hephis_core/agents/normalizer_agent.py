@@ -6,8 +6,15 @@ from hephis_core.utils.logger_decorator import log_action
 
 class NormalizerAgent:
 
-    @on_event("music.organized")
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
+
+
     @log_action(action="agt-normalizing-music")
+    @on_event("music.organized")
     def normalize_music(self, payload):
 
         sections = payload["sections"]
@@ -29,8 +36,8 @@ class NormalizerAgent:
             "run_id": run_id,
         })
 
-    @on_event("recipe.organized")
     @log_action(action="agt-normalizing-recipe")
+    @on_event("recipe.organized")
     def normalize_recipe(self, payload):
 
         raw = payload["sections"]
@@ -44,10 +51,10 @@ class NormalizerAgent:
         module_version="1.0"
         )
 
-    event_bus.emit("recipe.normalized", {
-        "domain": "recipe",
-        "normalized": normalized,
-        "source": source,
-        "confidence": confidence,
-        "run_id": run_id,
-    })
+        event_bus.emit("recipe.normalized", {
+            "domain": "recipe",
+            "normalized": normalized,
+            "source": source,
+            "confidence": confidence,
+            "run_id": run_id,
+        })

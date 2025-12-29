@@ -4,9 +4,15 @@ from hephis_core.events.decorators import on_event
 
 class GatekeeperAgent:
 
-    @on_event("system.external_input")
+    def __init__(self):
+        for att_name in dir(self):
+            attr = getattr(self, att_name)
+            if callable(attr) and hasattr(attr, "_event_name"):
+                event_bus.subscribe(attr._event_name, attr)
+
     @log_action(action="gatekeeper-announces")
-    def gatekeeper_process(payload):
+    @on_event("system.external_input")
+    def gatekeeper_process(self,payload):
         event_bus.emit(
             "system.input_received",
             {

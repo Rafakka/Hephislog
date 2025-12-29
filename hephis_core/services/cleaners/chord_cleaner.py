@@ -1,10 +1,7 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag, NavigableString
 from hephis_core.services.cleaners.data_cleaner import clean_text
-from hephis_core.services.detectors.chord_detector import (
-    extract_chords_from_tokens,
-    is_main_chord,
-)
+from hephis_core.services.detectors.chord_detector import ChordDetector
 import re
 from hephis_core.schemas.music_schemas import ChordSheetSchema
 
@@ -19,7 +16,7 @@ def clean_duplicate_chord_blocks(text):
         'G Bm Em C Take on me...'
     """
     tokens = text.split()
-    chords = [t for t in tokens if is_main_chord(t)]
+    chords = [t for t in tokens if ChordDetector.is_main_chord(t)]
 
     # No chords or only one chord group? Nothing to fix
     if len(chords) < 4:
@@ -113,7 +110,7 @@ def extract_inline_chords(p_tag):
 
         # Plaintext chords in NavigableString
         elif isinstance(node, NavigableString):
-            extracted = extract_chords_from_tokens(str(node))
+            extracted = ChordDetector.extract_chords_from_tokens(str(node))
             chords.extend(extracted)
 
     return chords
@@ -132,7 +129,7 @@ def music_organizer(paragraphs):
 
         # STEP 1: Extract inline chords FIRST
         # (because this site does NOT use taggedChord spans)
-        inline_chords = extract_chords_from_tokens(raw.replace("-", " "))
+        inline_chords = ChordDetector.extract_chords_from_tokens(raw.replace("-", " "))
 
         # PURE CHORD LINE (ex: "Am - D - G - C - Bm")
         if inline_chords and all(is_main_chord(tok) for tok in raw.replace("-", " ").split()):
@@ -150,7 +147,7 @@ def music_organizer(paragraphs):
             continue
 
         # MIXED LINE: lyrics + chords in same paragraph
-        if inline_chords and not all(is_main_chord(tok) for tok in raw.split()):
+        if inline_chords and not all(ChordDetector.is_main_chord(tok) for tok in raw.split()):
             # separate chords from lyrics
             lyric_only = raw
             for c in inline_chords:
