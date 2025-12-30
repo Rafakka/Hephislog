@@ -46,7 +46,7 @@ def run_manual_explained_silence():
     print("\n===CHECK REPORT===")
     report = get_report(run_id)
     
-    if report is none:
+    if report is None:
         print("No report generated.")
     return
 
@@ -72,4 +72,3 @@ def run_manual_explained_silence():
 
 if __name__ == "__main__":
     run_manual_explained_silence()
-

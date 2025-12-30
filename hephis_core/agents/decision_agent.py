@@ -4,8 +4,14 @@ from hephis_core.utils.logger_decorator import log_action
 
 class DecisionAgent:
 
-    THRESHOLD = 0.4
+    DOMAIN_THRESHOLDS = {
+        "recipe":0.6,
+        "music":0.7,
+        "text":0.6,
+    }
     
+    DEFAULT_THRESHOLD = 0.7
+
     def __init__(self):
         print("INIT:", self.__class__.__name__)
         self.confidence = {}
@@ -18,75 +24,98 @@ class DecisionAgent:
     @log_action(action="agt-deciding-by-smell")
     @on_event("system.smells.post.extraction")
     def decide(self, payload):
-
-        smells = payload.get("smells", {})
+        smells = payload.get("smells",{})
         source = payload.get("source")
         run_id = payload.get("run_id")
         raw = payload.get("raw")
 
         if not run_id or not smells:
-            return
-
-        candidates = {
-            domain: score
-            for domain, score in smells.items()
-            if score >= self.THRESHOLD
-        }
-
-        if not candidates:
             event_bus.emit(
-                "intent.defer",
-                {
-                    "source": source,
-                    "run_id": run_id,
-                    "confidence": smells
+                "facts.emit",{
+                    "stage":"decision",
+                    "component":"DecisionAgent",
+                    "result":"declined",
+                    "reason":"missing_run_id_or_smells",
+                    "details":{"smells":smells}
                 }
             )
             return
 
+        candidates = {
+            domain:score
+            for domain, score in smells.items()
+            if score >= self.DOMAIN_THRESHOLDS.get(domain, self.DEFAULT_THRESHOLD)
+        }
+
+        if not candidates:
+            event_bus.emit(
+                "facts.emit",{
+                    "stage":"decision",
+                    "component":"DecisionAgent",
+                    "result":"declined",
+                    "reason":"no_domain_above_threshold",
+                    "details":{
+                        "thresholds":self.DOMAIN_THRESHOLDS,
+                        "smells":smells,
+                    }
+                }
+            )
+            return
+        
         weighted = {}
 
         for domain, score in candidates.items():
-            smell = domain
             intent = f"organize.{domain}"
-            trust = self.confidence.get((smell, intent), 1.0)
+            trust = self.confidence.get((domain,intent),1.0)
 
-            if trust < self.THRESHOLD:
+            threshold = self.DOMAIN_THRESHOLDS.get(domain, self.DEFAULT_THRESHOLD)
+            if trust < threshold:
                 continue
-
-            weighted[domain] = score * trust
+            weighted[domain] = score*trust
 
         if not weighted:
+            event_bus.emit(
+                "facts.emit",{
+                    "stage":"decision",
+                    "component":"DecisionAgent",
+                    "result":"declined",
+                    "reason":"trust_filtered_all_candidates",
+                    "details":{"candidates":candidates}
+                }
+            )
             return
 
-        chosen_domain, confidence = max(
-            weighted.items(),
-            key=lambda item: item[1]
-        )
+        chosen_domain, confidence = max(weighted.items(), key=lambda i:i[1])
 
         decision = {
-            "domain": chosen_domain,
-            "confidence": confidence,
-            "smells": smells,
-            "source": source,
-            "run_id": run_id,
+            "domain":chosen_domain,
+            "confidence":confidence,
+            "smells":smells,
+            "source":source,
+            "run_id":run_id,
         }
 
-        store_decision(run_id, decision)
-
         if raw is None:
+            event_bus.emit(
+                "facts.emit",{
+                    "stage":"decision",
+                    "component":"DecisionAgent",
+                    "result":"accepted",
+                    "reason":"no_raw_payload_no_intent",
+                }
+            )
             return
 
         event_bus.emit(
-            f"intent.organize.{chosen_domain}",
-            {
-                "domain": chosen_domain,
-                "run_id": run_id,
-                "confidence": confidence,
-                "raw": raw,
-                "source": source,
-            }
-        )
+                f"intent.organize.{chosen_domain}",{
+                "domain":chosen_domain,
+                "confidence":confidence,
+                "run_id":run_id,
+                "raw":raw,
+                "source":source,
+                
+                }
+            )
 
     @log_action(action="agt-updating-confidence")
     @on_event("confidence.updated")
