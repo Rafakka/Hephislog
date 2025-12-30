@@ -5,9 +5,10 @@ from typing import List, Callable, Dict, Any
 ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
 
 class ReporterAgent:
-    def __init__(self, rules:List[ReporterRule]):
+    def __init__(self, rules:List[ReporterRule], renderer=None):
         print("INIT:ReporterAgent")
         self.rules = rules
+        self.renderer = renderer or self.output
         event_bus.subscribe("system.run.completed",self.handle_run_completed)
     
     def handle_run_completed(self, event:Dict[str,Any]):
@@ -36,11 +37,11 @@ class ReporterAgent:
             "domain":event["domain"],
             "input_type":event["input_type"],
             "terminated_at":event["terminated_at"],
-            "verdict":self.infer_verdict(findings),
+            "veredict":self.infer_veredict(findings),
             "findings":findings,
         }
     
-    def infer_verdict(self, findings):
+    def infer_veredict(self, findings):
         if not findings:
             return "silent_success"
         if any(f["type"]== "error" for f in findings):
@@ -48,9 +49,10 @@ class ReporterAgent:
         return "no_action"
     
     def output(self, report):
+        self.last_report = report
         print("\n===REPORT===")
         print("Run:", report["run_id"])
-        print("Verdict:", report["verdict"])
+        print("Veredict:", report["veredict"])
 
         if not report["findings"]:
             print("no findings")

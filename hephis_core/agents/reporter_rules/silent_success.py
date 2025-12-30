@@ -7,7 +7,7 @@ def rule_explain_silence(event:Dict[str, Any]) -> Optional[Dict[str,Any]]:
 
     if not facts:
         return {
-            "type":"silent_sucess",
+            "type":"silent_success",
             "reason":"no_facts_emitted",
             "message":"The pipeline completed without emitting any facts."
         }
