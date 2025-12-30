@@ -15,8 +15,8 @@ class DecisionAgent:
             if fn and hasattr(fn, "__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @on_event("system.smells.post.extraction")
     @log_action(action="agt-deciding-by-smell")
+    @on_event("system.smells.post.extraction")
     def decide(self, payload):
 
         smells = payload.get("smells", {})
@@ -88,6 +88,7 @@ class DecisionAgent:
             }
         )
 
+    @log_action(action="agt-updating-confidence")
     @on_event("confidence.updated")
     def update_confidence(self, payload):
         key = (payload["smell"], payload["intent"])

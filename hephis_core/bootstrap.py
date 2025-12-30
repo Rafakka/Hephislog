@@ -11,19 +11,22 @@ from hephis_core.agents.universal_packer_agent import UniversalPackerAgent
 from hephis_core.agents.universal_retriever_agent import UniversalRetrieverAgent
 from hephis_core.agents.finalizer_agent import FinalizerAgent
 from hephis_core.agents.reporter_agent import ReporterAgent
+from hephis_core.agents.reporter_rules import REPORTER_RULES
 
 print("BOOSTRAP CALLED")
 
 def bootstrap_agents():
-    ReporterAgent(rules=REPORTER_RULES)
-    ConfidenceAgent()
-    SnifferAgent()    
-    GatekeeperAgent()
-    IdentifierAgent()
-    UniversalExtractorAgent()
-    DecisionAgent()
-    NormalizerAgent()
-    OrganizerAgent()
-    UniversalPackerAgent()
-    UniversalRetrieverAgent()
-    FinalizerAgent()
+    agents = [
+        ConfidenceAgent(),
+        SnifferAgent(),    
+        GatekeeperAgent(),
+        IdentifierAgent(),
+        UniversalExtractorAgent(),
+        DecisionAgent(),
+        NormalizerAgent(),
+        OrganizerAgent(),
+        UniversalPackerAgent(),
+        UniversalRetrieverAgent(),
+        FinalizerAgent(),
+        ReporterAgent(rules=REPORTER_RULES),
+        ]

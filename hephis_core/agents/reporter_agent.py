@@ -1,13 +1,17 @@
 
+from hephis_core.events.bus import event_bus
 from typing import List, Callable, Dict, Any
 
-REPORTER_RULES = callable[[Dict[str, Any]], Dict[str,Any]| None]
+ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
 
 class ReporterAgent:
-    def __init__(self, rules:List[REPORTER_RULES]):
+    def __init__(self, rules:List[ReporterRule]):
+        print("INIT:ReporterAgent")
         self.rules = rules
+        event_bus.subscribe("system.run.completed",self.handle_run_completed)
     
     def handle_run_completed(self, event:Dict[str,Any]):
+        print("REPORT CALLED")
         findings = []
 
         for rule in self.rules:
@@ -47,5 +51,22 @@ class ReporterAgent:
         print("\n===REPORT===")
         print("Run:", report["run_id"])
         print("Verdict:", report["verdict"])
+
+        if not report["findings"]:
+            print("no findings")
+            return
+        
+        print("\nDetails:")
         for f in report["findings"]:
-            print("-",f)
+            print(f"- Type:{f.get('type')}")
+
+            if "reason" in f:
+                print(f" Reason:{f['reason']}")
+            
+            if "message" in f:
+                print(f" Message:{f['message']}")
+            
+            if "summary" in f:
+                print(" Summary:")
+                for k, v in f["summary"].items():
+                    print(f" {k}:{v}")

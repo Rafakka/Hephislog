@@ -2,7 +2,11 @@ from hephis_core.infra.observability.run_closer import close_run
 from hephis_core.infra.observability.run_context import RunContext
 from hephis_core.infra.observability.context import current_run
 from hephis_core.utils.logger_decorator import log_action
+from hephis_core.events.decorators import on_event
+from hephis_core.bootstrap import bootstrap_agents
 from hephis_core.events.bus import event_bus
+
+bootstrap_agents()
 
 def debug_run_completed(event):
     print("\nRUN COMPLETED.")
@@ -11,9 +15,8 @@ def debug_run_completed(event):
     print("Facts:")
     for f in event["facts"]:
         print(" ",f)
-
-event_bus.subscribe("system.run.completed",
-debug_run_completed)
+    
+    event_bus.subscribe("system.run.completed",debug_run_completed)
 
 @log_action(action="test_ok",stage="test")
 def returns_value():
@@ -26,7 +29,6 @@ def returns_none():
 @log_action(action="test_error",stage="test")
 def raises_error():
     raise RuntimeError("boom")
-
 
 def run_test():
     ctx=RunContext(
@@ -45,10 +47,9 @@ def run_test():
             raises_error()
         except RuntimeError:
             pass
-
     finally:
         close_run(ctx, stage="test_runner")
         current_run.reset(token)
-
+        
 if __name__ == "__main__":
     run_test()
