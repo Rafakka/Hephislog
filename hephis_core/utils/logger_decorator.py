@@ -7,12 +7,15 @@ import asyncio
 from functools import wraps
 from typing import Iterable, Optional
 
+from hephis_core.infra.observability.fact import Fact
+from hephis_core.infra.observability.context import current_run
+
 
 # ---------------------------------------------------------
 # DECORATOR FACTORY
 # ---------------------------------------------------------
 
-def log_action(action):
+def log_action(action:str, stage:str|None = None):
 
     def decorator(func):
 
@@ -84,7 +87,36 @@ def log_action(action):
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+
+            ctx = current_run.get()
+            component = func.__qualname__
+            fact_stage = stage or action
+
+            try:
+                result = func(*args, **kwargs)
+
+                if ctx is not None:
+                    fact = Fact (
+                        run_id=ctx.run_id,
+                        stage=fact_stage,
+                        component=component,
+                        result="none" if result is None else "ok",
+                        reason="returned none" if result is None else None,
+                    ) 
+                    ctx.add_fact(fact)
+                return result
+            except Exception as exc:
+                if ctx is not None:
+                    fact = Fact(
+                    run_id=ctx.run_id,
+                    stage=fact_stage, 
+                    component=component,
+                    result="error",
+                    reason=exc.__class__.__name__,
+                    )
+                    ctx.add_fact(fact)
+                raise
+
         return wrapper
         
     return decorator
