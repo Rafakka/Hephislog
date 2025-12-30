@@ -47,10 +47,9 @@ def test_agent_declined(reporter):
         "input_type":"manual",
         "terminated_at":"now",
         "facts":[
-            FakeFact("decision","agent","declined"),
+            FakeFact(stage="decision",component="agent",result="declined"),
         ],
     })
-
 
     types = {f["type"] for f in report["findings"]}
     assert "agent_declined" in types

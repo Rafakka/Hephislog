@@ -1,5 +1,6 @@
 
 from hephis_core.events.bus import event_bus
+from hephis_core.infra.observability.report_store import save_report
 from typing import List, Callable, Dict, Any
 
 ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
@@ -27,8 +28,8 @@ class ReporterAgent:
                     "error":str(exc),
                 })
 
-        report = self.build_report(event, findings) 
-
+        report = self.build_report(event, findings)
+        save_report(report["run_id"],report)
         self.output(report)
 
     def build_report(self, event, findings):
@@ -55,7 +56,8 @@ class ReporterAgent:
         print("Veredict:", report["veredict"])
 
         if not report["findings"]:
-            print("no findings")
+            print("Explanation:No rule produced findings.")
+            print("Meaning: The pipiline completed successfully without requiring action.")
             return
         
         print("\nDetails:")

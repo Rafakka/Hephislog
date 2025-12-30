@@ -6,7 +6,8 @@ def rule_agent_declined(event:Dict[str, Any]) -> Optional[Dict[str, Any]]:
     facts = event.get("facts",[])
 
     declined_agents = [
-        f for f in facts if f.stage == "agent" and f.results == "declined"
+        f for f in facts 
+        if f.stage == "decision" and f.result == "declined"
     ]
 
     if not declined_agents:
