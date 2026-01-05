@@ -3,6 +3,7 @@ from hephis_core.events.bus import event_bus
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
+from hephis_core.swarm.run_context import run_context
 
 class UniversalExtractorAgent:
 
@@ -19,7 +20,21 @@ class UniversalExtractorAgent:
         "music": MUSIC
     }
 
-    def emit_result(self, raw, domain, run_id,source):
+    def emit_result(self, raw, domain, run_id, source):
+        run_context.touch(
+                run_id,
+                agent="UniversalExtractorAgent",
+                action="extracted_file",
+                domain=domain,
+                reason="valid_file_type",
+            )
+        run_context.emit_fact(
+                run_id,
+                stage="universalextractoragent",
+                component="UniversalExtractorAgent",
+                result="extracted_file",
+                reason="valid_file_type",
+                )
         event_bus.emit(
             "system.extraction.completed",
             {   
@@ -75,4 +90,21 @@ class UniversalExtractorAgent:
         source = payload["source"]
 
         domain, raw = self.extract_any(input_value, input_type)
+
+        if not domain or not raw:
+            run_context.touch(
+                run_id,
+                agent="UniversalExtractorAgent",
+                action="extract_file",
+                reason="no_domain_or_and_no_raw",
+            )
+            run_context.emit_fact(
+                    run_id,
+                    stage="universalextractoragent",
+                    component="UniversalExtractorAgent",
+                    result="declined",
+                    reason="no_domain_or_and_no_raw",
+                    )
+            return
+
         self.emit_result(raw, domain,run_id,source)

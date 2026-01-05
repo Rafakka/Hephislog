@@ -23,7 +23,16 @@ class GatekeeperAgent:
         run_id, 
         agent="GatekeeperAgent", 
         action ="saw_input", 
-        event="system,input_received"
+        event="system.external_input"
+        )
+
+        run_context.emit_fact(
+            run_id,
+            stage="gatekeeper",
+            component="GatekepperAgent",
+            result="input_announced",
+            reason="valid_external_input"
+
         )
 
         event_bus.emit(

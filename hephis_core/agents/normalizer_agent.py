@@ -3,6 +3,7 @@ from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.utils.logger_decorator import log_action
+from hephis_core.swarm.run_context import run_context
 
 class NormalizerAgent:
 
@@ -30,6 +31,38 @@ class NormalizerAgent:
             run_id=run_id or "pipeline-agent"
         )
 
+        if not normalized:
+            run_context.touch(
+                run_id,
+                agent="NormalizerAgent",
+                action="declined",
+                domain="music",
+                reason="Failed at normalizing",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="normalizedagent",
+                component="NormalizerAgent",
+                result="declined",
+                reason="failed at normalizing",
+                )
+
+        run_context.touch(
+                run_id,
+                agent="NormalizedAgent",
+                action="normalized",
+                domain="music",
+                reason="File normalized",
+            )
+        run_context.emit_fact(
+                run_id,
+                stage="normalizeragent",
+                component="NormalizedAgent",
+                result="normalized",
+                reason="File Normalized",
+                )
+
+
         event_bus.emit("music.normalized", {
             "domain": "music",
             "normalized": normalized,
@@ -52,6 +85,37 @@ class NormalizerAgent:
         schema_version="1.0",
         module_version="1.0"
         )
+
+        if not normalized:
+            run_context.touch(
+                run_id,
+                agent="NormalizerAgent",
+                action="declined",
+                domain="recipe",
+                reason="Failed at normalizing",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="normalizeragent",
+                component="NormalizerAgent",
+                result="declined",
+                reason="failed at normalizing",
+                )
+
+        run_context.touch(
+                run_id,
+                agent="NormalizerAgent",
+                action="normalized",
+                domain="recipe",
+                reason="File normalized",
+            )
+        run_context.emit_fact(
+                run_id,
+                stage="normalizeragent",
+                component="NormalizerAgent",
+                result="normalized",
+                reason="File Normalized",
+                )
 
         event_bus.emit("recipe.normalized", {
             "domain": "recipe",

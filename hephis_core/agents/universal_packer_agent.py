@@ -2,6 +2,7 @@ from hephis_core.services.packers.universal_packer import pack_data
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
+from hephis_core.swarm.run_context import run_context
 
 class UniversalPackerAgent:
 
@@ -44,6 +45,38 @@ class UniversalPackerAgent:
             serialized = normalized_content
 
         packed = pack_data(domain, normalized_content)
+
+        if not packed:
+            run_context.touch(
+                run_id,
+                agent="UniversalPackerAgent",
+                action="declined_file",
+                domain=domain,
+                reason="file_not_packed",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="universalpackeragent",
+                component="UniversalPackerAgent",
+                result="declined",
+                reason="file_not_packed",
+                )
+            return
+
+        run_context.touch(
+                run_id,
+                agent="UniversalPackerAgent",
+                action="packed_file",
+                domain=domain,
+                reason="valid_file_type",
+            )
+        run_context.emit_fact(
+                run_id,
+                stage="universalpackeragent",
+                component="UniversalPackerAgent",
+                result="packed_file",
+                reason="valid_file_type",
+                )
 
         event_bus.emit(
             f"{domain}.pipeline_finished",

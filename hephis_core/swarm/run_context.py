@@ -18,4 +18,26 @@ class RunContextStore:
     def reset(self):
         self._runs.clear()
     
+    def emit_fact(
+        self,
+        run_id: str,
+        *,
+        stage:str,
+        component:str,
+        result:str,
+        reason: str | None = None,
+        details: dict | None = None
+    ):
+        ctx =self._runs.setdefault(run_id, {})
+
+        fact = {
+            "stage": stage,
+            "component":component,
+            "result": result,
+            "reason":reason,
+            "details":details,
+        }
+
+        ctx.setdefault("facts",[]).append(fact)
+
 run_context = RunContextStore()

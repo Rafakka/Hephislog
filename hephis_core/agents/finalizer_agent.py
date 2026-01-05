@@ -3,6 +3,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.pipeline.results import store_result
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
+from hephis_core.swarm.run_context import run_context
 
 class FinalizerAgent:
 
@@ -26,9 +27,36 @@ class FinalizerAgent:
         
 
         if not run_id:
+            run_context.touch(
+                run_id,
+                agent="FinalizerAgent",
+                action="store_result_failed",
+                reason="run_id_not_found",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="finalizeragent",
+                component="FinalizerAgent",
+                result="declined",
+                reason="run_id_not_found"
+                )
             return 
 
         store_result(run_id, payload)
+
+        run_context.touch(
+                run_id,
+                agent="FinalizerAgent",
+                action="store_result",
+                reason="flow_completed",
+            )
+        run_context.emit_fact(
+            run_id,
+            stage="finalizeragent",
+            component="FinalizerAgent",
+            result="Completed",
+            reason="flow_completed"
+            )
 
         event_bus.emit(
                     "system.run.completed",{
@@ -40,5 +68,4 @@ class FinalizerAgent:
                     
                     }
                 )
-
         

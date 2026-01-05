@@ -3,6 +3,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.services.detectors.raw_detectors import detect_raw_type
 from hephis_core.utils.logger_decorator import log_action
+from hephis_core.swarm.run_context import run_context
 import hephis_core.agents.decision_agent
 from hephis_core.environment import ENV
 
@@ -19,10 +20,44 @@ class IdentifierAgent:
     @log_action("agt-identifies-input")
     @on_event("system.input_received")
     def identify_input(self,payload):
+
         incoming = payload["input"]
         source = payload["source"]
+
         raw_type = detect_raw_type(incoming, ENV)
 
+        if not raw_type:
+            run_context.touch(
+            run_id, 
+            agent="IdentifierAgent", 
+            action ="identification_failed", 
+            event="failed_to_detect_file_input"
+            )
+
+            run_context.emit_fact(
+                run_id,
+                stage="identifieragent",
+                component="IdentifierAgent",
+                result="declined",
+                reason="raw_type_none"
+            )
+            return
+
+        run_context.touch(
+            run_id, 
+            agent="IdentifierAgent", 
+            action ="identified_type_of_file", 
+            event="system.input_received"
+        )
+
+        run_context.emit_fact(
+            run_id,
+            stage="identifieragent",
+            component="IdentifierAgent",
+            result="identified_type_of_file",
+            reason="valid_input_file"
+        )
+        
         event_bus.emit(
             f"system.{raw_type}_received",
             {

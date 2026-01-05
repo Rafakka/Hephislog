@@ -33,6 +33,14 @@ class DecisionAgent:
                 domain=domain,
                 reason="No smells or run id.",
             )
+            run_context.emit_fact(
+            run_id,
+            stage="decision",
+            component="DecisionAgent",
+            result="declined",
+            reason="No_smells_or_run_id"
+            )
+
             event_bus.emit(
                 "facts.emit",{
                     "stage":"decision",
@@ -56,11 +64,18 @@ class DecisionAgent:
                 reason="confidence low",
                 confidence=confidence,
             )
+            run_context.emit_fact(
+            run_id,
+            stage="decision",
+            component="DecisionAgent",
+            result="declined",
+            reason="low_confidence",
+            )
             event_bus.emit(
                     "facts.emit",{
                         "stage":"decision",
                         "component":"DecisionAgent",
-                        "result":"accepted",
+                        "result":"declined",
                         "reason":"Low confidence",
                         "confidence":confidence,
                     }
@@ -84,6 +99,13 @@ class DecisionAgent:
                 reason="Normal flow",
                 decision=decision,
             )
+        run_context.emit_fact(
+            run_id,
+            result="stored",
+            stage="decision",
+            component="DecisionAgent",
+            reason="decision made",
+            )    
         event_bus.emit(
                     "facts.emit",{
                         "stage":"decision",
@@ -102,12 +124,19 @@ class DecisionAgent:
                 domain=domain,
                 reason="No raw payload",
             )
+            run_context.emit_fact(
+            run_id,
+            stage="decision",
+            component="DecisionAgent",
+            result="declined",
+            reason="no_raw_payload"
+            )
             event_bus.emit(
                     "facts.emit",{
                         "stage":"decision",
                         "component":"DecisionAgent",
-                        "result":"accepted",
-                        "reason":"no_raw_payload_no_intent",
+                        "result":"declined",
+                        "reason":"no_raw_payload",
                     }
                 )
 
@@ -119,7 +148,13 @@ class DecisionAgent:
                 reason="Processed",
                 confidence=confidence,
             )
-            
+        run_context.emit_fact(
+            run_id,
+            stage="decision",
+            component="DecisionAgent",
+            result="organized",
+            reason="matching context"
+            )
         event_bus.emit(
                     f"intent.organize.{domain}",{
                     "domain":domain,
@@ -127,7 +162,6 @@ class DecisionAgent:
                     "run_id":run_id,
                     "raw":raw,
                     "source":source,
-                    
                     }
                 )
     

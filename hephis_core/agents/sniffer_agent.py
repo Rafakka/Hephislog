@@ -3,6 +3,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.environment import ENV
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
+from hephis_core.swarm.run_context import run_context
 
 class SnifferAgent:
 
@@ -15,7 +16,24 @@ class SnifferAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     def sniff(self, raw):
+
         if not isinstance(raw, str):
+            
+            run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="sniffed",
+                domain="unknown",
+                reason="file_raw_not_str",
+            )
+
+            run_context.emit_fact(
+                run_id,
+                stage="snifferagent",
+                component="SnifferAgent",
+                result="declined",
+                reason="file_raw_not_str",
+                )
             return
 
         text = raw.lower()
@@ -45,15 +63,45 @@ class SnifferAgent:
     @log_action(action="agt-sniffing-payload")
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
+
         raw = payload.get("input")
         run_id = payload.get("run_id")
 
         if not run_id:
+            run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="checking_file_id",
+                reason="advicing_on_extracted_file",
+                event="first scenting",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="snifferagent",
+                component="SnifferAgent",
+                result="declined",
+                reason="not_finding_run_id",
+                )
             return
         
         ENV.reset(run_id)
 
         self.sniff(raw)
+
+        run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="scented_file",
+                reason="advicing_type_of_file",
+                event="first scenting",
+            )
+        run_context.emit_fact(
+                run_id,
+                stage="snifferagent",
+                component="SnifferAgent",
+                result="scented_file",
+                reason="advicing_type_of_file",
+                )
 
         event_bus.emit(
             "system.smells_updated",
@@ -73,9 +121,39 @@ class SnifferAgent:
         run_id = payload.get("run_id")
 
         if not run_id:
+            run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="checking_file_id",
+                reason="advicing_on_extracted_file",
+                event="second scenting",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="snifferagent",
+                component="SnifferAgent",
+                result="declined",
+                reason="not_finding_run_id",
+                )
             return
         
         self.sniff(raw)
+
+        run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="re_scented_file",
+                reason="advicing_on_extracted_file",
+                event="second scenting",
+            )
+
+        run_context.emit_fact(
+                run_id,
+                stage="snifferagent",
+                component="SnifferAgent",
+                result="re_scented_file",
+                reason="advicing_on_extracted_file",
+                )
 
         event_bus.emit(
             "system.smells.post.extraction",
