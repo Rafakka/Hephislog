@@ -1,27 +1,29 @@
-from typing import Dict, Any, Optional
 from .base import reporter_rule
 
 @reporter_rule
-def rule_no_agent_evaluated(event:Dict[str,Any]) -> Optional[Dict[str, Any]]:
-    facts = event.get("facts",[])
-
-    agent_facts = [ 
-        f for f in facts if f.stage == "agent"
+def rule_no_agent_evaluated(context):
+   timeline = context.get("timeline",[])
+   
+   agent_events = [ 
+    t for t in timeline
+    if t.get("stage") == "agent"
     ]
-
-    if agent_facts:
+    
+   if agent_events:
         return None
     
-    detector_facts = [
-        f for f in facts if f.stage == "detector" and f.result == "ok"
+   detector_events = [
+    t for t in timeline
+    if t.get("stage") == "detector" and t.get("result") == "ok"
     ]
 
-    if detector_facts:
-        return {
+   if not detector_events:
+    return None
+
+    return {
             "type":"no_agents_evaluated",
             "message":"Signals were detected, but no agent evaluated the run",
-            "detectors":[f.component for f in detector_facts],
+            "detectors":[t.get("agent") for t in detector_events],
             "reason":"no_matching_agent"
         }
         
-    return None

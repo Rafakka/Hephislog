@@ -17,9 +17,28 @@ class FinalizerAgent:
     @log_action(action="agt-finalizing-pipeline")
     @on_event("*.pipeline_finished")
     def finalize_pipeline(self, payload):
+        print("FINALIZER AGENT HANDLER CALLED",payload)
         run_id = payload.get("run_id")
+        raw = payload.get("raw")
+        domain = payload.get("domain")
+        confidence = payload.get("confidence")
+        source = payload.get("source")
+        
 
         if not run_id:
             return 
 
         store_result(run_id, payload)
+
+        event_bus.emit(
+                    "system.run.completed",{
+                    "domain":domain,
+                    "confidence":confidence,
+                    "run_id":run_id,
+                    "raw":raw,
+                    "source":source,
+                    
+                    }
+                )
+
+        

@@ -1,16 +1,10 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.utils.logger_decorator import log_action
+from hephis_core.swarm.decision_store import decision_store
+from hephis_core.swarm.run_context import run_context
 
 class DecisionAgent:
-
-    DOMAIN_THRESHOLDS = {
-        "recipe":0.6,
-        "music":0.7,
-        "text":0.6,
-    }
-    
-    DEFAULT_THRESHOLD = 0.7
 
     def __init__(self):
         print("INIT:", self.__class__.__name__)
@@ -20,103 +14,123 @@ class DecisionAgent:
             fn = getattr(attr, "__func__", None)
             if fn and hasattr(fn, "__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
+                print("SUBCRIBING:", fn.__event_name__,"->",attr)
 
     @log_action(action="agt-deciding-by-smell")
     @on_event("system.smells.post.extraction")
     def decide(self, payload):
-        smells = payload.get("smells",{})
+        print("DECISION AGENT CALLED")
+        smells = payload.get("smells", {})
+        run_id = payload.get("run_id") or payload.get("id")
         source = payload.get("source")
-        run_id = payload.get("run_id")
         raw = payload.get("raw")
 
-        if not run_id or not smells:
+        if not smells or not run_id:
+            run_context.touch(
+                run_id,
+                agent="DecisionAgent",
+                action="declined",
+                domain=domain,
+                reason="No smells or run id.",
+            )
             event_bus.emit(
                 "facts.emit",{
                     "stage":"decision",
                     "component":"DecisionAgent",
                     "result":"declined",
                     "reason":"missing_run_id_or_smells",
-                    "details":{"smells":smells}
+                    "smell details":{"smells":smells},
+                    "run id details":{"run_id":run_id},
                 }
             )
-            return
 
-        candidates = {
-            domain:score
-            for domain, score in smells.items()
-            if score >= self.DOMAIN_THRESHOLDS.get(domain, self.DEFAULT_THRESHOLD)
-        }
+        domain, confidence = max(smells.items(), key=lambda x: x[1])
 
-        if not candidates:
+        if confidence < 0.6:
+            print(f"DECLINED: confidence too low ({confidence})")
+            run_context.touch(
+                run_id,
+                agent="DecisionAgent",
+                action="declined",
+                domain=domain,
+                reason="confidence low",
+                confidence=confidence,
+            )
             event_bus.emit(
-                "facts.emit",{
-                    "stage":"decision",
-                    "component":"DecisionAgent",
-                    "result":"declined",
-                    "reason":"no_domain_above_threshold",
-                    "details":{
-                        "thresholds":self.DOMAIN_THRESHOLDS,
-                        "smells":smells,
+                    "facts.emit",{
+                        "stage":"decision",
+                        "component":"DecisionAgent",
+                        "result":"accepted",
+                        "reason":"Low confidence",
+                        "confidence":confidence,
                     }
-                }
-            )
-            return
-        
-        weighted = {}
-
-        for domain, score in candidates.items():
-            intent = f"organize.{domain}"
-            trust = self.confidence.get((domain,intent),1.0)
-
-            threshold = self.DOMAIN_THRESHOLDS.get(domain, self.DEFAULT_THRESHOLD)
-            if trust < threshold:
-                continue
-            weighted[domain] = score*trust
-
-        if not weighted:
-            event_bus.emit(
-                "facts.emit",{
-                    "stage":"decision",
-                    "component":"DecisionAgent",
-                    "result":"declined",
-                    "reason":"trust_filtered_all_candidates",
-                    "details":{"candidates":candidates}
-                }
-            )
-            return
-
-        chosen_domain, confidence = max(weighted.items(), key=lambda i:i[1])
+                )
 
         decision = {
-            "domain":chosen_domain,
-            "confidence":confidence,
-            "smells":smells,
+            "domain": domain,
+            "confidence": confidence,
+            "smells": smells,
+            "run_id": run_id,
             "source":source,
-            "run_id":run_id,
         }
 
-        if raw is None:
-            event_bus.emit(
-                "facts.emit",{
-                    "stage":"decision",
-                    "component":"DecisionAgent",
-                    "result":"accepted",
-                    "reason":"no_raw_payload_no_intent",
-                }
+        decision_store.store(run_id, decision)
+        print("DECISION STORED:", decision)
+        run_context.touch(
+                run_id,
+                agent="DecisionAgent",
+                action="stored",
+                domain=domain,
+                reason="Normal flow",
+                decision=decision,
             )
-            return
-
         event_bus.emit(
-                f"intent.organize.{chosen_domain}",{
-                "domain":chosen_domain,
-                "confidence":confidence,
-                "run_id":run_id,
-                "raw":raw,
-                "source":source,
-                
-                }
+                    "facts.emit",{
+                        "stage":"decision",
+                        "component":"DecisionAgent",
+                        "result":"stored",
+                        "reason":"decision stored",
+                        "decision":decision,
+                    }
+                )
+        
+        if raw is None:
+            run_context.touch(
+                run_id,
+                agent="DecisionAgent",
+                action="Returned none",
+                domain=domain,
+                reason="No raw payload",
             )
+            event_bus.emit(
+                    "facts.emit",{
+                        "stage":"decision",
+                        "component":"DecisionAgent",
+                        "result":"accepted",
+                        "reason":"no_raw_payload_no_intent",
+                    }
+                )
 
+        run_context.touch(
+                run_id,
+                agent="DecisionAgent",
+                action="organized",
+                domain=domain,
+                reason="Processed",
+                confidence=confidence,
+            )
+            
+        event_bus.emit(
+                    f"intent.organize.{domain}",{
+                    "domain":domain,
+                    "confidence":confidence,
+                    "run_id":run_id,
+                    "raw":raw,
+                    "source":source,
+                    
+                    }
+                )
+    
     @log_action(action="agt-updating-confidence")
     @on_event("confidence.updated")
     def update_confidence(self, payload):

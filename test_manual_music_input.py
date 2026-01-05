@@ -1,5 +1,5 @@
 from hephis_core.events.bus import event_bus
-from hephis_core.swarm.decisions import get_decision, reset_decisions
+from hephis_core.swarm.decision_store import decision_store
 from hephis_core.infra.observability.report_store import get_report, reset_report
 from hephis_core.bootstrap import bootstrap_agents
 
@@ -7,7 +7,7 @@ def run_manual_explained_silence():
     print("\n===EMIT INPUT EVENT ===")
 
     event_bus.reset()
-    reset_decisions()
+    decision_store.reset()
     reset_report()
     bootstrap_agents()
 
@@ -18,7 +18,7 @@ def run_manual_explained_silence():
         "system.smells.post.extraction",
         {
             "run_id":run_id,
-            "source":"music",
+            "source":"test",
             "raw":{
                 "domain":"music",
                 "lyrics":["taking away..."],
@@ -35,7 +35,7 @@ def run_manual_explained_silence():
     print("Event emitted successfully.")
 
     print("\n===CHECK DECISION===")
-    decision = get_decision(run_id)
+    decision = decision_store.get(run_id)
     print("Decision:", decision)
 
     if decision is None:

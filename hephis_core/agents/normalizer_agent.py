@@ -17,6 +17,7 @@ class NormalizerAgent:
     @log_action(action="agt-normalizing-music")
     @on_event("music.organized")
     def normalize_music(self, payload):
+        print("NORMALIZER MUSIC HANDLER CALLED",payload)
 
         sections = payload["sections"]
         source = payload["source"]

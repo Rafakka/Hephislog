@@ -1,45 +1,38 @@
 
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.observability.report_store import save_report
+from hephis_core.swarm.run_context import run_context
+from hephis_core.agents.reporter_rules.run_rules import run_rules
 from typing import List, Callable, Dict, Any
 
 ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
 
 class ReporterAgent:
     def __init__(self, rules:List[ReporterRule], renderer=None):
-        print("INIT:ReporterAgent")
+        print("INIT: ReporterAgent")
         self.rules = rules
         self.renderer = renderer or self.output
         event_bus.subscribe("system.run.completed",self.handle_run_completed)
     
-    def handle_run_completed(self, event:Dict[str,Any]):
+    def handle_run_completed(self, event):
         print("REPORT CALLED")
-        findings = []
+        run_id = event["run_id"]
+        context = run_context.get(run_id)
 
-        for rule in self.rules:
-            try:
-                result=rule(event)
-                if result:
-                    findings.append(result)
-            except Exception as exc:
-                findings.append({
-                    "type":"reporter_error",
-                    "rule":rule.__name__,
-                    "error":str(exc),
-                })
+        findings = self.run_rules(context)
+        report - self.build_report(run_id, context, findings)
 
-        report = self.build_report(event, findings)
-        save_report(report["run_id"],report)
+        save_report(run_id, report)
         self.output(report)
 
-    def build_report(self, event, findings):
+    def build_report(self, run_id, context, findings):
         return {
-            "run_id":event["run_id"],
-            "domain":event["domain"],
-            "input_type":event["input_type"],
-            "terminated_at":event["terminated_at"],
+            "run_id":run_id,
+            "domain":context.get("decision",{}).get("domain"),
+            "input_type":context.get("source"),
+            "terminated_at":context.get("terminated_at"),
             "veredict":self.infer_veredict(findings),
-            "findings":findings,
+            "context":context,
         }
     
     def infer_veredict(self, findings):

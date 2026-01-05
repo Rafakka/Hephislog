@@ -6,7 +6,7 @@ from hephis_core.utils.logger_decorator import log_action
 class OrganizerAgent:
 
     def __init__(self):
-        
+        print("INIT:", self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -16,12 +16,16 @@ class OrganizerAgent:
     @log_action(action="agt-organizing-music")
     @on_event("intent.organize.music")
     def handle_music(self, payload):
+        print("ORGANIZER MUSIC HANDLER CALLED",payload)
         raw = payload["raw"]
         source = payload.get("source")
         run_id = payload.get("run_id")
         confidence = payload.get("confidence")
+        
+        paragraphs = raw.get("lyrics",[])
 
-        paragraphs = raw.get("paragraphs", [])
+        if not paragraphs:
+            paragraphs = [raw.get("text","")]
 
         sections = music_organizer(paragraphs)
 

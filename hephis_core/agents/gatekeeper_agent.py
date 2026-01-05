@@ -1,6 +1,7 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.decorators import on_event
+from hephis_core.swarm.run_context import run_context
 
 class GatekeeperAgent:
 
@@ -15,11 +16,21 @@ class GatekeeperAgent:
     @log_action(action="gatekeeper-announces")
     @on_event("system.external_input")
     def gatekeeper_process(self,payload):
+
+        run_id = payload.get("run_id")
+
+        run_context.touch(
+        run_id, 
+        agent="GatekeeperAgent", 
+        action ="saw_input", 
+        event="system,input_received"
+        )
+
         event_bus.emit(
             "system.input_received",
             {
                 "input": payload["input"],
-                "run_id": payload["run_id"],
+                "run_id": run_id,
                 "source": "gatekeeper",
             }
         )

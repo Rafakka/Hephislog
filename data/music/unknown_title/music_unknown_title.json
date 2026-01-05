@@ -1,0 +1,19 @@
+{
+  "title": "Unknown Title",
+  "instrument": null,
+  "key": null,
+  "sections": [
+    {
+      "name": "Default",
+      "lines": [
+        {
+          "lyrics": "taking away...",
+          "chords": []
+        }
+      ]
+    }
+  ],
+  "source": "scraped",
+  "url": "test",
+  "run_id": "music-clear-1"
+}

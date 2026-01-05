@@ -17,11 +17,13 @@ class UniversalPackerAgent:
     @log_action(action="agt-packing-music")
     @on_event("music.normalized")
     def handle_music(self, payload):
+        print("PACKER MUSIC HANDLER CALLED",payload)
         self._pack_domain("music", payload)
 
     @log_action(action="agt-packing-recipe")
     @on_event("recipe.normalized")
     def handle_recipe(self, payload):
+        print("PACKER RECIPE HANDLER CALLED",payload)
         self._pack_domain("recipe", payload)
 
     def _pack_domain(self, domain: str, payload: dict):
