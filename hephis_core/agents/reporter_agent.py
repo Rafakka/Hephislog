@@ -2,7 +2,7 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.observability.report_store import save_report
 from hephis_core.swarm.run_context import run_context
-from hephis_core.agents.reporter_rules.run_rules import run_rules
+from hephis_core.agents.reporter_rules import REPORTER_RULES
 from typing import List, Callable, Dict, Any
 
 ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
@@ -19,9 +19,21 @@ class ReporterAgent:
         run_id = event["run_id"]
         context = run_context.get(run_id)
 
-        findings = self.run_rules(context)
-        report - self.build_report(run_id, context, findings)
+        findings = []
 
+        for rule in self.rules:
+            try:
+                result = rule(context)
+                if result:
+                    findings.append(result)
+            except Exception as exc:
+                findings.append({
+                    "type":"reporter_error",
+                    "rule":rule.__name__,
+                    "error":str(exc),
+                })
+
+        report = self.build_report(run_id, context, findings)
         save_report(run_id, report)
         self.output(report)
 
@@ -32,6 +44,7 @@ class ReporterAgent:
             "input_type":context.get("source"),
             "terminated_at":context.get("terminated_at"),
             "veredict":self.infer_veredict(findings),
+            "findings":findings,
             "context":context,
         }
     
@@ -47,6 +60,12 @@ class ReporterAgent:
         print("\n===REPORT===")
         print("Run:", report["run_id"])
         print("Veredict:", report["veredict"])
+
+        findings = report.get("findings",[])
+
+        if not findings:
+            print("No rule produced findings")
+            return
 
         if not report["findings"]:
             print("Explanation:No rule produced findings.")
