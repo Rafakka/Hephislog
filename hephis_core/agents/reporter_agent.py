@@ -2,8 +2,10 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.observability.report_store import save_report
 from hephis_core.swarm.run_context import run_context
+from hephis_core.agents.reporter_rules.base import run_completed, should_run_diagnostics, logger
 from hephis_core.agents.reporter_rules import REPORTER_RULES
 from typing import List, Callable, Dict, Any
+
 
 ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
 
@@ -19,6 +21,20 @@ class ReporterAgent:
         run_id = event["run_id"]
         context = run_context.get(run_id)
 
+        for f in context.get("facts",[]):
+            assert isinstance(f,dict),f"invalid fact detected: {f!r}"
+
+        if not should_run_diagnostics(context):
+            report = {
+                "run_id":run_id,
+                "veredict":"silent_success",
+                "findings":[],
+                "context":context,
+            }
+            save_report(run_id, report)
+            self.output(report)
+            return
+
         findings = []
 
         for rule in REPORTER_RULES:
@@ -27,33 +43,34 @@ class ReporterAgent:
                 if result:
                     findings.append(result)
             except Exception as exc:
-                findings.append({
-                    "type":"reporter_error",
-                    "rule":rule.__name__,
-                    "error":str(exc),
-                })
+                logger.exception(
+                    "Reporter rule failed",
+                    rule=rule.__name__
+                )
 
-        report = self.build_report(run_id, context, findings)
-        save_report(run_id, report)
-        self.output(report)
-
-    def build_report(self, run_id, context, findings):
-        return {
+        report = {
             "run_id":run_id,
-            "domain":context.get("decision",{}).get("domain"),
-            "input_type":context.get("source"),
-            "terminated_at":context.get("terminated_at"),
-            "veredict":self.infer_veredict(findings),
+            "veredict":self.infer_veredict(findings, context),
             "findings":findings,
             "context":context,
         }
+        save_report(run_id, report)
+        self.output(report)
+
+
     
-    def infer_veredict(self, findings):
-        if not findings:
+    def infer_veredict(self, findings, context):
+
+        if run_completed(context):
             return "silent_success"
-        if any(f["type"]== "error" for f in findings):
+
+        if any(f.get("type")=="error" for f in findings):
             return "error"
-        return "no_action"
+
+        if findings:
+            return "Flow Completed"
+
+        return "silent_success"
     
     def output(self, report):
         self.last_report = report
@@ -86,3 +103,5 @@ class ReporterAgent:
                 print(" Summary:")
                 for k, v in f["summary"].items():
                     print(f" {k}:{v}")
+            if None in f:
+                print("None")

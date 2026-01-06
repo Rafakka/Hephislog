@@ -9,4 +9,3 @@ def get_report(run_id:str):
 
 def reset_report():
     _REPORTS.clear()
-

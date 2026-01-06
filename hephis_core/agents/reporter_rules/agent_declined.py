@@ -1,10 +1,16 @@
 from typing import Dict, Any, Optional
-from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS
+from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS, run_completed, logger
 
 @reporter_rule
 def rule_agent_declined(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
     facts = context.get("facts",[])
+
+    if run_completed(facts):
+        logger.debug(
+            "rule_agent_declined skippped: Run already completed"
+        )
+        return None
 
     declined = [
         f for f in facts
@@ -13,6 +19,9 @@ def rule_agent_declined(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     ]
 
     if not declined:
+        logger.debug(
+            "Rule_agent_declined skipped: no declined agent facts"
+        )
         return None
     
     return {

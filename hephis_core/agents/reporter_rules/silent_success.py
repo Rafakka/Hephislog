@@ -18,7 +18,6 @@ def rule_explain_silence(event:Dict[str, Any]) -> Optional[Dict[str,Any]]:
             f.get("stage") in STAGE_GROUPS["decision_stages"]
             or f.get("stage") in STAGE_GROUPS["agent_activity"]
             or f.get("result") in RESULT_GROUPS["decision_failure"]
-            or f.get("result") in RESULT_GROUPS["error"]
         )
     ]
 

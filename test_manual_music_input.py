@@ -43,32 +43,6 @@ def run_manual_explained_silence():
     else:
         print("agent acted:", decision)
 
-    print("\n===CHECK REPORT===")
-    report = get_report(run_id)
-    
-    if report is None:
-        print("No report generated.")
-    return
-
-    print("\n===REPORT===")
-    print("Run ID:",report.get("run_id"))
-    print("Veredict:",report.get("veredict"))
-
-    findings=report.get("findings",[])
-    
-    if not findings:
-        print("No findings")
-    else:
-        print("\nFindings:")
-        for f in findings:
-            print("-", f)
-    
-    print("\n===ASSERTIONS(HUMAN)===")
-    print(".input accepted:YES")
-    print(".Decision returned None", decision is None)
-    print(".Explanation Exist", bool(findings))
-
-    print("\n===DONE===")
 
 if __name__ == "__main__":
     run_manual_explained_silence()

@@ -12,6 +12,12 @@ from hephis_core.agents.universal_retriever_agent import UniversalRetrieverAgent
 from hephis_core.agents.finalizer_agent import FinalizerAgent
 from hephis_core.agents.reporter_agent import ReporterAgent
 from hephis_core.agents.reporter_rules import REPORTER_RULES
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 print("BOOSTRAP CALLED")
 
