@@ -56,7 +56,7 @@ class UniversalPackerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="universalpackeragent",
+                stage="packer",
                 component="UniversalPackerAgent",
                 result="declined",
                 reason="file_not_packed",
@@ -72,7 +72,7 @@ class UniversalPackerAgent:
             )
         run_context.emit_fact(
                 run_id,
-                stage="universalpackeragent",
+                stage="packer",
                 component="UniversalPackerAgent",
                 result="packed_file",
                 reason="valid_file_type",

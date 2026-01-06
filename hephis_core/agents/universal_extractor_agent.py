@@ -30,7 +30,7 @@ class UniversalExtractorAgent:
             )
         run_context.emit_fact(
                 run_id,
-                stage="universalextractoragent",
+                stage="extractor",
                 component="UniversalExtractorAgent",
                 result="extracted_file",
                 reason="valid_file_type",
@@ -100,7 +100,7 @@ class UniversalExtractorAgent:
             )
             run_context.emit_fact(
                     run_id,
-                    stage="universalextractoragent",
+                    stage="extractor",
                     component="UniversalExtractorAgent",
                     result="declined",
                     reason="no_domain_or_and_no_raw",

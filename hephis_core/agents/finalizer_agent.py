@@ -35,7 +35,7 @@ class FinalizerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="finalizeragent",
+                stage="finalize",
                 component="FinalizerAgent",
                 result="declined",
                 reason="run_id_not_found"
@@ -52,7 +52,7 @@ class FinalizerAgent:
             )
         run_context.emit_fact(
             run_id,
-            stage="finalizeragent",
+            stage="finalize",
             component="FinalizerAgent",
             result="Completed",
             reason="flow_completed"

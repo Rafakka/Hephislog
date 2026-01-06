@@ -21,7 +21,7 @@ class ReporterAgent:
 
         findings = []
 
-        for rule in self.rules:
+        for rule in REPORTER_RULES:
             try:
                 result = rule(context)
                 if result:

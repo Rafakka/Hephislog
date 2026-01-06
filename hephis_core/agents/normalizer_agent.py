@@ -41,7 +41,7 @@ class NormalizerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="normalizedagent",
+                stage="normalized",
                 component="NormalizerAgent",
                 result="declined",
                 reason="failed at normalizing",
@@ -56,7 +56,7 @@ class NormalizerAgent:
             )
         run_context.emit_fact(
                 run_id,
-                stage="normalizeragent",
+                stage="normalized",
                 component="NormalizedAgent",
                 result="normalized",
                 reason="File Normalized",
@@ -96,7 +96,7 @@ class NormalizerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="normalizeragent",
+                stage="normalized",
                 component="NormalizerAgent",
                 result="declined",
                 reason="failed at normalizing",
@@ -111,7 +111,7 @@ class NormalizerAgent:
             )
         run_context.emit_fact(
                 run_id,
-                stage="normalizeragent",
+                stage="normalized",
                 component="NormalizerAgent",
                 result="normalized",
                 reason="File Normalized",

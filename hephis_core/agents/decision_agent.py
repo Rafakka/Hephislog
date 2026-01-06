@@ -41,16 +41,6 @@ class DecisionAgent:
             reason="No_smells_or_run_id"
             )
 
-            event_bus.emit(
-                "facts.emit",{
-                    "stage":"decision",
-                    "component":"DecisionAgent",
-                    "result":"declined",
-                    "reason":"missing_run_id_or_smells",
-                    "smell details":{"smells":smells},
-                    "run id details":{"run_id":run_id},
-                }
-            )
 
         domain, confidence = max(smells.items(), key=lambda x: x[1])
 
@@ -71,15 +61,7 @@ class DecisionAgent:
             result="declined",
             reason="low_confidence",
             )
-            event_bus.emit(
-                    "facts.emit",{
-                        "stage":"decision",
-                        "component":"DecisionAgent",
-                        "result":"declined",
-                        "reason":"Low confidence",
-                        "confidence":confidence,
-                    }
-                )
+
 
         decision = {
             "domain": domain,
@@ -106,15 +88,7 @@ class DecisionAgent:
             component="DecisionAgent",
             reason="decision made",
             )    
-        event_bus.emit(
-                    "facts.emit",{
-                        "stage":"decision",
-                        "component":"DecisionAgent",
-                        "result":"stored",
-                        "reason":"decision stored",
-                        "decision":decision,
-                    }
-                )
+
         
         if raw is None:
             run_context.touch(
@@ -131,14 +105,6 @@ class DecisionAgent:
             result="declined",
             reason="no_raw_payload"
             )
-            event_bus.emit(
-                    "facts.emit",{
-                        "stage":"decision",
-                        "component":"DecisionAgent",
-                        "result":"declined",
-                        "reason":"no_raw_payload",
-                    }
-                )
 
         run_context.touch(
                 run_id,

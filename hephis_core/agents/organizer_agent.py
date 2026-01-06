@@ -41,7 +41,7 @@ class OrganizerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="decisionagent",
+                stage="decision",
                 component="DecisionAgent",
                 result="declined",
                 reason="No sections",
@@ -57,7 +57,7 @@ class OrganizerAgent:
             )
         run_context.emit_fact(
             run_id,
-            stage="decisionagent",
+            stage="decision",
             component="DecisionAgent",
             result="organized",
             reason="file_accepted"
@@ -90,7 +90,7 @@ class OrganizerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="decisionagent",
+                stage="decision",
                 component="DecisionAgent",
                 result="declined",
                 reason="No run_id or no raw",
@@ -107,7 +107,7 @@ class OrganizerAgent:
 
         run_context.emit_fact(
             run_id,
-            stage="decisionagent",
+            stage="decision",
             component="DecisionAgent",
             result="organized",
             reason="file_accepted"

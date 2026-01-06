@@ -36,7 +36,7 @@ class IdentifierAgent:
 
             run_context.emit_fact(
                 run_id,
-                stage="identifieragent",
+                stage="identify",
                 component="IdentifierAgent",
                 result="declined",
                 reason="raw_type_none"
@@ -52,7 +52,7 @@ class IdentifierAgent:
 
         run_context.emit_fact(
             run_id,
-            stage="identifieragent",
+            stage="identify",
             component="IdentifierAgent",
             result="identified_type_of_file",
             reason="valid_input_file"

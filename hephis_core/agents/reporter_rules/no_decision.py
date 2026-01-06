@@ -1,28 +1,35 @@
-from .base import reporter_rule
+from typing import Dict, Any, Optional
+from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS
 
 @reporter_rule
-def rule_no_decision(context):
-    timeline = context.get("timeline",[])
+def rule_no_decision(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+
+    facts = context.get("facts",[])
     
-    agent_events = [
-        t for t in timeline
-        if t.get("stage") == "agent"
+    agent_activity = [
+        t for t in facts
+        if t.get("stage") in STAGE_GROUPS["agent_activity"]
     ]
 
-    if not agent_events:
+    if not agent_activity:
         return None
 
-    decision_events = [
-        t for t in timeline
-        if t.get("stage") == "decision"
+    successful_decisions = [
+        t for t in facts
+        if t.get("stage") in STAGE_GROUPS["decision_stages"]
+        and t.get("result") in RESULT_GROUPS["decision_success"]
     ]
 
-    if not decision_events:
-        return {
+    if successful_decisions:
+        return None
+
+    return {
             "type":"no_decision",
             "message":"Agent evaluted the run, but no decision was produced.",
-            "detectors":[t.get("agent") for t in agent_events],
+            "agents":list({
+               f.get("component","unkown")
+               for f in agent_activity
+            }),
             "reason":"No decision made",
         }
-    return None
 

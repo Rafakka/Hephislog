@@ -1,29 +1,34 @@
-from .base import reporter_rule
+from typing import Dict, Any, Optional
+from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS
 
 @reporter_rule
-def rule_no_agent_evaluated(context):
-   timeline = context.get("timeline",[])
+def rule_no_agent_evaluated(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+
+   facts = context.get("facts",[])
    
-   agent_events = [ 
-    t for t in timeline
-    if t.get("stage") == "agent"
+   agent_facts = [ 
+    t for t in facts
+    if t.get("stage") in STAGE_GROUPS["agent_activity"]
     ]
     
-   if agent_events:
+   if agent_facts:
         return None
     
-   detector_events = [
-    t for t in timeline
-    if t.get("stage") == "detector" and t.get("result") == "ok"
+   detector_facts = [
+    t for t in facts
+    if t.get("stage") in STAGE_GROUPS["detector_stages"] and t.get("result") in RESULT_GROUPS["decision_stages"]
     ]
 
-   if not detector_events:
+   if not detector_facts:
     return None
 
     return {
             "type":"no_agents_evaluated",
             "message":"Signals were detected, but no agent evaluated the run",
-            "detectors":[t.get("agent") for t in detector_events],
+            "detectors":sorted({
+               f.get("component","unkown")
+               for f in detector_facts
+            }),
             "reason":"no_matching_agent"
         }
         

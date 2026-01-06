@@ -29,7 +29,7 @@ class SnifferAgent:
 
             run_context.emit_fact(
                 run_id,
-                stage="snifferagent",
+                stage="first-scenting",
                 component="SnifferAgent",
                 result="declined",
                 reason="file_raw_not_str",
@@ -77,7 +77,7 @@ class SnifferAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="snifferagent",
+                stage="first-scenting",
                 component="SnifferAgent",
                 result="declined",
                 reason="not_finding_run_id",
@@ -97,7 +97,7 @@ class SnifferAgent:
             )
         run_context.emit_fact(
                 run_id,
-                stage="snifferagent",
+                stage="first-scenting",
                 component="SnifferAgent",
                 result="scented_file",
                 reason="advicing_type_of_file",
@@ -130,7 +130,7 @@ class SnifferAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="snifferagent",
+                stage="second-scenting",
                 component="SnifferAgent",
                 result="declined",
                 reason="not_finding_run_id",
@@ -149,7 +149,7 @@ class SnifferAgent:
 
         run_context.emit_fact(
                 run_id,
-                stage="snifferagent",
+                stage="second-scenting",
                 component="SnifferAgent",
                 result="re_scented_file",
                 reason="advicing_on_extracted_file",

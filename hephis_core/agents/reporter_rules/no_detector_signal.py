@@ -1,23 +1,39 @@
-from .base import reporter_rule
+from typing import Dict, Any, Optional
+from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS
 
 @reporter_rule
-def rule_no_detector_signal(context):
-    timeline = context.get("timeline",[])
+def rule_no_detector_signal(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
-    detector_events = [
-        f for f in timeline
-        if f.get("stage") == "detector"
+    facts = context.get("facts",[])
+
+    detector_facts = [
+        f for f in facts
+        if f.get("stage") in STAGE_GROUPS["detector_stages"]
     ]
 
-    if not detector_events:
+    if not detector_facts:
         return None
     
-    if all(t.get("result") in  ("none",None) for t in detector_events):
-        return {
-            "type":"no_detector_signal",
-            "message":"All detectors completed without emitting a signal.",
-            "detectors":[t.get("agent") for t in detector_events],
-            "reason":"no_signal_detected"
-        }
-
-    return None
+    if any(
+        f.get("result") in RESULT_GROUPS["detector_positive"]
+        for f  in detector_facts
+    ):
+        return none
+    
+    return {
+        "type":"no_detector_signal",
+        "message":"All detectors completed without emitting a signal",
+        "detectors": sorted ({
+            f.get("component","unkown")
+            for f in detector_facts
+        }),
+        "reason":"no_signal_detected",
+        "details":[
+            {
+                "detector":f.get("component"),
+                "result":f.get("result"),
+                "reason":f.get("reason"),
+            }
+            for f in detector_facts
+        ],
+    }
