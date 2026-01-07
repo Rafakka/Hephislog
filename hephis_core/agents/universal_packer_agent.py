@@ -94,6 +94,7 @@ class UniversalPackerAgent:
                 "normalized": serialized,
                 "data": packed,
                 "source": source,
+                "domain":domain,
                 "confidence": confidence,
                 "run_id": run_id,
             }

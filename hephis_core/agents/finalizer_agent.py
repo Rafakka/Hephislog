@@ -59,7 +59,6 @@ class FinalizerAgent:
                     "run_id":run_id,
                     "data":data,
                     "source":source,
-                    
                     }
                 )
         
