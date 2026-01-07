@@ -1,6 +1,6 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.decision_store import decision_store
-from hephis_core.infra.observability.report_store import get_report, reset_report
+from hephis_core.infra.observability.report_store import reset_report
 from hephis_core.bootstrap import bootstrap_agents
 
 def run_manual_explained_silence():

@@ -4,11 +4,13 @@ from hephis_core.environment import ENV
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
+from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.agents.reporter_rules.base import logger
 
 class SnifferAgent:
 
     def __init__(self):
-        print("INIT:",self.__class__.__name__)
+        print("1 - INIT:",self.__class__.__name__) 
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -18,22 +20,12 @@ class SnifferAgent:
     def sniff(self, raw):
 
         if not isinstance(raw, str):
-            
-            run_context.touch(
-                run_id,
-                agent="SnifferAgent",
-                action="sniffed",
-                domain="unknown",
-                reason="file_raw_not_str",
-            )
-
-            run_context.emit_fact(
-                run_id,
-                stage="first-scenting",
-                component="SnifferAgent",
-                result="declined",
-                reason="file_raw_not_str",
-                )
+            logger.warning("Source file raw isnt a string"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"first-sniffing",
+                    "payload":raw,
+                }
             return
 
         text = raw.lower()
@@ -65,31 +57,23 @@ class SnifferAgent:
     def sniff_input(self, payload: dict):
 
         raw = payload.get("input")
-        run_id = payload.get("run_id")
+        run_id = extract_run_id(payload)
 
         if not run_id:
-            run_context.touch(
-                run_id,
-                agent="SnifferAgent",
-                action="checking_file_id",
-                reason="advicing_on_extracted_file",
-                event="first scenting",
-            )
-            run_context.emit_fact(
-                run_id,
-                stage="first-scenting",
-                component="SnifferAgent",
-                result="declined",
-                reason="not_finding_run_id",
-                )
+            logger.warning("Source file has no valid id or run_id"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"first-sniffing",
+                    "payload":raw,
+                }
             return
         
-        ENV.reset(run_id)
+        ENV.reset()
 
         self.sniff(raw)
 
         run_context.touch(
-                run_id,
+                run_id=run_id,
                 agent="SnifferAgent",
                 action="scented_file",
                 reason="advicing_type_of_file",
@@ -104,7 +88,7 @@ class SnifferAgent:
                 )
 
         event_bus.emit(
-            "system.smells_updated",
+            "system.external_input",
             {
                 "smells": ENV.smells,
                 "snapshots": ENV.snapshot(),
@@ -117,24 +101,16 @@ class SnifferAgent:
     @log_action(action="agt-sniffing-extracted-payload")
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
-        raw = payload.get("raw")
-        run_id = payload.get("run_id")
+        raw = payload["raw"]
+        run_id = extract_run_id(payload)
 
         if not run_id:
-            run_context.touch(
-                run_id,
-                agent="SnifferAgent",
-                action="checking_file_id",
-                reason="advicing_on_extracted_file",
-                event="second scenting",
-            )
-            run_context.emit_fact(
-                run_id,
-                stage="second-scenting",
-                component="SnifferAgent",
-                result="declined",
-                reason="not_finding_run_id",
-                )
+            logger.error("Dropping event without run_id"),
+            extra={
+                   "agent":self.__class__.__name__,
+                    "event":"second-scenting",
+                    "payload":raw,
+                }
             return
         
         self.sniff(raw)
@@ -151,7 +127,7 @@ class SnifferAgent:
                 run_id,
                 stage="second-scenting",
                 component="SnifferAgent",
-                result="re_scented_file",
+                result="ok",
                 reason="advicing_on_extracted_file",
                 )
 

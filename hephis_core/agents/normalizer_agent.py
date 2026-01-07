@@ -4,11 +4,13 @@ from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.run_context import run_context
+from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.agents.reporter_rules.base import logger
 
 class NormalizerAgent:
 
     def __init__(self):
-        print("INIT:",self.__class__.__name__)
+        print("7 - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -21,9 +23,18 @@ class NormalizerAgent:
         print("NORMALIZER MUSIC HANDLER CALLED",payload)
 
         sections = payload["sections"]
-        source = payload["source"]
-        run_id = payload.get("run_id")
+        source = payload.get("source")
+        run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
+
+        if not run_id:
+            logger.warning("run id is missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-music",
+                    "payload":payload,
+                }
+            return
 
         normalized = music_normalizer(
             raw_lines=sections,
@@ -58,7 +69,7 @@ class NormalizerAgent:
                 run_id,
                 stage="normalized",
                 component="NormalizedAgent",
-                result="normalized",
+                result="accepted",
                 reason="File Normalized",
                 )
 
@@ -76,9 +87,18 @@ class NormalizerAgent:
     def normalize_recipe(self, payload):
 
         raw = payload["sections"]
-        source = payload["source"]
-        run_id = payload.get("run_id")
+        source = payload.get("source")
+        run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
+
+        if not run_id:
+            logger.warning("run id is missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-recipe",
+                    "payload":payload,
+                }
+            return
 
         normalized = recipe_normalizer(
         raw,
@@ -113,7 +133,7 @@ class NormalizerAgent:
                 run_id,
                 stage="normalized",
                 component="NormalizerAgent",
-                result="normalized",
+                result="accepted",
                 reason="File Normalized",
                 )
 

@@ -11,7 +11,7 @@ ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
 
 class ReporterAgent:
     def __init__(self, rules:List[ReporterRule], renderer=None):
-        print("INIT: ReporterAgent")
+        print("10 - INIT: ReporterAgent")
         self.rules = rules
         self.renderer = renderer or self.output
         event_bus.subscribe("system.run.completed",self.handle_run_completed)

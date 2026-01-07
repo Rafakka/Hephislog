@@ -3,17 +3,18 @@ from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
+from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.agents.reporter_rules.base import logger
 
 class UniversalPackerAgent:
 
     def __init__(self):
-        print("INIT:",self.__class__.__name__)
+        print("8 - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
-    
                 
     @log_action(action="agt-packing-music")
     @on_event("music.normalized")
@@ -30,9 +31,18 @@ class UniversalPackerAgent:
     def _pack_domain(self, domain: str, payload: dict):
 
         normalized = payload["normalized"]
-        source = payload["source"]
-        run_id = payload.get("run_id")
+        source = payload.get("source")
+        run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
+
+        if not run_id:
+            logger.warning("run id is missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"universal-packer-agent",
+                    "payload":payload,
+                }
+            return
 
         if isinstance(normalized, dict) and "data" in normalized:
             normalized_content = normalized["data"]
@@ -66,15 +76,15 @@ class UniversalPackerAgent:
         run_context.touch(
                 run_id,
                 agent="UniversalPackerAgent",
-                action="packed_file",
+                action="packing_file",
                 domain=domain,
                 reason="valid_file_type",
             )
         run_context.emit_fact(
                 run_id,
-                stage="packer",
+                stage="packing",
                 component="UniversalPackerAgent",
-                result="packed_file",
+                result="ok",
                 reason="valid_file_type",
                 )
 
@@ -82,7 +92,7 @@ class UniversalPackerAgent:
             f"{domain}.pipeline_finished",
             {
                 "normalized": serialized,
-                "packed": packed,
+                "data": packed,
                 "source": source,
                 "confidence": confidence,
                 "run_id": run_id,

@@ -6,11 +6,13 @@ from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.run_context import run_context
 import hephis_core.agents.decision_agent
 from hephis_core.environment import ENV
+from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.agents.reporter_rules.base import logger
 
 class IdentifierAgent:
     
     def __init__(self):
-        print("INIT:",self.__class__.__name__)
+        print("3 - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -22,7 +24,17 @@ class IdentifierAgent:
     def identify_input(self,payload):
 
         incoming = payload["input"]
-        source = payload["source"]
+        source = payload.get("source")
+        run_id = extract_run_id(payload)
+
+        if not run_id:
+            logger.warning("Source file has no valid id or run_id"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"reception-by-gate-keeper",
+                    "payload":payload,
+                }
+            return
 
         raw_type = detect_raw_type(incoming, ENV)
 
@@ -54,7 +66,7 @@ class IdentifierAgent:
             run_id,
             stage="identify",
             component="IdentifierAgent",
-            result="identified_type_of_file",
+            result="accepted",
             reason="valid_input_file"
         )
         
@@ -63,7 +75,7 @@ class IdentifierAgent:
             {
                 "data": incoming,
                 "type": raw_type,
-                "run_id": payload["run_id"],
+                "run_id": run_id,
                 "source": source,
             }
         )

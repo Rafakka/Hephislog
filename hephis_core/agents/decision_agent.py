@@ -3,11 +3,13 @@ from hephis_core.events.decorators import on_event
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.decision_store import decision_store
 from hephis_core.swarm.run_context import run_context
+from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.agents.reporter_rules.base import logger
 
 class DecisionAgent:
 
     def __init__(self):
-        print("INIT:", self.__class__.__name__)
+        print("5 - INIT:", self.__class__.__name__)
         self.confidence = {}
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
@@ -20,27 +22,28 @@ class DecisionAgent:
     @on_event("system.smells.post.extraction")
     def decide(self, payload):
         print("DECISION AGENT CALLED")
-        smells = payload.get("smells", {})
-        run_id = payload.get("run_id") or payload.get("id")
+        smells = payload["smells", {}]
+        run_id = extract_run_id(payload)
         source = payload.get("source")
-        raw = payload.get("raw")
+        raw = payload["raw"]
 
-        if not smells or not run_id:
-            run_context.touch(
-                run_id,
-                agent="DecisionAgent",
-                action="declined",
-                domain=domain,
-                reason="No smells or run id.",
-            )
-            run_context.emit_fact(
-            run_id,
-            stage="decision",
-            component="DecisionAgent",
-            result="declined",
-            reason="No_smells_or_run_id"
-            )
+        if not run_id:
+            logger.warning("run id is missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"Decision-making",
+                    "payload":payload,
+                }
+            return
 
+        if not smells:
+            logger.warning("smells are missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"Decision-making",
+                    "payload":payload,
+                }
+            return
 
         domain, confidence = max(smells.items(), key=lambda x: x[1])
 
@@ -61,6 +64,7 @@ class DecisionAgent:
             result="declined",
             reason="low_confidence",
             )
+            return
 
 
         decision = {
@@ -72,6 +76,7 @@ class DecisionAgent:
         }
 
         decision_store.store(run_id, decision)
+
         print("DECISION STORED:", decision)
         run_context.touch(
                 run_id,
@@ -88,7 +93,6 @@ class DecisionAgent:
             component="DecisionAgent",
             reason="decision made",
             )    
-
         
         if raw is None:
             run_context.touch(
@@ -105,6 +109,7 @@ class DecisionAgent:
             result="declined",
             reason="no_raw_payload"
             )
+            return
 
         run_context.touch(
                 run_id,
@@ -121,8 +126,10 @@ class DecisionAgent:
             result="organized",
             reason="matching context"
             )
+
         event_bus.emit(
-                    f"intent.organize.{domain}",{
+                    f"intent.organize.{domain}",
+                    {
                     "domain":domain,
                     "confidence":confidence,
                     "run_id":run_id,

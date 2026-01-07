@@ -3,11 +3,13 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.run_context import run_context
+from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.agents.reporter_rules.base import logger
 
 class OrganizerAgent:
 
     def __init__(self):
-        print("INIT:", self.__class__.__name__)
+        print("6 - INIT:", self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -21,8 +23,17 @@ class OrganizerAgent:
 
         raw = payload["raw"]
         source = payload.get("source")
-        run_id = payload.get("run_id")
+        run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
+
+        if not run_id:
+            logger.warning("run id is missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"organizing-music",
+                    "payload":payload,
+                }
+            return
         
         paragraphs = raw.get("lyrics",[])
 
@@ -42,7 +53,7 @@ class OrganizerAgent:
             run_context.emit_fact(
                 run_id,
                 stage="decision",
-                component="DecisionAgent",
+                component="OrganizerAgent",
                 result="declined",
                 reason="No sections",
                 )
@@ -58,8 +69,8 @@ class OrganizerAgent:
         run_context.emit_fact(
             run_id,
             stage="decision",
-            component="DecisionAgent",
-            result="organized",
+            component="OrganizerAgentt",
+            result="accepted",
             reason="file_accepted"
             )
 
@@ -76,24 +87,33 @@ class OrganizerAgent:
     def handle_recipe(self, payload):
         
         raw = payload["raw"]
-        source = payload["source"]
-        run_id = payload.get("run_id")
+        source = payload.get("source")
+        run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
 
-        if not run_id or not raw:
+        if not run_id:
+            logger.warning("run id is missing"),
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"organizing-recipe",
+                    "payload":payload,
+                }
+            return
+
+        if not raw:
             run_context.touch(
                 run_id,
                 agent="OrganizerAgent",
                 action="declined",
                 domain="Recipe",
-                reason="No run_id or no raw",
+                reason="No raw",
             )
             run_context.emit_fact(
                 run_id,
                 stage="decision",
-                component="DecisionAgent",
+                component="OrganizerAgent",
                 result="declined",
-                reason="No run_id or no raw",
+                reason="No raw",
                 )
             return
 
@@ -108,8 +128,8 @@ class OrganizerAgent:
         run_context.emit_fact(
             run_id,
             stage="decision",
-            component="DecisionAgent",
-            result="organized",
+            component="OrganizerAgent",
+            result="accepted",
             reason="file_accepted"
             )
 
