@@ -2,7 +2,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
-from hephis_core.infra.extractors.music.from_html import extract_music_from_html
+from hephis_core.infra.converters.html import to_html
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 import logging
@@ -10,6 +10,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class UniversalExtractorAgent:
+
+    validators = {
+        "recipe": RECIPE,
+        "music": MUSIC,
+    }
 
     def __init__(self):
         print("4 - INIT:",self.__class__.__name__)
@@ -19,12 +24,20 @@ class UniversalExtractorAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    validators = {
-        "recipe": RECIPE,
-        "music": MUSIC
-    }
 
     def emit_result(self, raw, domain, run_id, source):
+
+        if not run_id:
+            logger.warning("Source file has no valid id or run_id",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"extraction-by-universal-extractor",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
         run_context.touch(
                 run_id,
                 agent="UniversalExtractorAgent",
@@ -60,7 +73,15 @@ class UniversalExtractorAgent:
                 for fn in fns:
                     try:
                         raw = fn(value)
-                    except Exception:
+                    except Exception as exc:
+                        logger.debug("Extraction failed",
+                        extra={
+                                "agent":self.__class__.__name__,
+                                "event":"extraction-by-universal-extractor",
+                                "raw_type":type(payload).__name__,
+                                "error":repr(exc),
+                            }
+                        )
                         continue
                     if raw is None:
                         continue
@@ -79,7 +100,7 @@ class UniversalExtractorAgent:
             if html_value:
                 return try_type(html_value,"html")
 
-        return "system", None
+        return None
 
     @on_event("system.*_received")
     def handle_input(self, payload):
@@ -99,7 +120,25 @@ class UniversalExtractorAgent:
             )
             return
 
-        domain, raw = self.extract_any(input_value, input_type)
+        result = self.extract_any(input_value, input_type)
+        
+        if not result:
+            run_context.touch(
+                run_id,
+                agent="UniversalExtractorAgent",
+                action="extract_file",
+                reason="no_result",
+            )
+            run_context.emit_fact(
+                    run_id,
+                    stage="extractor",
+                    component="UniversalExtractorAgent",
+                    result="declined",
+                    reason="no_result_extracted",
+                    )
+            return
+        
+        domain, raw = result
 
         if not domain or not raw:
             run_context.touch(

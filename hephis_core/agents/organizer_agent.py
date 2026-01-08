@@ -21,7 +21,25 @@ class OrganizerAgent:
     def handle_music(self, payload):
         print("ORGANIZER MUSIC HANDLER CALLED",payload)
 
-        raw = payload["raw"]
+        raw = payload.get("raw")
+
+        if not raw:
+            run_context.touch(
+                run_id,
+                agent="OrganizerAgent",
+                action="declined",
+                domain="music",
+                reason="No raw",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="organizer",
+                component="OrganizerAgent",
+                result="declined",
+                reason="No raw",
+                )
+            return
+
         source = payload.get("source")
         run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
@@ -37,6 +55,8 @@ class OrganizerAgent:
             )
             return
         
+        paragraphs = [p for p in paragraphs if p.strip()]
+
         paragraphs = raw.get("lyrics",[])
 
         if not paragraphs:
@@ -54,7 +74,7 @@ class OrganizerAgent:
             )
             run_context.emit_fact(
                 run_id,
-                stage="decision",
+                stage="organizer",
                 component="OrganizerAgent",
                 result="declined",
                 reason="No sections",
@@ -70,7 +90,7 @@ class OrganizerAgent:
             )
         run_context.emit_fact(
             run_id,
-            stage="decision",
+            stage="organizer",
             component="OrganizerAgentt",
             result="accepted",
             reason="file_accepted"
@@ -87,9 +107,29 @@ class OrganizerAgent:
     @on_event("intent.organize.recipe")
     def handle_recipe(self, payload):
         
-        raw = payload["raw"]
+        raw = payload.get("raw")
+
+        if not raw:
+            run_context.touch(
+                run_id,
+                agent="OrganizerAgent",
+                action="declined",
+                domain="Recipe",
+                reason="No raw",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="organizer",
+                component="OrganizerAgent",
+                result="declined",
+                reason="No raw",
+                )
+            return
+
         source = payload.get("source")
+
         run_id = extract_run_id(payload)
+
         confidence = payload.get("confidence")
 
         if not run_id:
@@ -103,23 +143,6 @@ class OrganizerAgent:
             )
             return
 
-        if not raw:
-            run_context.touch(
-                run_id,
-                agent="OrganizerAgent",
-                action="declined",
-                domain="Recipe",
-                reason="No raw",
-            )
-            run_context.emit_fact(
-                run_id,
-                stage="decision",
-                component="OrganizerAgent",
-                result="declined",
-                reason="No raw",
-                )
-            return
-
         run_context.touch(
             run_id,
             agent="OrganizerAgent",
@@ -130,7 +153,7 @@ class OrganizerAgent:
 
         run_context.emit_fact(
             run_id,
-            stage="decision",
+            stage="organizer",
             component="OrganizerAgent",
             result="accepted",
             reason="file_accepted"
