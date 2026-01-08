@@ -1,11 +1,12 @@
 
 from hephis_core.events.decorators import on_event
 from hephis_core.pipeline.results import store_result
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FinalizerAgent:
 
@@ -17,7 +18,6 @@ class FinalizerAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @log_action(action="agt-finalizing-pipeline")
     @on_event("*.pipeline_finished")
     def finalize_pipeline(self, payload):
         print("FINALIZER AGENT HANDLER CALLED",payload)
@@ -28,12 +28,14 @@ class FinalizerAgent:
         source = payload.get("source")
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"finalizing",
-                    "payload":payload,
+                    "event":"finalizing-flow",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                 }
+            )
             return
 
         store_result(run_id, payload)

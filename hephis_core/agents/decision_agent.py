@@ -1,10 +1,11 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.decision_store import decision_store
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class DecisionAgent:
 
@@ -18,7 +19,6 @@ class DecisionAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
                 print("SUBCRIBING:", fn.__event_name__,"->",attr)
 
-    @log_action(action="agt-deciding-by-smell")
     @on_event("system.smells.post.extraction")
     def decide(self, payload):
         print("DECISION AGENT CALLED")
@@ -28,21 +28,25 @@ class DecisionAgent:
         raw = payload["raw"]
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"Decision-making",
-                    "payload":payload,
+                    "event":"decision-making",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                 }
+            )
             return
 
         if not smells:
-            logger.warning("smells are missing"),
+            logger.warning("smells are missing",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"Decision-making",
-                    "payload":payload,
+                    "event":"decision-making",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                 }
+            )
             return
 
         domain, confidence = max(smells.items(), key=lambda x: x[1])
@@ -138,7 +142,6 @@ class DecisionAgent:
                     }
                 )
     
-    @log_action(action="agt-updating-confidence")
     @on_event("confidence.updated")
     def update_confidence(self, payload):
         key = (payload["smell"], payload["intent"])

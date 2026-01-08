@@ -1,10 +1,11 @@
 from hephis_core.services.cleaners.chord_cleaner import music_organizer
 from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OrganizerAgent:
 
@@ -16,7 +17,6 @@ class OrganizerAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @log_action(action="agt-organizing-music")
     @on_event("intent.organize.music")
     def handle_music(self, payload):
         print("ORGANIZER MUSIC HANDLER CALLED",payload)
@@ -27,12 +27,14 @@ class OrganizerAgent:
         confidence = payload.get("confidence")
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"organizing-music",
-                    "payload":payload,
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
         
         paragraphs = raw.get("lyrics",[])
@@ -82,7 +84,6 @@ class OrganizerAgent:
             "run_id": run_id,
         })
         
-    @log_action(action="agt-organizing-recipe")
     @on_event("intent.organize.recipe")
     def handle_recipe(self, payload):
         
@@ -92,12 +93,14 @@ class OrganizerAgent:
         confidence = payload.get("confidence")
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"organizing-recipe",
-                    "payload":payload,
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
 
         if not raw:

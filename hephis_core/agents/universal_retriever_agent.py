@@ -2,7 +2,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.retrievers.registry import RETRIEVER_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
-from hephis_core.utils.logger_decorator import log_action
+
 
 class UniversalRetrieverAgent:
 
@@ -47,7 +47,6 @@ class UniversalRetrieverAgent:
 
         return "system", None
         
-    @log_action(action="agt-retriving-data-api")
     @on_event("system.*api_requested")
     def handle_input(self, payload):
         input_value = payload["data"]

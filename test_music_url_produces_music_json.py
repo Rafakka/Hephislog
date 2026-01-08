@@ -16,8 +16,6 @@ def test_music_url_produces_music_json(tmp_path):
     reset_report()
     run_context.reset()
     bootstrap_agents()
-
-    run_id = "music-clear-1"
     
     print("\n===EMIT INPUT EVENT===")
 

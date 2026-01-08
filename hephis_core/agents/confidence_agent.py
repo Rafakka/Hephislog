@@ -1,6 +1,5 @@
 from collections import defaultdict
 from hephis_core.events.decorators import on_event
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 
 class ConfidenceAgent:
@@ -24,7 +23,6 @@ class ConfidenceAgent:
                 print("SUBSCRIBE BUS ID:", id(event_bus))
                 event_bus.subscribe(event_name, attr)
 
-    @log_action(action="agt-recording-decisions")
     @on_event("intent.*")
     def record_decisions(self, payload):
         run_id = payload.get("run_id")
@@ -40,7 +38,6 @@ class ConfidenceAgent:
             "intent":intent,
         }
 
-    @log_action(action="agt-learning-from-outcomes")
     @on_event("*.pipeline_finished")
     def learn_from_outcomes(self, payload):
         run_id = payload.get("run_id")

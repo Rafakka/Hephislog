@@ -1,10 +1,11 @@
 from hephis_core.services.packers.universal_packer import pack_data
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UniversalPackerAgent:
 
@@ -16,13 +17,11 @@ class UniversalPackerAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
                 
-    @log_action(action="agt-packing-music")
     @on_event("music.normalized")
     def handle_music(self, payload):
         print("PACKER MUSIC HANDLER CALLED",payload)
         self._pack_domain("music", payload)
 
-    @log_action(action="agt-packing-recipe")
     @on_event("recipe.normalized")
     def handle_recipe(self, payload):
         print("PACKER RECIPE HANDLER CALLED",payload)
@@ -36,12 +35,14 @@ class UniversalPackerAgent:
         confidence = payload.get("confidence")
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"universal-packer-agent",
-                    "payload":payload,
+                    "event":"universal-packer",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
 
         if isinstance(normalized, dict) and "data" in normalized:

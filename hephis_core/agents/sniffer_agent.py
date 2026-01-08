@@ -1,11 +1,12 @@
 import json
 from hephis_core.events.decorators import on_event
 from hephis_core.environment import ENV
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SnifferAgent:
 
@@ -18,14 +19,16 @@ class SnifferAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     def sniff(self, raw):
-
+        
         if not isinstance(raw, str):
-            logger.warning("Source file raw isnt a string"),
+            logger.warning("Source file raw is no string",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"first-sniffing",
-                    "payload":raw,
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                 }
+            )
             return
 
         text = raw.lower()
@@ -52,7 +55,6 @@ class SnifferAgent:
         if len(text) > 100_000:
             ENV.add_smell("huge_input",1.0)
     
-    @log_action(action="agt-sniffing-payload")
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
 
@@ -60,12 +62,14 @@ class SnifferAgent:
         run_id = extract_run_id(payload)
 
         if not run_id:
-            logger.warning("Source file has no valid id or run_id"),
+            logger.warning("Source file has no valid id or run_id",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"first-sniffing",
-                    "payload":raw,
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                 }
+            )
             return
         
         ENV.reset()
@@ -98,19 +102,20 @@ class SnifferAgent:
             }
         )
 
-    @log_action(action="agt-sniffing-extracted-payload")
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
         raw = payload["raw"]
         run_id = extract_run_id(payload)
 
         if not run_id:
-            logger.error("Dropping event without run_id"),
+            logger.error("Dropping event without run_id",
             extra={
-                   "agent":self.__class__.__name__,
-                    "event":"second-scenting",
-                    "payload":raw,
+                    "agent":self.__class__.__name__,
+                    "event":"second-sniffing",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                 }
+            )
             return
         
         self.sniff(raw)

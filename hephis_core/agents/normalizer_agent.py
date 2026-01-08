@@ -2,10 +2,11 @@ from hephis_core.modules.music_normalizer.normalizer import music_normalizer
 from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class NormalizerAgent:
 
@@ -17,7 +18,6 @@ class NormalizerAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @log_action(action="agt-normalizing-music")
     @on_event("music.organized")
     def normalize_music(self, payload):
         print("NORMALIZER MUSIC HANDLER CALLED",payload)
@@ -28,12 +28,14 @@ class NormalizerAgent:
         confidence = payload.get("confidence")
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"normalizing-music",
-                    "payload":payload,
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
 
         normalized = music_normalizer(
@@ -82,7 +84,6 @@ class NormalizerAgent:
             "run_id": run_id,
         })
 
-    @log_action(action="agt-normalizing-recipe")
     @on_event("recipe.organized")
     def normalize_recipe(self, payload):
 
@@ -92,12 +93,14 @@ class NormalizerAgent:
         confidence = payload.get("confidence")
 
         if not run_id:
-            logger.warning("run id is missing"),
+            logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"normalizing-recipe",
-                    "payload":payload,
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
 
         normalized = recipe_normalizer(

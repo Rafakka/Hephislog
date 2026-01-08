@@ -2,12 +2,13 @@
 from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.services.detectors.raw_detectors import detect_raw_type
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.swarm.run_context import run_context
 import hephis_core.agents.decision_agent
 from hephis_core.environment import ENV
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class IdentifierAgent:
     
@@ -19,7 +20,6 @@ class IdentifierAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @log_action("agt-identifies-input")
     @on_event("system.input_received")
     def identify_input(self,payload):
 
@@ -28,12 +28,14 @@ class IdentifierAgent:
         run_id = extract_run_id(payload)
 
         if not run_id:
-            logger.warning("Source file has no valid id or run_id"),
+            logger.warning("Source file has no valid id or run_id",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"reception-by-gate-keeper",
-                    "payload":payload,
+                    "event":"identifing-agent",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
 
         raw_type = detect_raw_type(incoming, ENV)

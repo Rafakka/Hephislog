@@ -1,11 +1,12 @@
 from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
-from hephis_core.utils.logger_decorator import log_action
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.agents.reporter_rules.base import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UniversalExtractorAgent:
 
@@ -83,7 +84,6 @@ class UniversalExtractorAgent:
 
         return "system", None
 
-    @log_action(action="agt-extracting-payload")
     @on_event("system.*_received")
     def handle_input(self, payload):
         input_value = payload["data"]
@@ -92,12 +92,14 @@ class UniversalExtractorAgent:
         run_id = extract_run_id(payload)
 
         if not run_id:
-            logger.warning("Source file has no valid id or run_id"),
+            logger.warning("Source file has no valid id or run_id",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"extraction-by-universal-extractor",
-                    "payload":payload,
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
                 }
+            )
             return
 
         domain, raw = self.extract_any(input_value, input_type)
