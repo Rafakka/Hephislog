@@ -20,7 +20,7 @@ class IdentifierAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @on_event("system.input_received")
+    @on_event("system.input_to_be_identified")
     def identify_input(self,payload):
 
         incoming = payload["input"]

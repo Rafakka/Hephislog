@@ -101,6 +101,7 @@ class SnifferAgent:
                 "raw":raw,
             }
         )
+        return
 
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):

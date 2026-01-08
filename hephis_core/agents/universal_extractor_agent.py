@@ -2,6 +2,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
+from hephis_core.infra.extractors.music.from_html import extract_music_from_html
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 import logging
@@ -49,38 +50,34 @@ class UniversalExtractorAgent:
         )
 
     def extract_any(self, input_value, input_type, debug=False):
+        
+        tried_types = set()
 
-        extractors = EXTRACTOR_REGISTRY.get(input_type, {})
-
-        for domain, extractor_functions in extractors.items():
-            for fn in extractor_functions:
-                try:
-                    raw = fn(input_value)
+        def try_type(value, type_):
+            tried_types.add(type_)
+            extractors = EXTRACTOR_REGISTRY.get(type_, {})
+            for domain, fns in extractors.items():
+                for fn in fns:
+                    try:
+                        raw = fn(value)
+                    except Exception:
+                        continue
                     if raw is None:
                         continue
-                except Exception:
-                    continue
-                validator = self.validators.get(domain)
-                if validator and validator(raw):
-                    return domain, raw
+                    validator = self.validators.get(domain)
+                    if not validator or validator(raw):
+                        return domain, raw
+            return None
+        
+        result = try_type(input_value, input_type)
 
-        html_content = to_html(input_value, input_type)
-        html_extractors = EXTRACTOR_REGISTRY.get("html",{})
-
-        if debug:
-            print("[FALLBACK] Converting to HTML…")
-
-        for domain, extractor_functions in html_extractors.items():
-            for fn in extractor_functions:
-                try:
-                    raw = fn(html_content)
-                    if raw is None:
-                        continue
-                except Exception:
-                    continue
-                validator = self.validators.get(domain)
-                if validator and validator(raw):
-                    return domain, raw
+        if result:
+            return result
+        
+        if input_type != "html" and "html" not in tried_types:
+            html_value = to_html(input_value, input_type)
+            if html_value:
+                return try_type(html_value,"html")
 
         return "system", None
 

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from hephis_core.services.cleaners.data_cleaner import slugify
-from hephis_core.utils.logger_decorator import log_action
+
 
 BASE_PROCESSED_DIR = Path("data")
 
@@ -20,7 +20,6 @@ def get_processed_folder(domain, title):
     folder = BASE_PROCESSED_DIR /domain/slug
     return folder
 
-@log_action(action="write processed json")
 def write_processed_json(domain: str, title: str, json_dict: dict) -> Path:
     """
     Save final processed JSON.

@@ -48,10 +48,11 @@ class GatekeeperAgent:
         )
 
         event_bus.emit(
-            "system.input_received",
+            "system.input_to_be_identified",
             {
                 "input": payload,
                 "run_id": run_id,
                 "source": "gatekeeper",
             }
         )
+        return
