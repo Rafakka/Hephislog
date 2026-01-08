@@ -1,15 +1,26 @@
-from hephis_core.infra.extractors.registry import extractor
-from hephis_core.utils.logger_decorator import log_action
 import requests
+from hephis_core.infra.extractors.registry import extractor
 
-@log_action(action="extract_music_from_url")
-@extractor(domain="music", input_type="url")
-def extract_music_from_url(url: str):
+@extractor(domain="*",input_type="url")
+def fetch_url_as_html(url:str) -> Optional[str]:
 
-    try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-    except Exception:
+    if not isinstance(url, str):
         return None
-
-    return response.text
+    
+    try:
+        reponse = requests.get(
+            url,
+            timeout=10,
+            headers={
+                "User-Agent":(
+                    "Mozilla/5.0(X11, Linux x86_64)"
+                    "AppleWebKit/537.36(KHTML, like Gecko)"
+                    "Chrome/120.0.0.0 Safari/537.36"
+                )
+            },
+        )
+        reponse.raise_for_status()
+        return reponse.text
+    except Exception as exc:
+        print("FETCH FAILED", repr(exc))
+        return None

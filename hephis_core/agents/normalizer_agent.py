@@ -86,7 +86,7 @@ class NormalizerAgent:
 
     @on_event("recipe.organized")
     def normalize_recipe(self, payload):
-
+        print("RAN:",self.__class__.__name__) 
         raw = payload["sections"]
         source = payload.get("source")
         run_id = extract_run_id(payload)

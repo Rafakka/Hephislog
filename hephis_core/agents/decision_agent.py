@@ -17,11 +17,11 @@ class DecisionAgent:
             fn = getattr(attr, "__func__", None)
             if fn and hasattr(fn, "__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
-                print("SUBCRIBING:", fn.__event_name__,"->",attr)
+                #print("SUBCRIBING:", fn.__event_name__,"->",attr)
 
     @on_event("system.smells.post.extraction")
     def decide(self, payload):
-        print("DECISION AGENT CALLED")
+        print("RAN:",self.__class__.__name__) 
         smells = payload["smells", {}]
         run_id = extract_run_id(payload)
         source = payload.get("source")

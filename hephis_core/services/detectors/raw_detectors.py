@@ -23,9 +23,10 @@ def is_html(value):
         return False
 
     text = value.strip()
+    lower = text.lower()
 
-    if is_url(text):
-        return False
+    if lower.endswith((".html",".htm")):
+        return True
     
     if "<" not in text and ">" not in text:
         return False

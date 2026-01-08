@@ -19,7 +19,7 @@ class OrganizerAgent:
 
     @on_event("intent.organize.music")
     def handle_music(self, payload):
-        print("ORGANIZER MUSIC HANDLER CALLED",payload)
+        print("RAN:",self.__class__.__name__) 
 
         raw = payload.get("raw")
 

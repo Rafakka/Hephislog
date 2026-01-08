@@ -18,8 +18,11 @@ class GatekeeperAgent:
         
     @on_event("system.external_input")
     def gatekeeper_process(self,payload):
+        print("RAN:",self.__class__.__name__) 
 
         run_id = extract_run_id(payload)
+        raw = payload.get("raw")
+        source = payload.get("source")
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -51,8 +54,9 @@ class GatekeeperAgent:
             "system.input_to_be_identified",
             {
                 "input": payload,
+                "raw":raw,
                 "run_id": run_id,
-                "source": "gatekeeper",
+                "source": source,
             }
         )
         return

@@ -22,8 +22,9 @@ class IdentifierAgent:
 
     @on_event("system.input_to_be_identified")
     def identify_input(self,payload):
-
-        incoming = payload["input"]
+        print("RAN:",self.__class__.__name__) 
+        
+        raw = payload.get("raw") or payload.get("input")
         source = payload.get("source")
         run_id = extract_run_id(payload)
 
@@ -38,22 +39,25 @@ class IdentifierAgent:
             )
             return
 
-        raw_type = detect_raw_type(incoming, ENV)
+        raw_type = detect_raw_type(raw, ENV)
 
-        if not raw_type:
-            run_context.touch(
-            run_id, 
-            agent="IdentifierAgent", 
-            action ="identification_failed", 
-            event="failed_to_detect_file_input"
+        print(f"CONTENTS OF DETECTION:--{raw_type}")
+
+        if raw_type in (None, "unknown"):
+            logger.warning("Source file has not being identified",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"identifing-agent",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
             )
-
             run_context.emit_fact(
                 run_id,
                 stage="identify",
                 component="IdentifierAgent",
                 result="declined",
-                reason="raw_type_none"
+                reason="raw_type_unkown"
             )
             return
 
@@ -73,11 +77,12 @@ class IdentifierAgent:
         )
         
         event_bus.emit(
-            f"system.{raw_type}_received",
+            f"system.input_identified",
             {
-                "data": incoming,
-                "type": raw_type,
-                "run_id": run_id,
-                "source": source,
+                "run_id":run_id,
+                "raw":raw,
+                "raw_type":raw_type,
+                "source":source,
+                "domain_hint":payload.get("domain_hint"),
             }
         )

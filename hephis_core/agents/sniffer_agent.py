@@ -57,7 +57,7 @@ class SnifferAgent:
     
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
-
+        print("RAN:",self.__class__.__name__) 
         raw = payload.get("input")
         run_id = extract_run_id(payload)
 
@@ -105,6 +105,7 @@ class SnifferAgent:
 
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
+        print("RAN:",self.__class__.__name__) 
         raw = payload["raw"]
         run_id = extract_run_id(payload)
 

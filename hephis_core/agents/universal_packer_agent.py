@@ -28,7 +28,7 @@ class UniversalPackerAgent:
         self._pack_domain("recipe", payload)
 
     def _pack_domain(self, domain: str, payload: dict):
-
+        print("RAN:",self.__class__.__name__) 
         normalized = payload["normalized"]
         source = payload.get("source")
         run_id = extract_run_id(payload)

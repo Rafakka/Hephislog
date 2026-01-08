@@ -23,10 +23,10 @@ def bootstrap_agents():
         IdentifierAgent(),
         UniversalExtractorAgent(),
         DecisionAgent(),
-        NormalizerAgent(),
         OrganizerAgent(),
+        NormalizerAgent(),
         UniversalPackerAgent(),
-        UniversalRetrieverAgent(),
         FinalizerAgent(),
         ReporterAgent(rules=REPORTER_RULES),
+        UniversalRetrieverAgent(),
         ]

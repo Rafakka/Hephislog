@@ -7,7 +7,7 @@ from hephis_core.infra.extractors.validators import RECIPE, MUSIC
 class UniversalRetrieverAgent:
 
     def __init__(self):
-        print("INIT:",self.__class__.__name__)
+        print("11 - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
