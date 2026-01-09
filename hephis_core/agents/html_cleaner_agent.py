@@ -6,12 +6,11 @@ from bs4 import BeautifulSoup
 import re
 import logging
 
+from hephis_core.services.cleaners.data_cleaner import (
+    clean_text
+)
+
 logger = logging.getLogger(__name__)
-
-def normalize_text(text:str) -> str:
-    text = re.sub(r"\s+"," ", text)
-    return text.strip()
-
 
 class HtmlCleanerAgent:
 
@@ -24,26 +23,15 @@ class HtmlCleanerAgent:
             if fn and hasattr(fn, "__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @staticmethod
-    def heavy_clean_html(raw:str) -> str:
-        soup = BeautifulSoup(raw, "lxml")
-
+    def heavy_clean_html(self, soup:BeautifulSoup) -> str:
         for tag in soup([
-            "script","meta","link","nonscript"
-        ]):
+            "script","meta", "style","link","nonscript"]
+            ):
             tag.decompose()
-
-        text = soup.get_text(separator="\n")
-
-        return normalize_text(text)
-
-    @staticmethod
-    def light_clean_html(raw:str) -> str:
-        soup = BeautifulSoup(raw, "html.parser")
-
-        text = soup.get_text(separator="")
-
-        return normalize_text(text)
+        return clean_text(soup.get_text(separator=""))
+        
+    def light_clean_html(self, soup:BeautifulSoup) -> str:
+        return clean_text(soup.get_text(separator=""))
 
     @on_event("system.advisor.to.html.cleaner")
     def decide(self, payload):
@@ -76,8 +64,8 @@ class HtmlCleanerAgent:
             )
             return
         
-        if not stage:
-            logger.warning("Missing stage field.",
+        if stage != "material_raw":
+            logger.warning("Stage not material raw.",
             extra ={
                     "agent":self.__class__.__name__,
                     "event":"decision-making",
@@ -89,13 +77,19 @@ class HtmlCleanerAgent:
         advice = payload.get("advice",{})
         cleaning = advice.get("cleaning","none")
 
+        soup = BeautifulSoup(raw,"html.parser")
+
         if cleaning == "heavy":
-            cleaned_text = self.heavy_clean_html(raw)
+            cleaned_text = self.heavy_clean_html(soup)
+            reason = "heavy clean applied"
         
         elif cleaning == "light":
-            cleaned_text = self.light_clean_html(raw)
+            cleaned_text = self.light_clean_html(soup)
+            reason = "light clean applied"
         else:
-            cleaned_text = raw
+            cleaned_text = soup.get_text(separator=" ")
+            text = clean_text(text)
+            reason = "no html cleaning applied"
         
         stage = "material_cleaned"
 
@@ -103,7 +97,7 @@ class HtmlCleanerAgent:
                 run_id,
                 agent="htmlcleaneragent",
                 action="cleaned-material",
-                reason="",
+                reason=reason,
             )
         run_context.emit_fact(
                 run_id,
@@ -120,6 +114,7 @@ class HtmlCleanerAgent:
                 "stage":stage,
                 "raw": cleaned_text,
                 "source":source,
+                "smells":smells,
                 "html_state":"cleaned",
             }
         )
