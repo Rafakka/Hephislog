@@ -10,14 +10,16 @@ STAGE_GROUPS = {
         "finalizer",
         "gatekeeper",
         "identifier",
+        "cleaning"
     },
     "decision_stages": {
         "decision",
     },
     "detector_stages":{
-        "sniffer",
+        "sniffing",
         "confidence",
         "detector",
+        "advising",
     },
 }
 
@@ -26,6 +28,8 @@ RESULT_GROUPS = {
         "stored",
         "accepted",
         "ok",
+        "completed",
+        "cleaned",
     },
     "decision_failure": {
         "declined",

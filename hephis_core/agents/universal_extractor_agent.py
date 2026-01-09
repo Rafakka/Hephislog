@@ -2,7 +2,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
-from hephis_core.infra.converters.html import to_html
+from hephis_core.infra.extractors.common.from_html import fetch_url_as_html
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 import logging
@@ -77,14 +77,14 @@ class UniversalExtractorAgent:
             return result
 
         if raw_type == "url":
-            html_value = to_html(value,"url")
+            html_value = fetch_url_as_html(value,"url")
             if html_value:
                 return self.extract_any(value,"html")
 
         
         if raw_type != "html":
             try:
-                html_value = to_html(value, raw_type)
+                html_value = fetch_url_as_html(value, raw_type)
             except Exception as exc:
                 logger.debug(
                     "HTML conversion failed",
@@ -150,71 +150,80 @@ class UniversalExtractorAgent:
                     "reason":"exception",
                 }
             )
-            if not result:
-                run_context.touch(
-                    run_id,
-                    agent="UniversalExtractorAgent",
-                    action="extract_file",
-                    reason="no_result",
-                )
-                run_context.emit_fact(
-                        run_id,
-                        stage="extractor",
-                        component="UniversalExtractorAgent",
-                        result="declined",
-                        reason="no_result_extracted",
-                        )
-                return
-            
-            domain, raw = result
-
-            if not domain or not raw:
-                run_context.touch(
-                    run_id,
-                    agent="UniversalExtractorAgent",
-                    action="extract_file",
-                    reason="no_domain_or_and_no_raw",
-                )
-                run_context.emit_fact(
-                        run_id,
-                        stage="extractor",
-                        component="UniversalExtractorAgent",
-                        result="declined",
-                        reason="no_domain_or_and_no_raw",
-                        )
-                return
-
-            if not run_id:
-                logger.warning("Source file has no valid id or run_id",
-                extra={
-                        "agent":self.__class__.__name__,
-                        "event":"extraction-by-universal-extractor",
-                        "raw_type":type(payload).__name__,
-                        "raw_is_dict":isinstance(payload, dict),
-                    }
-                )
-                return
-
+        if not result:
             run_context.touch(
-                    run_id,
-                    agent="UniversalExtractorAgent",
-                    action="extracted_file",
-                    domain=domain,
-                    reason="valid_file_type",
-                )
+                run_id,
+                agent="UniversalExtractorAgent",
+                action="extract_file",
+                reason="no_result",
+            )
             run_context.emit_fact(
                     run_id,
                     stage="extractor",
                     component="UniversalExtractorAgent",
-                    result="accepted",
-                    reason="valid_file_type",
+                    result="declined",
+                    reason="no_result_extracted",
                     )
-            event_bus.emit(
-                "system.extraction.completed",
-                {   
-                    "raw":raw,
-                    "domain":domain,
-                    "run_id": run_id,
-                    "source":source,
-                }
+            return
+            
+        if result:
+            domain, raw = result
+
+            wrapped = {
+                "stage":"material_raw",
+                "raw":raw,
+                "domain":domain,
+                "source":source,
+                "run_id":run_id,
+            }
+
+        if not domain or not raw:
+            run_context.touch(
+                run_id,
+                agent="UniversalExtractorAgent",
+                action="extract_file",
+                reason="no_domain_or_and_no_raw",
             )
+            run_context.emit_fact(
+                    run_id,
+                    stage="extractor",
+                    component="UniversalExtractorAgent",
+                    result="declined",
+                    reason="no_domain_or_and_no_raw",
+                    )
+            return
+
+        if not run_id:
+            logger.warning("Source file has no valid id or run_id",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"extraction-by-universal-extractor",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                    }
+            )
+            return
+
+        run_context.touch(
+                run_id,
+                agent="UniversalExtractorAgent",
+                action="extracted_file",
+                domain=domain,
+                reason="valid_file_type",
+            )
+        run_context.emit_fact(
+                run_id,
+                stage="extractor",
+                component="UniversalExtractorAgent",
+                result="accepted",
+                reason="valid_file_type",
+                )
+        event_bus.emit(
+            "system.extraction.completed",
+            {   
+                "raw":raw,
+                "domain":domain,
+                "run_id": run_id,
+                "source":source,
+            }
+        )

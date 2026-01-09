@@ -7,6 +7,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+VALID_DECISION_STAGES = {
+    "post_clean_sniffing",
+}
+
 class DecisionAgent:
 
     def __init__(self):
@@ -17,11 +21,11 @@ class DecisionAgent:
             fn = getattr(attr, "__func__", None)
             if fn and hasattr(fn, "__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
-                #print("SUBCRIBING:", fn.__event_name__,"->",attr)
 
-    @on_event("system.smells.post.extraction")
+    @on_event("system.smells.to.decisionagent")
     def decide(self, payload):
-        print("RAN:",self.__class__.__name__) 
+        print("RAN:",self.__class__.__name__)
+        stage = payload["stage"]
         smells = payload["smells", {}]
         run_id = extract_run_id(payload)
         source = payload.get("source")
@@ -42,9 +46,19 @@ class DecisionAgent:
             logger.warning("smells are missing",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"decision-making",
+                    "event":"decision",
                     "raw_type":type(raw).__name__,
                     "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+        
+        if not stage or stage not in VALID_DECISION_STAGES:
+            logger.warning("Material not cleaned, flow error",
+            extra ={
+                    "agent":self.__class__.__name__,
+                    "event":"decision-making",
+                    "payload":list(payload.keys()),
                 }
             )
             return
@@ -69,7 +83,6 @@ class DecisionAgent:
             reason="low_confidence",
             )
             return
-
 
         decision = {
             "domain": domain,
@@ -141,8 +154,3 @@ class DecisionAgent:
                     "source":source,
                     }
                 )
-    
-    @on_event("confidence.updated")
-    def update_confidence(self, payload):
-        key = (payload["smell"], payload["intent"])
-        self.confidence[key] = payload["trust"]

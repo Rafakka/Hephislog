@@ -105,12 +105,33 @@ class SnifferAgent:
 
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
-        print("RAN:",self.__class__.__name__) 
+        print("RAN:",self.__class__.__name__)
         raw = payload["raw"]
         run_id = extract_run_id(payload)
+        stage = payload["stage"]
+
+        if stage != "material_raw":
+            logger.error("Missing material_raw stage.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"second-sniffing",
+                }
+            )
+            return
 
         if not run_id:
             logger.error("Dropping event without run_id",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"second-sniffing",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+        
+        if not raw:
+            logger.error("Dropping event without data",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"second-sniffing",
@@ -138,9 +159,71 @@ class SnifferAgent:
                 reason="advicing_on_extracted_file",
                 )
 
+        print(f"SMELLS APPLIED IN THIS FILE: {ENV.smells}")
+
         event_bus.emit(
-            "system.smells.post.extraction",
-            {
+            "system.smells.to.advisor",
+            {   
+                "stage":stage,
+                "smells": ENV.smells,
+                "snapshots": ENV.snapshot(),
+                "raw":raw,
+                "run_id": run_id,
+                "source": payload.get("source"),
+            }
+        )
+    
+    @on_event("system.cleaner.to.sniffer")
+    def sniff_after_cleaning(self, payload:dict):
+        print("RAN:",self.__class__.__name__)
+        raw = payload["raw"]
+        run_id = extract_run_id(payload)
+        stage = payload["stage"]
+
+        if stage != "cleaned_material":
+            logger.error("Missing cleaning stage.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"third-sniffing",
+                }
+            )
+            return
+
+        if not run_id:
+            logger.error("Dropping event without run_id",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"third-sniffing",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+        
+        ENV.reset()
+        self.sniff(raw)
+        stage = "post_clean_sniffing"
+
+        run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="re_scented_file",
+                reason="advicing_on_cleaned_file",
+                event="third scenting",
+            )
+
+        run_context.emit_fact(
+                run_id,
+                stage="sniffing",
+                component="SnifferAgent",
+                result="accepted",
+                reason="third-smell-after-cleaning",
+                )
+
+        event_bus.emit(
+            "system.smells.to.decisionagent",
+            {   
+                "stage":stage,
                 "smells": ENV.smells,
                 "snapshots": ENV.snapshot(),
                 "raw":raw,

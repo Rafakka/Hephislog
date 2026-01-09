@@ -1,9 +1,7 @@
 import re
 import json
 from bs4 import BeautifulSoup
-from hephis_core.utils.logger_decorator import log_action
 
-@log_action(action="extract_recipe_from_tg_html")
 def extract_recipe_from_tg_html(html):
     soup = BeautifulSoup(html, "html.parser")
 
