@@ -221,6 +221,7 @@ class UniversalExtractorAgent:
         event_bus.emit(
             "system.extraction.completed",
             {   
+                "stage":"material_raw",
                 "raw":raw,
                 "domain":domain,
                 "run_id": run_id,

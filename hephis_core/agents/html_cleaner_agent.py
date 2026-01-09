@@ -8,6 +8,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def normalize_text(text:str) -> str:
+    text = re.sub(r"\s+"," ", text)
+    return text.strip()
+
+
 class HtmlCleanerAgent:
 
     def __init__(self):
@@ -39,21 +44,15 @@ class HtmlCleanerAgent:
         text = soup.get_text(separator="")
 
         return normalize_text(text)
-    
-    @staticmethod
-    def normalize_text(text:str) -> str:
-        text = re.sub(r"\s+"," ", text)
-        return text.strip()
-
 
     @on_event("system.advisor.to.html.cleaner")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__) 
-        smells = payload["smells", {}]
+        smells = payload.get("smells", {})
         run_id = extract_run_id(payload)
         source = payload.get("source")
         raw = payload["raw"]
-        stage = payload.get(stage)
+        stage = payload.get("stage")
 
         if not run_id:
             logger.warning("run id is missing",
@@ -91,10 +90,10 @@ class HtmlCleanerAgent:
         cleaning = advice.get("cleaning","none")
 
         if cleaning == "heavy":
-            cleaned_text = heavy_clean_html(raw)
+            cleaned_text = self.heavy_clean_html(raw)
         
         elif cleaning == "light":
-            cleaned_text = light_clean_html(raw)
+            cleaned_text = self.light_clean_html(raw)
         else:
             cleaned_text = raw
         

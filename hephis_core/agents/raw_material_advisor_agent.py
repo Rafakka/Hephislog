@@ -29,9 +29,9 @@ class RawMaterialAdvisorAgent:
     @on_event("system.smells.to.advisor")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__) 
-        smells = payload["smells", {}]
+        smells = payload.get("smells", {})
         run_id = extract_run_id(payload)
-        raw = payload["raw"]
+        raw = payload.get("raw")
         stage = payload.get("stage")
 
         if stage != "material_raw" or not isinstance(raw, str):

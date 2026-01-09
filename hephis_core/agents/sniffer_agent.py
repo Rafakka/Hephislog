@@ -57,7 +57,7 @@ class SnifferAgent:
     
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
-        print("RAN:",self.__class__.__name__) 
+        print("FIRST RAN:",self.__class__.__name__) 
         raw = payload.get("input")
         run_id = extract_run_id(payload)
 
@@ -105,10 +105,10 @@ class SnifferAgent:
 
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
-        print("RAN:",self.__class__.__name__)
+        print("SECOND RAN:",self.__class__.__name__)
         raw = payload["raw"]
         run_id = extract_run_id(payload)
-        stage = payload["stage"]
+        stage = payload.get("stage")
 
         if stage != "material_raw":
             logger.error("Missing material_raw stage.",
@@ -141,7 +141,10 @@ class SnifferAgent:
             )
             return
         
+        ENV.reset()
         self.sniff(raw)
+
+        print(f"THIS IS SNIFF RESULT: {raw}")
 
         run_context.touch(
                 run_id,
@@ -159,8 +162,6 @@ class SnifferAgent:
                 reason="advicing_on_extracted_file",
                 )
 
-        print(f"SMELLS APPLIED IN THIS FILE: {ENV.smells}")
-
         event_bus.emit(
             "system.smells.to.advisor",
             {   
@@ -175,10 +176,10 @@ class SnifferAgent:
     
     @on_event("system.cleaner.to.sniffer")
     def sniff_after_cleaning(self, payload:dict):
-        print("RAN:",self.__class__.__name__)
+        print("THIRD RAN:",self.__class__.__name__)
         raw = payload["raw"]
         run_id = extract_run_id(payload)
-        stage = payload["stage"]
+        stage = payload.get("stage")
 
         if stage != "cleaned_material":
             logger.error("Missing cleaning stage.",
