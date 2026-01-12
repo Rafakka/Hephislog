@@ -2,6 +2,7 @@ from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.services.cleaners.data_cleaner import clean_html_artifacts
 from bs4 import BeautifulSoup
 import re
 import logging
@@ -29,11 +30,11 @@ class HtmlCleanerAgent:
             ):
             tag.decompose()
             text = soup.get_text(separator="")
-        return clean_text(text)
+        return clean_html_artifacts(text)
         
     def light_clean_html(self, soup:BeautifulSoup) -> str:
         text = soup.get_text(separator="")
-        return clean_text(text)
+        return clean_html_artifacts(text)
 
     @on_event("system.advisor.to.html.cleaner")
     def decide(self, payload):
@@ -90,7 +91,7 @@ class HtmlCleanerAgent:
             reason = "light clean applied"
         else:
             clean = soup.get_text(separator=" ")
-            cleaned_text = clean_text(clean)
+            cleaned_text = clean_html_artifacts(clean)
             reason = "no html cleaning applied"
         
         stage = "material_cleaned"

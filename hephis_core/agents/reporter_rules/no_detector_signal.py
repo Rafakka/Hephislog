@@ -2,9 +2,7 @@ from typing import Optional
 from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS, iter_facts
 
 @reporter_rule
-def rule_no_detector_signal(context:list[dict]) -> Optional[dict]:
-
-    facts = iter_facts(context)
+def rule_no_detector_signal(facts:list[dict]) -> Optional[dict]:
 
     detector_facts = [
         f for f in facts

@@ -2,9 +2,7 @@ from typing import Optional
 from .base import reporter_rule, RESULT_GROUPS, STAGE_GROUPS, iter_facts
 
 @reporter_rule
-def rule_explain_silence(context:list[dict]) -> Optional[dict]:
-    
-    facts = iter_facts(context)
+def rule_explain_silence(facts:list[dict]) -> Optional[dict]:
 
     if not facts:
         return {

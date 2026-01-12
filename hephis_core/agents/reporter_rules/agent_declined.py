@@ -2,9 +2,7 @@ from typing import Optional
 from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS, run_completed, logger, iter_facts
 
 @reporter_rule
-def rule_agent_declined(context:list[dict]) -> Optional[dict]:
-
-    facts = iter_facts(context)
+def rule_agent_declined(facts:list[dict]) -> Optional[dict]:
 
     if run_completed(facts):
         logger.debug(

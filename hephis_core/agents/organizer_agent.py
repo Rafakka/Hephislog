@@ -1,4 +1,4 @@
-from hephis_core.services.cleaners.chord_cleaner import music_organizer
+from hephis_core.services.detectors.chord_detector import ChordDetector
 from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
@@ -17,13 +17,41 @@ class OrganizerAgent:
             fn = getattr(attr,"__func__", None)
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
+    
+    def organize_lines(self, text:str) -> list[dict]:
+
+        lines = [l.rstrip() for l in text.splitlines()]
+
+        blocks = []
+        current = {"lyrics":None, "chords":None}
+
+        for line in lines:
+            if not line.strip():
+                continue
+            
+            if ChordDetector.looks_like_chord_line(line):
+                if current["chords"] is not None:
+                    blocks.append(current)
+                    current = {"lyrics":None,"chords":None}
+
+                current["chords"] = line
+            else:
+
+                if current["lyrics"] is not None:
+                    blocks.append(current)
+                    current = {"lyrics":None,"chords":None}
+                current["lyrics"] = line
+        
+            if current["lyrics"] or current["chords"]:
+                blocks.append(current)
+
+            return blocks
 
     @on_event("intent.organize.music")
     def handle_music(self, payload):
         print("RAN:",self.__class__.__name__) 
         raw = payload.get("raw",{})
-        print(f"THIS IS RAW: {raw}")
-        paragraphs =raw.get("lyrics",[])
+        text = raw.get("text","")
         source = payload.get("source")
         run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
@@ -56,34 +84,32 @@ class OrganizerAgent:
             )
             return
         
-        if not paragraphs:
-            text = raw.get("text","")
-            if isinstance(text, Tag):
-                text = text.get_text(separator="")
-            elif not isinstance(text, str):
-                text = str(text)
-            paragraphs = [text]
+        if not isinstance(text, str) or not text.strip():
+            logger.warning("Organizer agent received empty or invalid text",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"organizing-music",
+                    "run_id":run_id,
+                }
+            )
+            return
+        
+        blocks = self.organize_lines(text)
 
-        paragraphs = [p for p in paragraphs if p.strip()]
-
-        assert all(isinstance(p,str)for p in paragraphs),"Organizer received non-str paragraphs"
-
-        sections = music_organizer(paragraphs)
-
-        if not sections:
+        if not blocks:
             run_context.touch(
                 run_id,
                 agent="OrganizerAgent",
                 action="declined",
                 domain="music",
-                reason="No sections",
+                reason="No blocks created",
             )
             run_context.emit_fact(
                 run_id,
                 stage="organizer",
                 component="OrganizerAgent",
                 result="declined",
-                reason="No sections",
+                reason="No blocks created",
                 )
             return
 
@@ -97,14 +123,16 @@ class OrganizerAgent:
         run_context.emit_fact(
             run_id,
             stage="organizer",
-            component="OrganizerAgentt",
+            component="OrganizerAgent",
             result="accepted",
             reason="file_accepted"
             )
 
+        print(f"THIS IS SECTIONS ORGANIZED: {blocks}")
+
         event_bus.emit("music.organized", {
             "domain": "music",
-            "sections": sections,
+            "sections": blocks,
             "source": source,
             "confidence": confidence,
             "run_id": run_id,

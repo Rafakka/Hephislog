@@ -128,7 +128,9 @@ def music_organizer(paragraphs):
     for p in paragraphs:
         p_tag = ensure_tag(p)
         text= p_tag.get_text(separator="", strip=True)
-        raw = clean_text(text)
+        raw = re.sub(r"\u00a0","",text)
+        raw = re.sub(r"[\t]+"," ",raw)
+        raw = raw.strip()
         raw = clean_duplicate_chord_blocks(raw)
 
         if not raw:
@@ -136,10 +138,16 @@ def music_organizer(paragraphs):
 
         # STEP 1: Extract inline chords FIRST
         # (because this site does NOT use taggedChord spans)
-        inline_chords = ChordDetector.extract_chords_from_tokens(raw.replace("-", " "))
+        tokens = raw.replace("-"," ").split()
+        inline_chords = [
+            t for t in tokens
+            if ChordDetector.is_main_chord(t)
+        ]
 
         # PURE CHORD LINE (ex: "Am - D - G - C - Bm")
-        if inline_chords and all(ChordDetector.is_main_chord(tok) for tok in raw.replace("-", " ").split()):
+        tokens = raw.replace("-","").split()
+        if tokens and all(ChordDetector.is_main_chord(t) for t in tokens):
+            chords = normalize_chord_line(raw).split()
             # remove consecutive duplicates from span flattening
             unique = []
             for c in inline_chords:
@@ -154,17 +162,13 @@ def music_organizer(paragraphs):
             continue
 
         # MIXED LINE: lyrics + chords in same paragraph
-        if inline_chords and not all(ChordDetector.is_main_chord(tok) for tok in raw.split()):
-            # separate chords from lyrics
-           tokens = raw.split()
-
-        filtered = [
+        tokens = raw.split()
+        lyrics_tokens = [
             t for t in tokens
             if not ChordDetector.is_main_chord(t)
-           ]
-        lyric_only = remove_chords_preserve_spacing(raw)
-        lyric_only = re.sub(r'[\t]+',' ', lyric_only)
-        lyric_only = lyric_only.strip()
+        ]
+        lyric_only = "".join(lyrics_tokens)
+
         lines.append({
                 "lyrics": lyric_only,
                 "chords": inline_chords.copy()

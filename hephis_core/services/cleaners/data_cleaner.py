@@ -8,6 +8,15 @@ _PAREN_REM = re.compile(r"\([^)]*\)")
 
 _TRAILING_PUNCT = re.compile(r"[,.;:\-]+$")
 
+def clean_html_artifacts(text:str) -> str:
+    if not text:
+        return ""
+    
+    return (
+        text
+        .replace("\xa0","")
+        .replace("&nbsp,","")
+    )
 
 def clean_text(text:str)-> str:
     """

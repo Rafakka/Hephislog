@@ -51,25 +51,29 @@ RESULT_GROUPS = {
 ReportFinding = Dict[str, Any]
 RunEvent = Dict[str, Any]
 
-def iter_facts(context):
-    if isinstance(context, list):
-        return context
-    if isinstance(context, dict):
-        return context.get("facts",[])
-    return[]
+def iter_facts(input) -> list[dict]:
 
+    if isinstance(input, list):
+        return [f for f in input if isinstance(f, dict)]
+    if isinstance(input, dict):
+        facts = input.get("facts",[])
+        if isinstance(facts, list):
+            return [f for f in facts if isinstance(f, dict)]
+    return []
+    
 def reporter_rule(fn):
     fn._is_reporter_rule = True
     return fn
 
 def run_completed(facts: list[dict]) -> bool:
-    for f in facts:
-        if f.get("stage") == "run_completed":
-            return True
-    return False
+    return any(
+        f.get("stage") == "run_completed"
+        for f in facts
+        if isinstance(f, dict)
+    )
 
-def should_run_diagnostics(context: dict) -> bool:
-    for f in context.get("facts",[]):
+def should_run_diagnostics(facts: list [dict]) -> bool:
+    for f in facts:
         if (
             isinstance(f,dict)
             and f.get("stage") == "run"
