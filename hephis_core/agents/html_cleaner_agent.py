@@ -28,10 +28,12 @@ class HtmlCleanerAgent:
             "script","meta", "style","link","nonscript"]
             ):
             tag.decompose()
-        return clean_text(soup.get_text(separator=""))
+            text = soup.get_text(separator="")
+        return clean_text(text)
         
     def light_clean_html(self, soup:BeautifulSoup) -> str:
-        return clean_text(soup.get_text(separator=""))
+        text = soup.get_text(separator="")
+        return clean_text(text)
 
     @on_event("system.advisor.to.html.cleaner")
     def decide(self, payload):
@@ -87,8 +89,8 @@ class HtmlCleanerAgent:
             cleaned_text = self.light_clean_html(soup)
             reason = "light clean applied"
         else:
-            cleaned_text = soup.get_text(separator=" ")
-            text = clean_text(text)
+            clean = soup.get_text(separator=" ")
+            cleaned_text = clean_text(clean)
             reason = "no html cleaning applied"
         
         stage = "material_cleaned"
@@ -110,11 +112,11 @@ class HtmlCleanerAgent:
         event_bus.emit(
             "system.cleaner.to.sniffer",
             {   
+                "raw": {"text":cleaned_text},
+                "smells":smells,
+                "source":source,
                 "run_id":run_id,
                 "stage":stage,
-                "raw": cleaned_text,
-                "source":source,
-                "smells":smells,
-                "html_state":"cleaned",
+                "html_state":"cleaned"
             }
         )

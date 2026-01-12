@@ -121,7 +121,8 @@ def music_organizer(paragraphs):
 
     for p in paragraphs:
         p_tag = ensure_tag(p)
-        raw = clean_text(p_tag).strip()
+        text= p_tag.get_text(separator="", strip=True)
+        raw = clean_text(text)
         raw = clean_duplicate_chord_blocks(raw)
 
         if not raw:
@@ -132,7 +133,7 @@ def music_organizer(paragraphs):
         inline_chords = ChordDetector.extract_chords_from_tokens(raw.replace("-", " "))
 
         # PURE CHORD LINE (ex: "Am - D - G - C - Bm")
-        if inline_chords and all(is_main_chord(tok) for tok in raw.replace("-", " ").split()):
+        if inline_chords and all(ChordDetector.is_main_chord(tok) for tok in raw.replace("-", " ").split()):
             # remove consecutive duplicates from span flattening
             unique = []
             for c in inline_chords:

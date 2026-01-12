@@ -139,7 +139,6 @@ class UniversalExtractorAgent:
 
         try: 
             result = self.extract_any(input_value, input_type)
-            print(f"THIS IS THE RESULT{result}")
             
         except Exception as exc:
             logger.exception("Extractor crashed",

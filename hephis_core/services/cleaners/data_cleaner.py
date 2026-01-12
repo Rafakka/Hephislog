@@ -9,7 +9,7 @@ _PAREN_REM = re.compile(r"\([^)]*\)")
 _TRAILING_PUNCT = re.compile(r"[,.;:\-]+$")
 
 
-def clean_text(tag):
+def clean_text(text:str)-> str:
     """
     Given a BeautifulSoup tag (normally <p>), return cleaned textual content:
     - preserves normal spaces,
@@ -17,16 +17,13 @@ def clean_text(tag):
     - removes multiple spaces,
     - strips at edges.
     """
-    if tag is None:
-        return ""
+    if not isinstance (text, str):
+        raise TypeError(f"clean_text expected str, got {type(text)}")
 
-    raw = tag.get_text(" ", strip=False)
-    if not raw:
-        return ""
-
-    raw = raw.replace("\xa0", " ").replace("&nbsp;", " ")
-    raw = _MULTI_SPACE.sub(" ", raw)
-    return raw.strip()
+    text = text.replace("\xa0", " ").replace("&nbsp;", " ")
+    text = _MULTI_SPACE.sub(" ", text)
+    text = text.strip()
+    return text
 
 def normalize_line(text: str) -> str:
     """

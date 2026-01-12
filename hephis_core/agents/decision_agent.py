@@ -11,6 +11,8 @@ VALID_DECISION_STAGES = {
     "post_clean_sniffing",
 }
 
+CONTAINER_SMELLS = {"html","json","text"}
+
 class DecisionAgent:
 
     def __init__(self):
@@ -21,12 +23,28 @@ class DecisionAgent:
             fn = getattr(attr, "__func__", None)
             if fn and hasattr(fn, "__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
+    
+    @staticmethod
+    def penalize_container_smells(smells:dict) -> dict:
+        smells = smells.copy()
+
+        semantic_smells = {
+            k: v for k, v in smells.items()
+            if k not in CONTAINER_SMELLS
+        }
+
+        if semantic_smells: 
+            for k in CONTAINER_SMELLS:
+                if k in smells:
+                    smells[k] *= 0.3
+        
+        return smells
 
     @on_event("system.smells.to.decisionagent")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__)
-        stage = payload["stage"]
-        smells = payload["smells", {}]
+        stage = payload.get("stage")
+        smells = payload.get("smells", {})
         run_id = extract_run_id(payload)
         source = payload.get("source")
         raw = payload["raw"]
@@ -62,8 +80,25 @@ class DecisionAgent:
                 }
             )
             return
+        
+        smells = DecisionAgent.penalize_container_smells(smells)
+        
+        if "music.semantic_confirmed" in smells:
+            smells["music"] += 0.5
 
-        domain, confidence = max(smells.items(), key=lambda x: x[1])
+        domain= max(smells, key=smells.get)
+        confidence = smells[domain]
+
+        logger.info(
+            "Decision smells after penalty",
+            extra={
+                "original":payload.get("smells"),
+                "penalized":smells,
+                "run_id":payload.get("run_id")
+            }
+        )
+
+        print(f"SMELLS: {smells},  CONFIDENCE: {confidence}")
 
         if confidence < 0.6:
             print(f"DECLINED: confidence too low ({confidence})")

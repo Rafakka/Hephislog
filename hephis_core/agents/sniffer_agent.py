@@ -4,6 +4,7 @@ from hephis_core.environment import ENV
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.services.detectors.chord_detector import ChordDetector
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,30 +19,47 @@ class SnifferAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
+    def extract_sniff_text(self, raw) -> str | None:
+        if isinstance(raw, dict):
+            raw_extracted = raw.get("text") or raw.get("lyrics") or raw.get("content") or ""
+            return raw_extracted
+        if isinstance(raw, str):
+            return raw
+        else:
+            logger.warning("Unsupported raw type",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"third-sniffing",
+                }
+            )
+            return None
+
     def sniff(self, raw):
+
+        text = self.extract_sniff_text(raw)
         
-        if not isinstance(raw, str):
-            logger.warning("Source file raw is no string",
+        if not text:
+            logger.warning("raw is not sniffable",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"first-sniffing",
                     "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
-                }
+                    "raw_is_dict":isinstance(raw,dict),
+                },
             )
             return
 
-        text = raw.lower()
+        text = text.lower()
 
         if"<html" in text or "<div" in text:
             ENV.add_smell("html",0.9)
-        
+            
         if "ingrediente" in text:
             ENV.add_smell("recipe",0.6)
-        
+            
         if "modo de preparo" in text or "preparo" in text:
             ENV.add_smell("recipe",0.8)
-        
+            
         if text.strip().startswith(("{","[")):
             try:
                 json.loads(text)
@@ -73,7 +91,6 @@ class SnifferAgent:
             return
         
         ENV.reset()
-
         self.sniff(raw)
 
         run_context.touch(
@@ -141,10 +158,7 @@ class SnifferAgent:
             )
             return
         
-        ENV.reset()
         self.sniff(raw)
-
-        print(f"THIS IS SNIFF RESULT: {raw}")
 
         run_context.touch(
                 run_id,
@@ -180,8 +194,9 @@ class SnifferAgent:
         raw = payload["raw"]
         run_id = extract_run_id(payload)
         stage = payload.get("stage")
+        incoming_smells = payload.get("smells",{})
 
-        if stage != "cleaned_material":
+        if stage != "material_cleaned":
             logger.error("Missing cleaning stage.",
             extra={
                     "agent":self.__class__.__name__,
@@ -200,9 +215,53 @@ class SnifferAgent:
                 }
             )
             return
-        
-        ENV.reset()
+
+        for k, v in incoming_smells.items():
+            ENV.add_smell(k,v)
+
         self.sniff(raw)
+
+        text = self.extract_sniff_text(raw)
+
+        if not text:
+            logger.warning("no text on third sniffing to extract")
+            return
+
+        if ChordDetector.block_contains_chords(text):
+
+            ENV.add_smell("music.semantic_confirmed", 1.0)
+            stage = "post_clean_sniffing"
+
+            run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="re_scented_file",
+                reason="advicing_on_cleaned_file_by_semantic",
+                event="third scenting",
+            )
+            run_context.emit_fact(
+                    run_id,
+                    stage="sniffing",
+                    component="SnifferAgent",
+                    result="accepted",
+                    reason="third-smell-semantic-after-cleaning",
+            )
+
+            print(F"CLEANED AND FINAL SCENTED: SMELL:{ENV.smells}")
+
+            event_bus.emit(
+                "system.smells.to.decisionagent",
+                {   
+                    "stage":"post_clean_sniffing",
+                    "smells": ENV.smells,
+                    "snapshots": ENV.snapshot(),
+                    "raw":raw,
+                    "run_id": run_id,
+                    "source": payload.get("source"),
+                }
+            )
+            return
+
         stage = "post_clean_sniffing"
 
         run_context.touch(
@@ -220,6 +279,8 @@ class SnifferAgent:
                 result="accepted",
                 reason="third-smell-after-cleaning",
                 )
+
+        print(F"CLEANED AND FINAL SCENTED: SMELL:{ENV.smells}")
 
         event_bus.emit(
             "system.smells.to.decisionagent",

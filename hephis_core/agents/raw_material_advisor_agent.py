@@ -28,7 +28,7 @@ class RawMaterialAdvisorAgent:
 
     @on_event("system.smells.to.advisor")
     def decide(self, payload):
-        print("RAN:",self.__class__.__name__) 
+        print("RAN:",self.__class__.__name__)
         smells = payload.get("smells", {})
         run_id = extract_run_id(payload)
         raw = payload.get("raw")

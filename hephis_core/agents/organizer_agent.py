@@ -3,6 +3,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
+from bs4 import Tag
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,8 +21,12 @@ class OrganizerAgent:
     @on_event("intent.organize.music")
     def handle_music(self, payload):
         print("RAN:",self.__class__.__name__) 
-
-        raw = payload.get("raw")
+        raw = payload.get("raw",{})
+        print(f"THIS IS RAW: {raw}")
+        paragraphs =raw.get("lyrics",[])
+        source = payload.get("source")
+        run_id = extract_run_id(payload)
+        confidence = payload.get("confidence")
 
         if not raw:
             run_context.touch(
@@ -40,10 +45,6 @@ class OrganizerAgent:
                 )
             return
 
-        source = payload.get("source")
-        run_id = extract_run_id(payload)
-        confidence = payload.get("confidence")
-
         if not run_id:
             logger.warning("run id is missing",
             extra={
@@ -55,12 +56,17 @@ class OrganizerAgent:
             )
             return
         
+        if not paragraphs:
+            text = raw.get("text","")
+            if isinstance(text, Tag):
+                text = text.get_text(separator="")
+            elif not isinstance(text, str):
+                text = str(text)
+            paragraphs = [text]
+
         paragraphs = [p for p in paragraphs if p.strip()]
 
-        paragraphs = raw.get("lyrics",[])
-
-        if not paragraphs:
-            paragraphs = [raw.get("text","")]
+        assert all(isinstance(p,str)for p in paragraphs),"Organizer received non-str paragraphs"
 
         sections = music_organizer(paragraphs)
 
