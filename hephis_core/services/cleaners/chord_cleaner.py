@@ -7,6 +7,12 @@ from hephis_core.schemas.music_schemas import ChordSheetSchema
 
 CHORD_TOKEN = r"[A-G](#|b)?(m|maj7|maj|min7|m7|dim|aug|sus2|sus4|add9|6|9|11|13)?"
 
+def remove_chords_preserve_spacing(raw:str) -> str:
+    def replacer(match):
+        token = match.group(0)
+        return " " if ChordDetector.is_main_chord(token) else token
+    return re.sub(r'\b[^\s]+b', replacer, raw)
+
 def clean_duplicate_chord_blocks(text):
     """
     Removes duplicated chord blocks created by MS Word HTML.
@@ -150,17 +156,21 @@ def music_organizer(paragraphs):
         # MIXED LINE: lyrics + chords in same paragraph
         if inline_chords and not all(ChordDetector.is_main_chord(tok) for tok in raw.split()):
             # separate chords from lyrics
-            lyric_only = raw
-            for c in inline_chords:
-                lyric_only = lyric_only.replace(c, "")
-            lyric_only = re.sub(r'\s+', ' ', lyric_only).strip()
+           tokens = raw.split()
 
-            lines.append({
+        filtered = [
+            t for t in tokens
+            if not ChordDetector.is_main_chord(t)
+           ]
+        lyric_only = remove_chords_preserve_spacing(raw)
+        lyric_only = re.sub(r'[\t]+',' ', lyric_only)
+        lyric_only = lyric_only.strip()
+        lines.append({
                 "lyrics": lyric_only,
                 "chords": inline_chords.copy()
             })
-            pending_chords = None
-            continue
+        pending_chords = None
+        continue
 
         # LYRIC FOLLOWING CHORD BLOCK
         if pending_chords:

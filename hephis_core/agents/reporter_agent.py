@@ -4,10 +4,11 @@ from hephis_core.infra.observability.report_store import save_report
 from hephis_core.swarm.run_context import run_context
 from hephis_core.agents.reporter_rules.base import run_completed, should_run_diagnostics, logger
 from hephis_core.agents.reporter_rules import REPORTER_RULES
+from hephis_core.agents.reporter_rules.base import iter_facts
 from typing import List, Callable, Dict, Any
 
 
-ReporterRule = Callable[[Dict[str, Any]], Dict[str,Any]| None]
+ReporterRule = Callable[[list[dict]], dict | None]
 
 class ReporterAgent:
     def __init__(self, rules:List[ReporterRule], renderer=None):
@@ -16,8 +17,15 @@ class ReporterAgent:
         self.renderer = renderer or self.output
         event_bus.subscribe("system.run.completed",self.handle_run_completed)
     
+    def run_completed(context:list[dict]) -> bool:
+        for f in context:
+            if f.get("event") == "run_completed":
+                return True
+        return False
+    
     def handle_run_completed(self, event):
         print("REPORT CALLED")
+
         run_id = event["run_id"]
         context = run_context.get(run_id)
 
@@ -39,7 +47,8 @@ class ReporterAgent:
 
         for rule in REPORTER_RULES:
             try:
-                result = rule(context)
+                facts = iter_facts(context)
+                result = rule(facts)
                 if result:
                     findings.append(result)
             except Exception as exc:

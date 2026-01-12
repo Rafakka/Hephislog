@@ -1,9 +1,10 @@
-from typing import Dict, Any, Optional
-from .base import reporter_rule, RESULT_GROUPS, STAGE_GROUPS
+from typing import Optional
+from .base import reporter_rule, RESULT_GROUPS, STAGE_GROUPS, iter_facts
 
 @reporter_rule
-def rule_explain_silence(event:Dict[str, Any]) -> Optional[Dict[str,Any]]:
-    facts = event.get("facts",[])
+def rule_explain_silence(context:list[dict]) -> Optional[dict]:
+    
+    facts = iter_facts(context)
 
     if not facts:
         return {

@@ -1,10 +1,10 @@
-from typing import Dict, Any, Optional
-from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS
+from typing import Optional
+from .base import reporter_rule, STAGE_GROUPS, RESULT_GROUPS, iter_facts
 
 @reporter_rule
-def rule_no_detector_signal(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def rule_no_detector_signal(context:list[dict]) -> Optional[dict]:
 
-    facts = context.get("facts",[])
+    facts = iter_facts(context)
 
     detector_facts = [
         f for f in facts
