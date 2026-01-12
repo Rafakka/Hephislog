@@ -2,7 +2,6 @@ from hephis_core.services.packers.universal_packer import pack_data
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
-from hephis_core.swarm.run_id import extract_run_id
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,10 +28,28 @@ class UniversalPackerAgent:
 
     def _pack_domain(self, domain: str, payload: dict):
         print("RAN:",self.__class__.__name__) 
-        normalized = payload["normalized"]
-        source = payload.get("source")
-        run_id = extract_run_id(payload)
-        confidence = payload.get("confidence")
+        sheet =  payload.get["sheet"]
+
+        if not sheet:
+            logger.warning("Normalizer received event without sheet.")
+            return
+
+        run_id = sheet["run_id"]
+
+        if not run_id:
+            logger.warning("run id is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-music",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        normalized = sheet["normalized"]
+        source = sheet["source"]
+        confidence = sheet["confidence"]
 
         if not run_id:
             logger.warning("run id is missing",
@@ -56,6 +73,8 @@ class UniversalPackerAgent:
             serialized = normalized_content
 
         packed = pack_data(domain, normalized_content)
+
+        
 
         if not packed:
             run_context.touch(

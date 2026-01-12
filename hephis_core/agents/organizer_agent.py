@@ -1,4 +1,6 @@
 from hephis_core.services.detectors.chord_detector import ChordDetector
+from hephis_core.services.cleaners.chord_cleaner import normalize_chord_line
+from hephis_core.schemas.music_schemas import ChordSheetSchema
 from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
@@ -23,29 +25,23 @@ class OrganizerAgent:
         lines = [l.rstrip() for l in text.splitlines()]
 
         blocks = []
-        current = {"lyrics":None, "chords":None}
+        
+        pending_chords: list[str] | None = None
 
         for line in lines:
             if not line.strip():
                 continue
-            
+
             if ChordDetector.looks_like_chord_line(line):
-                if current["chords"] is not None:
-                    blocks.append(current)
-                    current = {"lyrics":None,"chords":None}
+                pending_chords = normalize_chord_line(line).split()
+                continue
 
-                current["chords"] = line
-            else:
+            blocks.append({
+                "lyrics":line,
+                "chords":pending_chords or [],
+            })
 
-                if current["lyrics"] is not None:
-                    blocks.append(current)
-                    current = {"lyrics":None,"chords":None}
-                current["lyrics"] = line
-        
-            if current["lyrics"] or current["chords"]:
-                blocks.append(current)
-
-            return blocks
+        return blocks
 
     @on_event("intent.organize.music")
     def handle_music(self, payload):
@@ -55,6 +51,11 @@ class OrganizerAgent:
         source = payload.get("source")
         run_id = extract_run_id(payload)
         confidence = payload.get("confidence")
+
+        title = payload.get("title") or "Unknown title"
+        instrument=payload.get("instrument") or "Unknown instrument"
+        key=payload.get("key") or "Unknown key"
+        url=payload.get("url") or source
 
         if not raw:
             run_context.touch(
@@ -94,9 +95,11 @@ class OrganizerAgent:
             )
             return
         
-        blocks = self.organize_lines(text)
+        print(f"THIS IS TEXT BEFORE ORGANIZED: {text}")
 
-        if not blocks:
+        lines = self.organize_lines(text)
+
+        if not lines:
             run_context.touch(
                 run_id,
                 agent="OrganizerAgent",
@@ -112,6 +115,11 @@ class OrganizerAgent:
                 reason="No blocks created",
                 )
             return
+        
+        sections = [{
+            "name":"default",
+            "lines":lines,
+        }]
 
         run_context.touch(
                 run_id,
@@ -128,15 +136,26 @@ class OrganizerAgent:
             reason="file_accepted"
             )
 
-        print(f"THIS IS SECTIONS ORGANIZED: {blocks}")
+        print(f"THIS IS SECTIONS ORGANIZED: {sections}")
+
+        sheet = ChordSheetSchema (
+            title = title,
+            instrument= instrument,
+            key=key,
+            sections=sections,
+            source=source,
+            url=url,
+            run_id=run_id
+        )
 
         event_bus.emit("music.organized", {
             "domain": "music",
-            "sections": blocks,
-            "source": source,
+            "sections": sections,
+            "sheet":sheet.model_dump(),
             "confidence": confidence,
             "run_id": run_id,
         })
+
         
     @on_event("intent.organize.recipe")
     def handle_recipe(self, payload):

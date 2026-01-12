@@ -20,12 +20,14 @@ class NormalizerAgent:
 
     @on_event("music.organized")
     def normalize_music(self, payload):
-        print("NORMALIZER MUSIC HANDLER CALLED",payload)
+        print("RAN:",self.__class__.__name__)
+        sheet = payload.get("sheet")
 
-        sections = payload["sections"]
-        source = payload.get("source")
-        run_id = extract_run_id(payload)
-        confidence = payload.get("confidence")
+        if not sheet:
+            logger.warning("Normalizer received event without sheet.")
+            return
+        
+        run_id = sheet["run_id"]
 
         if not run_id:
             logger.warning("run id is missing",
@@ -38,11 +40,16 @@ class NormalizerAgent:
             )
             return
 
+        raw_lines = []
+        for section in sheet.get("sections",[]):
+            raw_lines.extend(section.get("lines",[]))
+
         normalized = music_normalizer(
-            raw_lines=sections,
-            url=source,
-            run_id=run_id or "pipeline-agent"
+            raw_lines=raw_lines,
+            url=sheet["source"],
+            run_id=sheet["run_id"]
         )
+
 
         if not normalized:
             run_context.touch(
@@ -75,13 +82,9 @@ class NormalizerAgent:
                 reason="File Normalized",
                 )
 
-
         event_bus.emit("music.normalized", {
-            "domain": "music",
-            "normalized": normalized,
-            "source": source,
-            "confidence": confidence,
-            "run_id": run_id,
+            "domain":"music",
+            "sheet":normalized.model_dump()
         })
 
     @on_event("recipe.organized")

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, StrictStr, ConfigDict
 from typing import List, ClassVar, Set
+from pydantic import field_validator
 
 class BaseSchema(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -31,3 +32,10 @@ class ChordSheetSchema(BaseSchema):
     source: str
     url: str
     run_id: str
+
+    @field_validator("sections")
+    @classmethod
+    def must_have_sections(cls, v):
+        if not v:
+            raise ValueError("ChordSheet must contain at least one section")
+            return v

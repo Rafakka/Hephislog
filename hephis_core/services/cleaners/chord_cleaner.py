@@ -7,12 +7,6 @@ from hephis_core.schemas.music_schemas import ChordSheetSchema
 
 CHORD_TOKEN = r"[A-G](#|b)?(m|maj7|maj|min7|m7|dim|aug|sus2|sus4|add9|6|9|11|13)?"
 
-def remove_chords_preserve_spacing(raw:str) -> str:
-    def replacer(match):
-        token = match.group(0)
-        return " " if ChordDetector.is_main_chord(token) else token
-    return re.sub(r'\b[^\s]+b', replacer, raw)
-
 def clean_duplicate_chord_blocks(text):
     """
     Removes duplicated chord blocks created by MS Word HTML.
@@ -127,10 +121,10 @@ def music_organizer(paragraphs):
 
     for p in paragraphs:
         p_tag = ensure_tag(p)
-        text= p_tag.get_text(separator="", strip=True)
+        text= p_tag.get_text(separator=" ", strip=True)
+
         raw = re.sub(r"\u00a0","",text)
         raw = re.sub(r"[\t]+"," ",raw)
-        raw = raw.strip()
         raw = clean_duplicate_chord_blocks(raw)
 
         if not raw:
@@ -145,45 +139,37 @@ def music_organizer(paragraphs):
         ]
 
         # PURE CHORD LINE (ex: "Am - D - G - C - Bm")
-        tokens = raw.replace("-","").split()
         if tokens and all(ChordDetector.is_main_chord(t) for t in tokens):
             chords = normalize_chord_line(raw).split()
-            # remove consecutive duplicates from span flattening
-            unique = []
-            for c in inline_chords:
-                if not unique or unique[-1] != c:
-                    unique.append(c)
-
+            
             lines.append({
                 "lyrics": "",
-                "chords": unique.copy()
+                "chords": chords()
             })
-            pending_chords = unique.copy()
+            pending_chords = chords
             continue
 
-        # MIXED LINE: lyrics + chords in same paragraph
-        tokens = raw.split()
-        lyrics_tokens = [
-            t for t in tokens
-            if not ChordDetector.is_main_chord(t)
-        ]
-        lyric_only = "".join(lyrics_tokens)
-
-        lines.append({
-                "lyrics": lyric_only,
-                "chords": inline_chords.copy()
-            })
-        pending_chords = None
-        continue
-
-        # LYRIC FOLLOWING CHORD BLOCK
-        if pending_chords:
+        if pending_chords and not inline_chords:
             lines.append({
-                "lyrics": raw,
-                "chords": pending_chords.copy()
+                "lyrics":raw,
+                "chords":pending_chords
             })
             pending_chords = None
             continue
+
+        # MIXED LINE: lyrics + chords in same paragraph
+        if inline_chords:
+            lyrics_tokens = [
+            t for t in tokens
+            if not ChordDetector.is_main_chord(t)
+        ]
+
+        lines.append({
+                "lyrics":" ".join(lyrics_tokens),
+                "chords": inline_chords
+            })
+        pending_chords = None
+        continue
 
         # PURE LYRICS
         lines.append({
