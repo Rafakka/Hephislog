@@ -1,26 +1,33 @@
 
 <div align="center"><img width="424" height="424" alt="Hephislog_icon" src="https://github.com/user-attachments/assets/69655ad8-ee6a-44d2-9657-15db7d7d60d1" /></div>
 
-[Leia o resumo em pt-br](docs/readme-pt-br.md)
+<br>
+
+>🇧🇷 [Leia o resumo em pt-br](docs/readme-pt-br.md)
+
 
 ## Hephislogº - Event-Driven Swarm Pipeline for Inteligent Data Ingestion & Normalization
+<br>
 
-  The system is built as a swarm of single-resposability agents, coordinated via and internal event bus, enabling flexible orchestration, traceability, and continuos learning across runs.
+&nbsp;&nbsp;&nbsp;&nbsp;The system is built as a swarm of single-resposability agents, coordinated via and internal event bus, enabling flexible orchestration, traceability, and continuos learning across runs.
 
-  This project demonstrates production-grade patterns commonly required in IT consulting, system integration, data plataforms, and observability-heavy enviroments.
+&nbsp;&nbsp;&nbsp;&nbsp;This project demonstrates production-grade patterns commonly required in IT consulting, system integration, data plataforms, and observability-heavy enviroments.
 
-  Hephislogº is a modular, event driven processing framework designed to ingest unstructured inputs, infer intent through probabilistic signals, and transform them into validated, normalized, and auditable outputs, without hard coded pipelines.
+&nbsp;&nbsp;&nbsp;&nbsp;Hephislogº is a modular, event driven processing framework designed to ingest unstructured inputs, infer intent through probabilistic signals, and transform them into validated, normalized, and auditable outputs, without hard coded pipelines.
 
-## Core Concepts
+<br>
 
-### Event-Driven Architecture
+## ✅ Core Concepts
 
-All processing is coordinated through a decoupled event bus. 
+
+### 🗓️ Event-Driven Architecture
+
+All processing is coordinated through a decoupled event bus.<br>
 Agents subscribe to semantic events (e.g. system.input_received, intent.organize.music) rather than calling each other directly.
 
-### Swarm-Based Agent Design
+### 🐝 Swarm-Based Agent Design
 
-Each agent performs one well-defined role:
+&nbsp;&nbsp;&nbsp;&nbsp;Each agent performs one well-defined role:
 
 - sniffing & signal extraction
 - input identification
@@ -30,17 +37,17 @@ Each agent performs one well-defined role:
 - packing & persistence
 - reporting & diagnostics
 
-### Probabilistic Decision Layer
+### 📈 Probabilistic Decision Layer
 
-Instead of rigid routing rules, inputs are evaluated using confidence-weighted “smells”, allowing the system to:
+&nbsp;&nbsp;&nbsp;&nbsp;Instead of rigid routing rules, inputs are evaluated using confidence-weighted “smells”, allowing the system to:
 
 - decline low-confidence flows safely
 - adapt to ambiguous or noisy data
 - learn from previous outcomes over time
 
-### Full Observability & Audit Trail
+### 👓 Full Observability & Audit Trail
 
-Every run produces a structured execution context:
+&nbsp;&nbsp;&nbsp;&nbsp;Every run produces a structured execution context:
 
 - facts emitted per stage
 - agent actions and decisions
@@ -57,12 +64,12 @@ Every run produces a structured execution context:
 - Universal packer serializes output into domain-ready artifacts
 - Finalizer & Reporter agents persist results and generate diagnostics
 
-The pipeline is self-orchestrating — adding a new domain requires no central rewrite.
+&nbsp;&nbsp;&nbsp;&nbsp;The pipeline is self-orchestrating — adding a new domain requires no central rewrite.
 
 ### 🧩 Designed for Extension
 
 Plug-in friendly (new agents auto-register via decorators)
-Domain-agnostic core (music, recipes, APIs, documents, etc.)
+&nbsp;&nbsp;&nbsp;&nbsp;Domain-agnostic core (music, recipes, APIs, documents, etc.)
 
 Clear separation between:
 
@@ -90,5 +97,5 @@ This makes Hephislog° suitable as:
 
   ---
 
-1. [Read about Architecture](docs/architecture.md)
-2. [Read about Philosophy](docs/philosophy.md)
+🗎 1.[Read about Architecture](docs/architecture.md)<br>
+🗎 2.[Read about Philosophy](docs/philosophy.md)<br>
