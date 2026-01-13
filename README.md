@@ -1,3 +1,6 @@
+
+<div align="center"><img width="424" height="424" alt="Hephislog_icon" src="https://github.com/user-attachments/assets/69655ad8-ee6a-44d2-9657-15db7d7d60d1" /></div>
+
 ENG
 
 ## Hephislogº - Event-Driven Swarm Pipeline for Inteligent Data Ingestion & Normalization
@@ -145,7 +148,7 @@ Cada execução produz um contexto de execução estruturado:
 
 O pipeline é auto-orquestrado — adicionar um novo domínio não requer nenhuma reescrita central.
 
-- ### 🧩 Projetado para Extensões
+### 🧩 Projetado para Extensões
 
 Amigável a plug-ins (novos agentes se registram automaticamente via decoradores)
 
@@ -174,3 +177,5 @@ Isso torna o Hephislog° adequado como:
 - Registro e geração de relatórios estruturados
 - Fluxos testáveis ​​(testes de integração simulam pipelines completos)
 - Acoplamento zero entre agentes
+
+  ---
