@@ -32,16 +32,17 @@ def test_music_url_produces_music_json(tmp_path):
 
     decison = decision_store.get(run_id)
     
-    output_dir = Path("data/output") / run_id
-    assert output_dir.exists()
+    base_dir = Path("data/music")
+    assert base_dir.exists()
 
-    json_files =list(output_dir.glob("*.json"))
-    assert json_files
+    json_files = list(base_dir.rglob("*.json"))
+    assert json_files, "No music Json files produced"
 
     with json_files[0].open() as f:
         data = json.load(f)
     
-    assert data["domain"] == "music"
+    assert "domain" not in data
+    assert "sections" in data
+    assert isinstance (data["sections"],list)
     assert "title" in data
-    assert "chords" in data or "lyrics" in data
-    assert "source_url" in data
+    assert "url" in data

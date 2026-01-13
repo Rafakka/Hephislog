@@ -9,7 +9,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 class NormalizerAgent:
-
     def __init__(self):
         print("7 - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
@@ -27,6 +26,9 @@ class NormalizerAgent:
             logger.warning("Normalizer received event without sheet.")
             return
         
+        if hasattr(sheet,"model_dump"):
+            sheet = sheet.model_dump()    
+
         run_id = sheet["run_id"]
 
         if not run_id:
@@ -40,16 +42,17 @@ class NormalizerAgent:
             )
             return
 
-        raw_lines = []
-        for section in sheet.get("sections",[]):
-            raw_lines.extend(section.get("lines",[]))
+        raw_lines = [
+            line
+            for section in sheet["sections"]
+            for line in section["lines"]
+        ]
 
         normalized = music_normalizer(
             raw_lines=raw_lines,
             url=sheet["source"],
             run_id=sheet["run_id"]
         )
-
 
         if not normalized:
             run_context.touch(
@@ -66,6 +69,9 @@ class NormalizerAgent:
                 result="declined",
                 reason="failed at normalizing",
                 )
+            return
+
+        sheet["normalized"] = normalized
 
         run_context.touch(
                 run_id,
@@ -84,7 +90,9 @@ class NormalizerAgent:
 
         event_bus.emit("music.normalized", {
             "domain":"music",
-            "sheet":normalized.model_dump()
+            "sheet":sheet,
+            "confidence":payload.get("confidence"),
+            "run_id": run_id
         })
 
     @on_event("recipe.organized")

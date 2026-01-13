@@ -33,9 +33,11 @@ class ChordSheetSchema(BaseSchema):
     url: str
     run_id: str
 
-    @field_validator("sections")
+    @field_validator("sections", mode="before")
     @classmethod
     def must_have_sections(cls, v):
+        if v is None:
+            raise ValueError("sections is none(schema constrution failed)")
         if not v:
             raise ValueError("ChordSheet must contain at least one section")
-            return v
+        return v

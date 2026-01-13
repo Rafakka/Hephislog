@@ -28,7 +28,7 @@ class UniversalPackerAgent:
 
     def _pack_domain(self, domain: str, payload: dict):
         print("RAN:",self.__class__.__name__) 
-        sheet =  payload.get["sheet"]
+        sheet =  payload.get("sheet")
 
         if not sheet:
             logger.warning("Normalizer received event without sheet.")
@@ -49,7 +49,8 @@ class UniversalPackerAgent:
 
         normalized = sheet["normalized"]
         source = sheet["source"]
-        confidence = sheet["confidence"]
+        confidence = payload.get("confidence")
+        domain = payload.get("domain")
 
         if not run_id:
             logger.warning("run id is missing",
@@ -73,8 +74,6 @@ class UniversalPackerAgent:
             serialized = normalized_content
 
         packed = pack_data(domain, normalized_content)
-
-        
 
         if not packed:
             run_context.touch(

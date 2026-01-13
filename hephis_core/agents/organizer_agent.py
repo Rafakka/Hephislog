@@ -1,6 +1,6 @@
 from hephis_core.services.detectors.chord_detector import ChordDetector
 from hephis_core.services.cleaners.chord_cleaner import normalize_chord_line
-from hephis_core.schemas.music_schemas import ChordSheetSchema
+from hephis_core.schemas.music_schemas import ChordSheetSchema, ChordLineSchema, ChordSectionSchema
 from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
@@ -45,7 +45,8 @@ class OrganizerAgent:
 
     @on_event("intent.organize.music")
     def handle_music(self, payload):
-        print("RAN:",self.__class__.__name__) 
+        print("RAN:",self.__class__.__name__)
+
         raw = payload.get("raw",{})
         text = raw.get("text","")
         source = payload.get("source")
@@ -116,11 +117,18 @@ class OrganizerAgent:
                 )
             return
         
-        sections = [{
-            "name":"default",
-            "lines":lines,
-        }]
+        section = ChordSectionSchema(
+            name = title,
+            lines = [
+                ChordLineSchema(**line)
+                if isinstance(line, dict)
+                else line
+                for line in lines
+            ]
+        )
 
+        sections = [section]
+        
         run_context.touch(
                 run_id,
                 agent="OrganizerAgent",
@@ -136,7 +144,8 @@ class OrganizerAgent:
             reason="file_accepted"
             )
 
-        print(f"THIS IS SECTIONS ORGANIZED: {sections}")
+        assert sections is not None, "Section is none before schema creation"
+        assert isinstance(sections, list), type(sections)
 
         sheet = ChordSheetSchema (
             title = title,
@@ -148,9 +157,10 @@ class OrganizerAgent:
             run_id=run_id
         )
 
+        print(f"FINAL SHEET:", sheet.model_dump())
+
         event_bus.emit("music.organized", {
             "domain": "music",
-            "sections": sections,
             "sheet":sheet.model_dump(),
             "confidence": confidence,
             "run_id": run_id,

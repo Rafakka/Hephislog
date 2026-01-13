@@ -7,87 +7,282 @@
       "name": "Default",
       "lines": [
         {
-          "lyrics": "Take on me - a-ha\n\n\n\n\n\n\n\n\n\nTake on me\n(intro)\n(midi)\n\n\n Am - D - G - C - Bm (3x)\n\n Am\n- DG -\nC\nBm \n1. Talking away, I don't\nknow what I'm to say,\n\nAmDG\nC Bm \n I'll say it anyway,\ntoday's another day to find you. \nAm\nD - Em C \n Shine away, I'll be coming for your love OK. \n\n G BmEmC G BmEm C \nTake on me (take on me), take me\non (take on me), \nGBmEm - C\n- G - Bm - C - D\n\nI'll be gone in a day or two. \n\n Am - D G-\nC\nBm\n2. So, needless to say, at odds and ends but\nI'll be \n Am\nD G\nCBm\n stumbling away, slowly\nlearning that life is OK.\n Am D - Em C\n Say after me, it's much better to be safe than sorry. \n\n G BmEmC G BmEm C \nTake on me (take on me), take me\non (take on me), \nGBmEm -\nC - G - Bm - C -\nD \nI'll be gone in a day\nor two. \n\n+ Am - D - G - C - Bm (3x)\n\n\nAm -\nD\nG-\nC \nBm\n3. Oh, things that you say, yeah, is it life or just a play,\n\nAm D\nG C Bm\n my worries away, you're all\nthe things I've got to remember. \nAm D - Em C\n You shine away, I'll be coming for you anyway. \n\n G BmEmC G BmEm C GBmEm - C\nTake on me (take on me), take me\non (take on me), I'll be gone.\n\nrepeat 2 x and fade. \n\n(capo 2nd) (A-Ha)",
+          "lyrics": "Take on me - a-ha",
+          "chords": []
+        },
+        {
+          "lyrics": "Take on me",
+          "chords": []
+        },
+        {
+          "lyrics": "(intro)",
+          "chords": []
+        },
+        {
+          "lyrics": "(midi)",
+          "chords": []
+        },
+        {
+          "lyrics": "- DG -",
           "chords": [
-            "a",
-            "Am",
+            "Am"
+          ]
+        },
+        {
+          "lyrics": "1. Talking away, I don't",
+          "chords": [
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "know what I'm to say,",
+          "chords": [
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "I'll say it anyway,",
+          "chords": [
+            "C",
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "today's another day to find you.",
+          "chords": [
+            "C",
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "Shine away, I'll be coming for your love OK.",
+          "chords": [
             "D",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "Take on me (take on me), take me",
+          "chords": [
             "G",
-            "C",
             "Bm",
-            "Am",
-            "C",
-            "Bm",
-            "AmDG",
-            "C",
-            "Bm",
-            "Am",
-            "D",
             "Em",
             "C",
             "G",
-            "BmEmC",
-            "G",
-            "BmEm",
-            "C",
-            "GBmEm",
-            "C",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "on (take on me),",
+          "chords": [
             "G",
             "Bm",
-            "C",
-            "D",
-            "a",
-            "Am",
-            "D",
-            "G",
-            "C",
-            "Bm",
-            "Am",
-            "D",
-            "G",
-            "CBm",
-            "Am",
-            "D",
             "Em",
             "C",
             "G",
-            "BmEmC",
-            "G",
-            "BmEm",
-            "C",
-            "GBmEm",
-            "C",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "I'll be gone in a day or two.",
+          "chords": [
             "G",
             "Bm",
             "C",
-            "D",
-            "a",
-            "Am",
-            "D",
-            "G",
+            "D"
+          ]
+        },
+        {
+          "lyrics": "2. So, needless to say, at odds and ends but",
+          "chords": [
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "I'll be",
+          "chords": [
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "stumbling away, slowly",
+          "chords": [
             "C",
-            "Bm",
-            "Am",
-            "D",
-            "G",
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "learning that life is OK.",
+          "chords": [
             "C",
-            "Bm",
-            "a",
-            "Am",
-            "D",
-            "G",
-            "C",
-            "Bm",
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "Say after me, it's much better to be safe than sorry.",
+          "chords": [
             "Am",
             "D",
             "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "Take on me (take on me), take me",
+          "chords": [
+            "G",
+            "Bm",
+            "Em",
             "C",
             "G",
-            "BmEmC",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "on (take on me),",
+          "chords": [
             "G",
-            "BmEm",
+            "Bm",
+            "Em",
             "C",
-            "GBmEm",
+            "G",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "I'll be gone in a day",
+          "chords": [
+            "D"
+          ]
+        },
+        {
+          "lyrics": "or two.",
+          "chords": [
+            "D"
+          ]
+        },
+        {
+          "lyrics": "3. Oh, things that you say, yeah, is it life or just a play,",
+          "chords": [
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "my worries away, you're all",
+          "chords": [
+            "G",
+            "C",
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "the things I've got to remember.",
+          "chords": [
+            "G",
+            "C",
+            "Bm"
+          ]
+        },
+        {
+          "lyrics": "You shine away, I'll be coming for you anyway.",
+          "chords": [
+            "Am",
+            "D",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "Take on me (take on me), take me",
+          "chords": [
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "on (take on me), I'll be gone.",
+          "chords": [
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "repeat 2 x and fade",
+          "chords": [
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": ".",
+          "chords": [
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C"
+          ]
+        },
+        {
+          "lyrics": "(capo 2nd)    (A-Ha)",
+          "chords": [
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
+            "C",
+            "G",
+            "Bm",
+            "Em",
             "C"
           ]
         }
