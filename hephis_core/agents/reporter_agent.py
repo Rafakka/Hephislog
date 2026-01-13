@@ -65,8 +65,6 @@ class ReporterAgent:
         }
         save_report(run_id, report)
         self.output(report)
-
-
     
     def infer_veredict(self, findings, context):
 
