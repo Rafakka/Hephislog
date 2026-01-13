@@ -17,7 +17,8 @@ ENG
 
 ### Event-Driven Architecture
 
-All processing is coordinated through a decoupled event bus. Agents subscribe to semantic events (e.g. system.input_received, intent.organize.music) rather than calling each other directly.
+All processing is coordinated through a decoupled event bus. 
+Agents subscribe to semantic events (e.g. system.input_received, intent.organize.music) rather than calling each other directly.
 
 ### Swarm-Based Agent Design
 
@@ -105,7 +106,8 @@ PT-BR
 
 ### Arquitetura Orientada a Eventos
 
-Todo o processamento é coordenado por meio de um barramento de eventos desacoplado. Os agentes se inscrevem em eventos semânticos (por exemplo, system.input_received, intent.organize.music) em vez de se comunicarem diretamente.
+Todo o processamento é coordenado por meio de um barramento de eventos desacoplado. 
+Os agentes se inscrevem em eventos semânticos (por exemplo, system.input_received, intent.organize.music) em vez de se comunicarem diretamente.
 
 ### Projeto de Agentes Baseado em Enxame
 
