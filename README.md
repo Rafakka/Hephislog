@@ -6,6 +6,8 @@ ENG
 
   This project demonstrates production-grade patterns commonly required in IT consulting, system integration, data plataforms, and observability-heavy enviroments.
 
+  Hephislogº is a modular, event driven processing framework designed to ingest unstructured inputs, infer intent through probabilistic signals, and transform them into validated, normalized, and auditable outputs, without hard coded pipelines.
+
 ---
 
 PT-BR
