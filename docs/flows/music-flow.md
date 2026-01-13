@@ -2,8 +2,7 @@
 
 ## PURPOSE:
 
-This flow processes a music-related URL, extracts lyrics and chords, and produces a structured JSON representation suitable
-for downstream use.
+This flow processes a music-related URL, extracts lyrics and chords, and produces a structured JSON representation suitable for downstream use.
 
 ## HIGH-LEVEL-FLOW (Agent-Oriented)
 
@@ -54,33 +53,30 @@ system.run.completed
 
 ## Notes:
  
-**SnifferAgent** appears multiple times in this flow.
-Each appearance represents a different confidence stage in domain interference, allowing the DecisionAgentto select the correct
-domain based on accumulated signals.
+**SnifferAgent** appears multiple times in this flow. Each appearance represents a different confidence stage in domain interference, allowing the DecisionAgent to select the correct domain based on accumulated signals.
 
 ## EVENT TIMELINE
 
-1.system.input_received
-2.system.external_input
-3.system.input_to_be_identified
-4.system.input_identified
-5.system.extraction.completed
-6.system.smells.to.advisor
-7.system.advisor.to.html.cleaner
-8.system.cleaner.to.sniffer
-9.system.smells.to.decisionagent
-10.intent.organize.music
-11.music.organized
-12.music.normalized
-13.music.pipeline_finished
-14.system.run.completed
+1. system.input_received
+2. system.external_input
+3. system.input_to_be_identified
+4. system.input_identified
+5. system.extraction.completed
+6. system.smells.to.advisor
+7. system.advisor.to.html.cleaner
+8. system.cleaner.to.sniffer
+9. system.smells.to.decisionagent
+10. intent.organize.music
+11. music.organized
+12. music.normalized
+13. music.pipeline_finished
+14. system.run.completed
 
 ## AGENTS AND RESPONSABILITIES
 
 ### SnifferAgent
 
-    This agent sniffs and scents data, it evaluates and annotates incoming data with probabilitics domain signals, 
-    it has three phases where:
+    This agent sniffs and scents data, it evaluates and annotates incoming data with probabilitics domain signals, it has three phases where:
 
     1. Sniffs and scents the first assumptions of what can be the data.
     2. Sniffs again after extraction of data, and make scents weaker or stronger.
@@ -96,8 +92,7 @@ domain based on accumulated signals.
 
 ### UniversalExtractorAgent
 
-    This agent tries to extract data into a parseable data shape, based on scents by SnifferAgent, 
-    and the advise of type by IdentifierAgent.
+    This agent tries to extract data into a parseable data shape, based on scents by SnifferAgent, and the advise of type by IdentifierAgent.
 
 ### RawMaterialAdvisorAgent
 
@@ -129,8 +124,7 @@ domain based on accumulated signals.
 
 ### ReportAgent
 
-    This agent trigger when flow stops, if he completes successifully or not. It always give information about the current flow,
-    it reports what happened that stopped the flow.
+    This agent trigger when flow stops, if he completes successifully or not. It always give information about the current flow, it reports what happened that stopped the flow.
 
 ## SCHEMAS
 
