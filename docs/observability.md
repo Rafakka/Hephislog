@@ -105,5 +105,6 @@ See Also:
 > 2. 📐 [Diagrams](diagrams/)
 > 3. 🔭 [About Observability Layer](observability.md)
 > 4. 📜 [About this system Philosophy's](philosophy.md)
+> 5. 🔀 [About Data Flows](flows/README.md)
 
 ---
