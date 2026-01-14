@@ -11,7 +11,7 @@ Observability here does not mean logging, monitoring, or metrics.
 It means the ability to reconstruct what happened and why from the system’s own outputs, without re-executing the pipeline.   
 
 
-### Core Principle
+### 🎯 Core Principle
 
 <br>
 
@@ -40,7 +40,7 @@ The run context is append-only and execution-scoped.
 
 ---
 
-### Separation of Concerns
+### 📚 Separation of Concerns
 
 <br>
 
@@ -54,7 +54,7 @@ This separation ensures that explanation is not time-dependent and does not inte
 
 ---
 
-### Reporter Role
+### 🕵🏻 Reporter Role
 
 <br>
 
@@ -74,7 +74,7 @@ This allows reports to be:
 
 ---
 
-### Silent Success
+### 🔇 Silent Success
 
 <br>
 
@@ -85,7 +85,7 @@ Observability includes the ability to explain why nothing happened.
 
 ---
 
-### Architectural Outcome
+### 🔗 Architectural Outcome
 
 <br>
 
