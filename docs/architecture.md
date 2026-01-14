@@ -320,5 +320,5 @@ See also:
 > 🔀 1. [About Data Flows](docs/flows/)   
 > 🔭 2. [About Observability Layer](docs/observability.md)   
 > 📐 3. [Diagrams](docs/diagrams/)   
-> 📜 4. [About this system Philosophy's](docs/philosophy.md)   
+> 📜 4. [About this system's Philosophy](docs/philosophy.md)   
 
