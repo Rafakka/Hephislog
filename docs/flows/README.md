@@ -16,7 +16,7 @@ Flow are documented to preserve architectural intent and prevent knowledge loss 
 
 <br>
 
-> 1. 🏗️ [About Architecture](docs/architecture.md)
-> 2. 🔭 [About Observability Layer](docs/observability.md)   
-> 3. 📐 [Diagrams](diagrams/)   
-> 4. 📜 [About this system's Philosophy](docs/philosophy.md)   
+> 1. 🏗️ [About Architecture](../architecture.md)
+> 2. 🔭 [About Observability Layer](../observability.md)   
+> 3. 📐 [Diagrams](../diagrams/readme.md)   
+> 4. 📜 [About this system's Philosophy](../philosophy.md)   
