@@ -101,7 +101,7 @@ This model is visualized in the Observability Flow Diagram, which shows how fact
 ---
 
 See Also:
-> 1. 🏗️ [Architerute Overview](docs/architecture.md)
+> 1. 🏗️ [Architecture Overview](docs/architecture.md)
 > 2. 📐 [Diagrams](docs/diagrams/)
 
 
