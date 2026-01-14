@@ -108,7 +108,7 @@ It is a diagram of the philosophy.
 
 See also:
 > 1. 🔀 [About Data Flows](flows/README.md)
-> 2. 📖 [Back To Root "README"](../../README.md) 
+> 2. 📖 [Back To Root "README"](../README.md) 
 > 3. 🏗️ [About Architecture](architecture.md)   
 > 4. 🔭 [About Observability Layer](observability.md)   
 > 5. 📐 [Diagrams](diagrams/)   
