@@ -74,3 +74,5 @@ O Hephislog nasce de três dores comuns:
 <br>
 
 ---
+
+> 1. 📐 [Diagramas](docs/diagrams/)
