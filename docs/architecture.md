@@ -50,12 +50,12 @@ HephisLog° treats computation as craft, not magic.
 
 Key beliefs:
 
-- Determinism is a virtue, not a limitation
-- Transparency beats persuasion
-- Structure precedes intelligence
-- Pipelines should be inspectable, not mysterious
-- Logarithms matter here not symbolically, but philosophically:
-- logarithms compress chaos, reveal scale, expose growth patterns without exaggeration
+- Determinism is a virtue, not a limitation.
+- Transparency beats persuasion.
+- Structure precedes intelligence.
+- Pipelines should be inspectable, not mysterious.
+- Logarithms matter here not symbolically, but philosophically.
+- Logarithms compress chaos, reveal scale, expose growth patterns without exaggeration.
 
 Intelligence is not noise reduction — it is scale-aware transformation.
 
