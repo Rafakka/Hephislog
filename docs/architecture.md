@@ -317,8 +317,8 @@ This makes it resilient, extensible, and suitable for real-world systems where i
 ---
 
 See also:
-> 🔀 1. [About Data Flows](docs/flows/)   
-> 🔭 2. [About Observability Layer](docs/observability.md)   
-> 📐 3. [Diagrams](docs/diagrams/)   
-> 📜 4. [About this system's Philosophy](docs/philosophy.md)   
+> 🔀 1. [About Data Flows](flows/)   
+> 🔭 2. [About Observability Layer](observability.md)   
+> 📐 3. [Diagrams](diagrams/)   
+> 📜 4. [About this system's Philosophy](philosophy.md)   
 
