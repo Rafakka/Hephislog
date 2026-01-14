@@ -77,4 +77,4 @@ O Hephislog nasce de três dores comuns:
 
 > 1. 📐 [Diagramas](docs/diagrams/)
 > 2. 🔀 [About Data Flows](flows/README.md)
-> 3. 📖 [Back To Root "README"](../../README.md)
+> 3. 📖 [Back To Root "README"](../README.md)
