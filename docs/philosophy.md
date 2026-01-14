@@ -107,6 +107,7 @@ It is a diagram of the philosophy.
 ---
 
 See also:
-> 1. 🔀 [About Data Flows](flows/)   
-> 2. 🔭 [About Observability Layer](observability.md)   
-> 3. 📐 [Diagrams](diagrams/)   
+> 1. 🔀 [About Data Flows](flows/)
+> 2. 🏗️ [About Architecture](architecture.md)   
+> 3. 🔭 [About Observability Layer](observability.md)   
+> 4. 📐 [Diagrams](diagrams/)   
