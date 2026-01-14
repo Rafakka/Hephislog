@@ -320,5 +320,6 @@ See also:
 > 🔀 1. [About Data Flows](flows/README.md)   
 > 🔭 2. [About Observability Layer](observability.md)   
 > 📐 3. [Diagrams](diagrams/)   
-> 📜 4. [About this system's Philosophy](philosophy.md)   
+> 📖 4 .[Back To Root "README"](../../README.md)    
+> 📜 5. [About this system's Philosophy](philosophy.md)   
 
