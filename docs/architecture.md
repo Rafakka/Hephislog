@@ -317,7 +317,7 @@ This makes it resilient, extensible, and suitable for real-world systems where i
 ---
 
 See also:
-> 🔀 1. [About Data Flows](flows/README.md)
+> 🔀 1. [About Data Flows](flows/README.md)   
 > 🔭 2. [About Observability Layer](observability.md)   
 > 📐 3. [Diagrams](diagrams/)   
 > 📜 4. [About this system's Philosophy](philosophy.md)   
