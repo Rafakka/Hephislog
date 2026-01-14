@@ -97,6 +97,6 @@ This makes Hephislog° suitable as:
 
   ---
 
-🗎 1.[Read about Architecture](docs/architecture.md)<br>
-🗎 2.[Read about Philosophy](docs/philosophy.md)<br>
-🗎 3.[Read about Music data flow](docs/flows/music-flow.md)<br>
+🏗️ 1.[Read about Architecture](docs/architecture.md)<br>
+📜 2.[Read about Philosophy](docs/philosophy.md)<br>
+🔀 3.[Read about data flow](docs/flows/README.md)<br>
