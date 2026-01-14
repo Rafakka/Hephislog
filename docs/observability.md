@@ -101,8 +101,9 @@ This model is visualized in the Observability Flow Diagram, which shows how fact
 ---
 
 See Also:
-> 1. 🏗️ [Architecture Overview](docs/architecture.md)
-> 2. 📐 [Diagrams](docs/diagrams/)
-
+> 1. 🏗️ [Architecture Overview](architecture.md)
+> 2. 📐 [Diagrams](diagrams/)
+> 3. 🔭 [About Observability Layer](observability.md)
+> 4. 📜 [About this system Philosophy's](philosophy.md)
 
 ---
