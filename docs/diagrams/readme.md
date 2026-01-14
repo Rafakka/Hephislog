@@ -37,3 +37,11 @@ Shows how advisory signals are resolved into a single domain decision.
 Illustrates how facts accumulate into a run context and are later reported.
 
 </details>
+
+<br>
+
+> 📖 1.[Back To Root "README"](../../README.md)   
+> 🔀 2. [About Data Flows](../flows/README.md)   
+> 🔭 3. [About Observability Layer](../observability.md)   
+> 📜 4. [About this system's Philosophy](../philosophy.md)      
+
