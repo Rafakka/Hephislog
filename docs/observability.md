@@ -96,5 +96,13 @@ Because observability is structural:
 - confidence and uncertainty are explicit
 - the system can decline safely without hiding behavior
 
+This model is visualized in the Observability Flow Diagram, which shows how facts and flow independently of execution.
+
+---
+
+See Also:
+> 1. 🏗️ [Architerute Overview](docs/architecture.md)
+> 2. 📐 [Diagrams](docs/diagrams/)
+
 
 ---
