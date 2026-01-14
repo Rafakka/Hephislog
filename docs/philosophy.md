@@ -62,7 +62,7 @@ Intelligence is not noise reduction — it is scale-aware transformation.
 ### Relationship With Data
 
 HephisLog° does not “consume” data.
-It accepts responsibility for it.
+It accepts responsability for it.
 
 - Raw data is treated as ore
 - Schemas are molds
@@ -71,7 +71,7 @@ It accepts responsibility for it.
  
 The system believes:
 
-- If data breaks your logic, your logic was dishonest.
+- If data breaks your logic, your logic was an assumption of how things work.
 
 So HephisLog° adapts structure without lying about uncertainty.
 
