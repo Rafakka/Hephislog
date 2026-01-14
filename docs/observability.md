@@ -106,6 +106,6 @@ See Also:
 > 3. 🔭 [About Observability Layer](observability.md)
 > 4. 📜 [About this system Philosophy's](philosophy.md)
 > 5. 🔀 [About Data Flows](flows/README.md)
-> 6. 📖 [Back To Root "README"](../../README.md)
+> 6. 📖 [Back To Root "README"](../README.md)
 
 ---
