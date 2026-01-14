@@ -20,4 +20,5 @@ Flow are documented to preserve architectural intent and prevent knowledge loss 
 > 4. 🧑🏻‍🍳 [About Recipe Flow](../flows/recipe-flow.md)
 > 5. 📐 [Diagrams](../diagrams/readme.md)
 > 6. 🔭 [About Observability Layer](../observability.md)   
-> 7. 📜 [About this system's Philosophy](../philosophy.md)   
+> 7. 📜 [About this system's Philosophy](../philosophy.md)
+> 8. 📖 [Back To Root "README"](../../README.md)    
