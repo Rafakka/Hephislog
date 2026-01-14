@@ -155,3 +155,10 @@ Each failure emits a corresponding events and terminates the flow safetly.
 - Packer remains domain-agnostic by design
 
 --- 
+
+> 1. 🏗️ [About Architecture](../architecture.md)
+> 2. 🔀 [About General Data Flow](../flows/general-data-flow.md)
+> 3. 🧑🏻‍🍳 [About Recipe Flow](../flows/recipe-flow.md)
+> 4. 📐 [Diagrams](../diagrams/readme.md)
+> 5. 🔭 [About Observability Layer](../observability.md)   
+> 6. 📜 [About this system's Philosophy](../philosophy.md)   
