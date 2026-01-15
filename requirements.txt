@@ -4,3 +4,5 @@ lxml
 pydantic
 pyyaml
 python-dateutil
+cloudscraper
+playwright

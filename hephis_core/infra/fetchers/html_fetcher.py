@@ -2,6 +2,10 @@ import html
 import requests
 import logging
 from typing import Optional
+from playwright.sync_api import sync_playwright
+import time
+import cloudscraper
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +18,7 @@ DEFAULT_HEADERS = {
                 "Accept-language":"en-US,en;q=0.9,pt-BR;q=0.8",
 }
 
-
 def _fetch_with_requests(url:str) -> Optional[str]:
-
     try:                                                        
         requests.get(
             url,
@@ -40,36 +42,96 @@ def _fetch_with_requests(url:str) -> Optional[str]:
         return None
 
 def _fetch_with_playwright(url:str) -> Optional[str]:
+    with sync_playwright() as p:
+        browser =p.chromium.launch(
+            headless=False,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+            ],
+        )
+        context = browser.new_context(
+            headers=DEFAULT_HEADERS,
+            viewport={"width":1280,"height":800},
+        )
+        page=context.new_page()
+        page.goto(url, wait_until="networkidle", timeout=120_000)
+
+        for _ in range(10):
+            title = page.title()
+            if "Just a moment" not in title:
+                break
+            time.sleep(1)
+        
+        html = page.content()
+
+        browser.close()
+
+        if "cdn-cgi/challenge-platform" in html:
+            return None
+        if len(html) < 20_000:
+            return None
+        return html
+
+def _fetch_with_cloudscraper(url:str)->Optional[str]:
     try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        logger.warning("Playwright not installed")
-        return None
-    
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+        scraper = cloudscraper.create_scraper(
+            browser = {
+                "browser":"chrome",
+                "platform":"linux",
+                "mobile":"False",
+            }
+        )
+        resp = scraper.get(url, timeout=30)
+        resp.raise_for_status()
 
-            page.goto(url, wait_until="domcontentloaded",
-            timeout=60_000)
-            page.wait_for_timeout(2_000)
+        html = resp.text
 
-            html = page.content()
-            browser.close()
+        if not html or len(html) <20_000:
+            logger.info(
+                "cloudscraper returned short html",
+                extra={"url":url, "lenght":len(html) if html else 0},
+            )
+            return None
+        if "cf-challenge" in "html" or "Just a moment" in html:
+            logger.info(
+                "cloudfare challenge still present after cloudscraper",
+                extra={"url":url}
 
-            return html
+            )
+            return None
+        return html
+
     except Exception as exc:
-        logger.warning(
-            "playwright fetch failed",
-            extra={"url":url,"error":repr(exc)},
+        logger.info(
+            "cloudscraper failed",
+            extra={"url":url, "error":(exc)},
         )
         return None
 
-def fetch_url_as_html(url:str) -> Optional[str]:
-    if not isinstance(url, str) or not url.startswith("http"):
-        return None
+def looks_real(html:str|None)-> bool:
+    if not html:
+        return False
+    if "Just a moment" in html:
+        return False
+    if "cdn-cgi" in html:
+        return False
+    return len(html) > 20_000
+
+
+def fetch_url_as_html(url:str) -> str | None:
+    print("[FETCH] TRYING REQUESTS")
     html = _fetch_with_requests(url)
-    if html:
+    if looks_real(html):
         return html
-    return _fetch_with_playwright(url)
+    
+    print("[FETCH] TRYING CLOUDSCRAPER")
+    html = _fetch_with_cloudscraper(url)
+    if looks_real(html):
+        return html
+
+    print("[FETCH] TRYING PLAYWRIGHT")
+    html = _fetch_with_playwright(url)
+    if looks_real(html):
+        return html
+    return None

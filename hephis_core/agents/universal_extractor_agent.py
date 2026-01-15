@@ -67,6 +67,7 @@ class UniversalExtractorAgent:
                         continue
 
                     validator = self.validators.get(domain)
+
                     if not validator or validator(raw):
                         return domain, raw
 
@@ -154,14 +155,6 @@ class UniversalExtractorAgent:
         if result:
             domain, raw = result
 
-            wrapped = {
-                "stage":"material_raw",
-                "raw":raw,
-                "domain":domain,
-                "source":source,
-                "run_id":run_id,
-            }
-
         if not domain or not raw:
             run_context.touch(
                 run_id,
@@ -170,12 +163,12 @@ class UniversalExtractorAgent:
                 reason="no_domain_or_and_no_raw",
             )
             run_context.emit_fact(
-                    run_id,
-                    stage="extractor",
-                    component="UniversalExtractorAgent",
-                    result="declined",
-                    reason="no_domain_or_and_no_raw",
-                    )
+                run_id,
+                stage="extractor",
+                component="UniversalExtractorAgent",
+                result="declined",
+                reason="no_domain_or_and_no_raw",
+                )
             return
 
         if not run_id:
@@ -188,6 +181,23 @@ class UniversalExtractorAgent:
                     }
             )
             return
+
+        if isinstance(raw, dict):
+            wrapped = {
+                    "stage":"semantic",
+                    "data":raw,
+                    "domain":domain,
+                    "source":source,
+                    "run_id":run_id,
+                }
+        
+        print(f"THIS IS WRAPPED: {wrapped}")
+        
+        event_bus.emit(
+            "system.extraction.completed",
+            wrapped
+        )
+        return
 
         run_context.touch(
                 run_id,
@@ -203,6 +213,9 @@ class UniversalExtractorAgent:
                 result="accepted",
                 reason="valid_file_type",
                 )
+        
+        print(f"THIS IS RAW: {raw}")
+
         event_bus.emit(
             "system.extraction.completed",
             {   
