@@ -5,6 +5,7 @@ from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.services.detectors.chord_detector import ChordDetector
+from hephis_core.services.detectors.raw_detectors import early_advice_raw_input
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,13 @@ class SnifferAgent:
 
     def extract_sniff_text(self, raw) -> str | None:
         if isinstance(raw, dict):
-            raw_extracted = raw.get("text") or raw.get("lyrics") or raw.get("content") or ""
-            return raw_extracted
+            raw_extracted = (
+                raw.get("text") 
+                or raw.get("lyrics") 
+                or raw.get("content") 
+                )
+            if raw_extracted:
+                return raw_extracted
         if isinstance(raw, str):
             return raw
         else:
@@ -77,6 +83,7 @@ class SnifferAgent:
     def sniff_input(self, payload: dict):
         print("FIRST RAN:",self.__class__.__name__) 
         raw = payload.get("input")
+        url_state = payload.get("url_state")
         run_id = extract_run_id(payload)
 
         if not run_id:
@@ -90,7 +97,50 @@ class SnifferAgent:
             )
             return
         
-        ENV.reset()
+        advice = early_advice_raw_input(raw)
+
+        domain_hint = advice["domain-hint"]
+        url_stage = url_state or advice["url_stage"]
+        
+        if "url" in domain_hint:
+
+            run_context.touch(
+                    run_id=run_id,
+                    agent="SnifferAgent",
+                    action="rerouted_input",
+                    reason="url-detected",
+                    event="signalling-url-fetcher",
+                )
+            run_context.emit_fact(
+                        run_id,
+                        stage="semantic",
+                        component="SnifferAgent",
+                        result="ok",
+                        reason="signalling-url-fetcher",
+                        )
+            event_bus.emit(
+                "system.fetch_url_input",
+                {
+                    "smells": ENV.smells,
+                    "snapshots": ENV.snapshot(),
+                    "run_id":run_id,
+                    "source": payload.get("source"),
+                    "raw":raw,
+                    "url_state":"unresolved",
+                    "origin":{
+                    "type":"url",
+                    "value":raw,
+                    }
+                }
+            )
+            return
+        
+        if domain_hint != "url":
+            ENV.reset()
+
+        if payload.get("stage") == "semantic":
+            return
+
         self.sniff(raw)
 
         run_context.touch(

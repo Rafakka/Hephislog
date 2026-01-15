@@ -44,47 +44,31 @@ def _fetch_with_requests(url:str) -> Optional[str]:
 def _fetch_with_playwright(url: str) -> Optional[str]:
     with sync_playwright() as p:
         browser = p.chromium.launch(
-            headless=False,  # keep visible while debugging
+            headless=True,
             args=[
-                "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
+                "--disable-blink-features=AutomationControlled"
             ],
         )
 
         context = browser.new_context(
-            extra_http_headers=DEFAULT_HEADERS,
-            viewport={"width": 1280, "height": 800},
+            user_agent=DEFAULT_HEADERS["User-Agent"],
+            locale="pt-BR",
+            viewport={"width":1366,"height":768},
+            extra_http_headers={
+                "Accept-Language":
+                DEFAULT_HEADERS.get("Accept-Language","pt-BR,pt;q=0.9"),
+            },
         )
 
         page = context.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=60_000)
 
-        # wait for Cloudflare challenge to disappear
-        page.wait_for_function(
-            """
-            () => {
-                const title = document.title || "";
-                const body = document.body ? document.body.innerText : "";
-                return (
-                    !title.toLowerCase().includes("just a moment") &&
-                    !body.toLowerCase().includes("checking your browser")
-                );
-            }
-            """,
-            timeout=60_000,
-        )
-
-        # let JS finish rendering
-        page.wait_for_timeout(2000)
-
+        page.goto(url, timeout=60_000, wait_until="domcontentloaded")
+        
         html = page.content()
+
         browser.close()
 
-        if not html:
-            return None
-        if "cdn-cgi" in html.lower():
-            return None
-        if len(html) < 20_000:
+        if not html or "cdn-cgi" in html.lower():
             return None
 
         return html
@@ -109,7 +93,7 @@ def _fetch_with_cloudscraper(url:str)->Optional[str]:
                 extra={"url":url, "lenght":len(html) if html else 0},
             )
             return None
-        if "cf-challenge" in "html" or "Just a moment" in html:
+        if "cf-challenge" in html or "Just a moment" in html.lower():
             logger.info(
                 "cloudfare challenge still present after cloudscraper",
                 extra={"url":url}
@@ -125,37 +109,23 @@ def _fetch_with_cloudscraper(url:str)->Optional[str]:
         )
         return None
 
-def looks_real(html:str|None)-> bool:
-    if not html:
-        return False
-    lowered = html.lower()    
-    if "just a moment" in lowered:
-        return False
-    if "checking your browser" in lowered:
-        return False    
-    if "cdn-cgi" in lowered:
-        return False
-    return len(html) > 20_000
-
 
 def fetch_url_as_html(url:str) -> str | None:
     print("[FETCH] TRYING REQUESTS")
     html = _fetch_with_requests(url)
-    if looks_real(html):
+    if html:
         return html
     
     print("[FETCH] TRYING CLOUDSCRAPER")
     html = _fetch_with_cloudscraper(url)
-    if looks_real(html):
+    if html:
         return html
 
     print("[FETCH] TRYING PLAYWRIGHT")
     html = _fetch_with_playwright(url)
-    if looks_real(html):
+    if html:
         return html
-    
+
     if not html:
         print("HTML IS EMPTY")
         return None
-        
-    return None

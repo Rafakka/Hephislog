@@ -3,6 +3,8 @@ import json
 from urllib.parse import urlparse
 from pathlib import Path
 
+
+
 def is_str(value) -> bool:
     return isinstance(value, str)
 
@@ -82,6 +84,30 @@ def is_text(value):
     if is_file(value): return False
 
     return True
+
+RAW_DOMAIN_DETECTOR = [
+
+        ("file", is_file),
+        ("url", is_url),
+        ("json", is_json),
+        ("html", is_html),
+        ("text", is_text),
+
+        ]
+
+def early_advice_raw_input(value):
+    claims = []
+
+    for domain, detector in RAW_DOMAIN_DETECTOR:
+            if detector(value):
+                claims.append(domain)
+            if "url" in claims:
+                url_stage = "unresolved"
+            else:
+                url_stage = None
+
+    return {"raw":value,"domain-hint":claims,"url_stage":url_stage}
+    
 
 def detect_raw_type(value, env):
 
