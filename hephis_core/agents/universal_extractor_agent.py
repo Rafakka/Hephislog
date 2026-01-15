@@ -2,7 +2,7 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
-from hephis_core.infra.extractors.common.from_html import fetch_url_as_html
+from hephis_core.infra.fetchers.html_fetcher import fetch_url_as_html
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 import logging
@@ -25,7 +25,7 @@ class UniversalExtractorAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     def extract_any(self, value, raw_type):
-        
+
         print("REGISTRY KEYS:",EXTRACTOR_REGISTRY.keys())
 
         tried_types = set()
@@ -72,32 +72,18 @@ class UniversalExtractorAgent:
 
             return None
         
+        result = None
+
         result = try_type(value, raw_type)
         if result:
             return result
 
         if raw_type == "url":
-            html_value = fetch_url_as_html(value,"url")
-            if html_value:
-                return self.extract_any(value,"html")
-
+            html_value = fetch_url_as_html(value)
+            if not html_value:
+                return None
+            return self.extract_any(html_value,"html")
         
-        if raw_type != "html":
-            try:
-                html_value = fetch_url_as_html(value, raw_type)
-            except Exception as exc:
-                logger.debug(
-                    "HTML conversion failed",
-                    extra={
-                    "agent":self.__class__.__name__,
-                        "event":"extraction-by-universal-extractor",
-                        "raw_type":raw_type,
-                        "error":repr(exc),
-                    },
-                )
-
-            if html_value:
-                return try_type(html_value,"html")
         return None
 
     @on_event("system.input_identified")
