@@ -41,54 +41,52 @@ def _fetch_with_requests(url:str) -> Optional[str]:
             extra={"url":url,"error":repr(exc)}),
         return None
 
-def _fetch_with_playwright(url:str) -> Optional[str]:
+def _fetch_with_playwright(url: str) -> Optional[str]:
     with sync_playwright() as p:
-        browser =p.chromium.launch(
-            headless=False,
+        browser = p.chromium.launch(
+            headless=False,  # keep visible while debugging
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
             ],
         )
+
         context = browser.new_context(
             extra_http_headers=DEFAULT_HEADERS,
-            viewport={"width":1280,"height":800},
+            viewport={"width": 1280, "height": 800},
         )
-        page=context.new_page()
+
+        page = context.new_page()
         page.goto(url, wait_until="domcontentloaded", timeout=60_000)
 
+        # wait for Cloudflare challenge to disappear
         page.wait_for_function(
             """
-        ()=> {
-            const title = document.title || "";
-            const body = document.body ? document.body.innerText: "";
-            return(
-                !title.toLowerCase().includes("just a moment")&&
-                !body.toLowerCase()includes("checking your browser")
+            () => {
+                const title = document.title || "";
+                const body = document.body ? document.body.innerText : "";
+                return (
+                    !title.toLowerCase().includes("just a moment") &&
+                    !body.toLowerCase().includes("checking your browser")
                 );
             }
-        """, 
-            timeout=60_000
+            """,
+            timeout=60_000,
         )
 
+        # let JS finish rendering
         page.wait_for_timeout(2000)
 
         html = page.content()
-
-        for _ in range(10):
-            title = page.title()
-            if "Just a moment" not in title:
-                break
-            time.sleep(1)
-        
-        html = page.content()
-
         browser.close()
 
-        if "cdn-cgi/challenge-platform" in html:
+        if not html:
+            return None
+        if "cdn-cgi" in html.lower():
             return None
         if len(html) < 20_000:
             return None
+
         return html
 
 def _fetch_with_cloudscraper(url:str)->Optional[str]:
