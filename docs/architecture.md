@@ -12,7 +12,7 @@ While the README focuses on capabilities and outcomes, this document focuses on:
 
 - control flow
 
-- responsibility separation
+- responsability separation
 
 - architectural invariants
 
@@ -83,7 +83,7 @@ The pipeline is an emergent property of event flow.
 
 Each agent represents a functional role, not a processing stage.
 
-Examples of agent responsibilities include:
+Examples of agent responsabilities include:
 
 - signal detection
 
@@ -271,7 +271,7 @@ The system prefers:
 A declined run is considered successful system behavior when it prevents invalid output.
 
 
-### Extensibility Model
+### Extensability Model
 
 The architecture supports extension through:
 
@@ -315,3 +315,11 @@ This makes it resilient, extensible, and suitable for real-world systems where i
 
 
 ---
+
+See also:
+> 🔀 1. [About Data Flows](flows/README.md)   
+> 🔭 2. [About Observability Layer](observability.md)   
+> 📐 3. [Diagrams](diagrams/)   
+> 📖 4 .[Back To Root "README"](../README.md)    
+> 📜 5. [About this system's Philosophy](philosophy.md)   
+

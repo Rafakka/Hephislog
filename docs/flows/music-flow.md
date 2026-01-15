@@ -1,10 +1,12 @@
-# MUSIC FLOW
+<br>
 
-## PURPOSE:
+## 🎶 MUSIC DATA FLOW
+
+### PURPOSE:
 
 This flow processes a music-related URL, extracts lyrics and chords, and produces a structured JSON representation suitable for downstream use.
 
-## HIGH-LEVEL-FLOW (Agent-Oriented)
+### 🎚️ HIGH-LEVEL-FLOW (Agent-Oriented)
 
 system.input_received
 
@@ -49,13 +51,11 @@ system.run.completed
 
 -> ReportAgent
 
----
-
-## Notes:
+## 🗒️ Notes:
  
 **SnifferAgent** appears multiple times in this flow. Each appearance represents a different confidence stage in domain interference, allowing the DecisionAgent to select the correct domain based on accumulated signals.
 
-## EVENT TIMELINE
+## ⏱️ EVENT TIMELINE
 
 1. system.input_received
 2. system.external_input
@@ -72,7 +72,7 @@ system.run.completed
 13. music.pipeline_finished
 14. system.run.completed
 
-## AGENTS AND RESPONSABILITIES
+## 🕵️ AGENTS AND RESPONSABILITIES
 
 ### SnifferAgent
 
@@ -126,19 +126,19 @@ system.run.completed
 
     This agent trigger when flow stops, if he completes successifully or not. It always give information about the current flow, it reports what happened that stopped the flow.
 
-## SCHEMAS
+## 📐 SCHEMAS
 
 - ChordLineSchema
 - ChordSectionSchema
 - ChordSheetSchema
 
-## PERSISTENCE & OUTPUT
+## 💾 PERSISTENCE & OUTPUT
 
 - Outputs are written to the data/music/directory
 - Filenames are derived from sanitized titles
 - JSON output is domain-stable and schema-valited
 
-## FAILURE MODES & GUARDS
+## 🛡️ FAILURE MODES & GUARDS
 
 - Missing or invalid input
 - Extraction failure
@@ -147,11 +147,18 @@ system.run.completed
 
 Each failure emits a corresponding events and terminates the flow safetly.
 
----
-
-## DESIGN NOTES
+## 🖋️ DESIGN NOTES
 
 - Event-driven, loosely coupled agents
 - Domain interference though progressive scenting
 - Schema enforcement occurs only after organization
 - Packer remains domain-agnostic by design
+
+--- 
+
+> 1. 🏗️ [About Architecture](../architecture.md)
+> 2. 🔀 [About General Data Flow](../flows/general-data-flow.md)
+> 3. 🧑🏻‍🍳 [About Recipe Flow](../flows/recipe-flow.md)
+> 4. 📐 [Diagrams](../diagrams/readme.md)
+> 5. 🔭 [About Observability Layer](../observability.md)   
+> 6. 📜 [About this system's Philosophy](../philosophy.md)   
