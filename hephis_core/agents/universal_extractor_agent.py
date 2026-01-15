@@ -127,6 +127,100 @@ class UniversalExtractorAgent:
         try: 
             result = self.extract_any(input_value, input_type)
             
+            if not result:
+                run_context.touch(
+                    run_id,
+                    agent="UniversalExtractorAgent",
+                    action="extract_file",
+                    reason="no_result",
+                )
+                run_context.emit_fact(
+                        run_id,
+                        stage="extractor",
+                        component="UniversalExtractorAgent",
+                        result="declined",
+                        reason="no_result_extracted",
+                        )
+                return
+            
+            if result:
+                domain, raw = result
+
+
+            if not domain or not raw:
+                run_context.touch(
+                    run_id,
+                    agent="UniversalExtractorAgent",
+                    action="extract_file",
+                    reason="no_domain_or_and_no_raw",
+                )
+                run_context.emit_fact(
+                    run_id,
+                    stage="extractor",
+                    component="UniversalExtractorAgent",
+                    result="declined",
+                    reason="no_domain_or_and_no_raw",
+                    )
+                return
+
+            if not run_id:
+                logger.warning("Source file has no valid id or run_id",
+                extra={
+                        "agent":self.__class__.__name__,
+                        "event":"extraction-by-universal-extractor",
+                        "raw_type":type(payload).__name__,
+                        "raw_is_dict":isinstance(payload, dict),
+                        }
+                )
+                return
+
+            print(f"THIS IS DOMAIN AND RAW: {domain} --- {raw}")
+
+            if isinstance(raw, dict):
+                wrapped = {
+                        "stage":"semantic",
+                        "data":raw,
+                        "domain":domain,
+                        "source":source,
+                        "run_id":run_id,
+                    }
+            
+            print(f"THIS IS WRAPPED: {wrapped}")
+            
+            event_bus.emit(
+                "system.extraction.completed",
+                wrapped
+            )
+            return
+
+            run_context.touch(
+                    run_id,
+                    agent="UniversalExtractorAgent",
+                    action="extracted_file",
+                    domain=domain,
+                    reason="valid_file_type",
+                )
+            run_context.emit_fact(
+                    run_id,
+                    stage="extractor",
+                    component="UniversalExtractorAgent",
+                    result="accepted",
+                    reason="valid_file_type",
+                    )
+            
+            print(f"THIS IS RAW: {raw}")
+
+            event_bus.emit(
+                "system.extraction.completed",
+                {   
+                    "stage":"material_raw",
+                    "raw":raw,
+                    "domain":domain,
+                    "run_id": run_id,
+                    "source":source,
+                }
+            )
+            
         except Exception as exc:
             logger.exception("Extractor crashed",
             extra={
@@ -136,93 +230,3 @@ class UniversalExtractorAgent:
                     "reason":"exception",
                 }
             )
-        if not result:
-            run_context.touch(
-                run_id,
-                agent="UniversalExtractorAgent",
-                action="extract_file",
-                reason="no_result",
-            )
-            run_context.emit_fact(
-                    run_id,
-                    stage="extractor",
-                    component="UniversalExtractorAgent",
-                    result="declined",
-                    reason="no_result_extracted",
-                    )
-            return
-            
-        if result:
-            domain, raw = result
-
-        if not domain or not raw:
-            run_context.touch(
-                run_id,
-                agent="UniversalExtractorAgent",
-                action="extract_file",
-                reason="no_domain_or_and_no_raw",
-            )
-            run_context.emit_fact(
-                run_id,
-                stage="extractor",
-                component="UniversalExtractorAgent",
-                result="declined",
-                reason="no_domain_or_and_no_raw",
-                )
-            return
-
-        if not run_id:
-            logger.warning("Source file has no valid id or run_id",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"extraction-by-universal-extractor",
-                    "raw_type":type(payload).__name__,
-                    "raw_is_dict":isinstance(payload, dict),
-                    }
-            )
-            return
-
-        if isinstance(raw, dict):
-            wrapped = {
-                    "stage":"semantic",
-                    "data":raw,
-                    "domain":domain,
-                    "source":source,
-                    "run_id":run_id,
-                }
-        
-        print(f"THIS IS WRAPPED: {wrapped}")
-        
-        event_bus.emit(
-            "system.extraction.completed",
-            wrapped
-        )
-        return
-
-        run_context.touch(
-                run_id,
-                agent="UniversalExtractorAgent",
-                action="extracted_file",
-                domain=domain,
-                reason="valid_file_type",
-            )
-        run_context.emit_fact(
-                run_id,
-                stage="extractor",
-                component="UniversalExtractorAgent",
-                result="accepted",
-                reason="valid_file_type",
-                )
-        
-        print(f"THIS IS RAW: {raw}")
-
-        event_bus.emit(
-            "system.extraction.completed",
-            {   
-                "stage":"material_raw",
-                "raw":raw,
-                "domain":domain,
-                "run_id": run_id,
-                "source":source,
-            }
-        )

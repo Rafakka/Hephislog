@@ -51,11 +51,29 @@ def _fetch_with_playwright(url:str) -> Optional[str]:
             ],
         )
         context = browser.new_context(
-            headers=DEFAULT_HEADERS,
+            extra_http_headers=DEFAULT_HEADERS,
             viewport={"width":1280,"height":800},
         )
         page=context.new_page()
-        page.goto(url, wait_until="networkidle", timeout=120_000)
+        page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+
+        page.wait_for_function(
+            """
+        ()=> {
+            const title = document.title || "";
+            const body = document.body ? document.body.innerText: "";
+            return(
+                !title.toLowerCase().includes("just a moment")&&
+                !body.toLowerCase()includes("checking your browser")
+                );
+            }
+        """, 
+            timeout=60_000
+        )
+
+        page.wait_for_timeout(2000)
+
+        html = page.content()
 
         for _ in range(10):
             title = page.title()
@@ -112,9 +130,12 @@ def _fetch_with_cloudscraper(url:str)->Optional[str]:
 def looks_real(html:str|None)-> bool:
     if not html:
         return False
-    if "Just a moment" in html:
+    lowered = html.lower()    
+    if "just a moment" in lowered:
         return False
-    if "cdn-cgi" in html:
+    if "checking your browser" in lowered:
+        return False    
+    if "cdn-cgi" in lowered:
         return False
     return len(html) > 20_000
 
@@ -134,4 +155,9 @@ def fetch_url_as_html(url:str) -> str | None:
     html = _fetch_with_playwright(url)
     if looks_real(html):
         return html
+    
+    if not html:
+        print("HTML IS EMPTY")
+        return None
+        
     return None
