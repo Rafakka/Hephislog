@@ -53,7 +53,7 @@ class RawMaterialAdvisorAgent:
                 }
             )
             return
-
+        
         html_score = smells.get("html",0)
         tag_count =raw.count("<")
         lenght=len(raw)
@@ -96,6 +96,7 @@ class RawMaterialAdvisorAgent:
                 },
                 "raw":raw,
                 "smells":smells,
-                "source":payload.get("source")
+                "source":payload.get("source"),
+                "domain_hint":payload.get("domain_hint")
             }
         )

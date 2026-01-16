@@ -197,7 +197,7 @@ class ChordDetector:
             "title": title,
             "chords": chords,
             "raw_lines": chord_lines,
-            "source": source
+            "material_source": source
         }
     
     @staticmethod

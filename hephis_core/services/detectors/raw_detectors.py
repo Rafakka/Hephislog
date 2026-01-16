@@ -85,6 +85,21 @@ def is_text(value):
 
     return True
 
+def infer_smell_bias(claims):
+    bias = {}
+
+    if "url" in claims:
+        bias["url"] = 0.9
+        bias["html"] = 0.1
+        bias["json"] = 0.1
+        bias["text"] = 0.5
+    
+    if "file" in claims:
+        bias["file"] = 0.8
+        bias["text"] = 0.2
+
+    return bias
+
 RAW_DOMAIN_DETECTOR = [
 
         ("file", is_file),
@@ -101,13 +116,21 @@ def early_advice_raw_input(value):
     for domain, detector in RAW_DOMAIN_DETECTOR:
             if detector(value):
                 claims.append(domain)
+
             if "url" in claims:
                 url_stage = "unresolved"
             else:
                 url_stage = None
 
-    return {"raw":value,"domain-hint":claims,"url_stage":url_stage}
-    
+    smell_bias = infer_smell_bias(claims)
+
+    return {
+        "raw":value,
+        "domain-hint":claims,
+        "url_stage":url_stage,
+        "smell_bias":smell_bias,
+        "confidence":"low",
+        }
 
 def detect_raw_type(value, env):
 

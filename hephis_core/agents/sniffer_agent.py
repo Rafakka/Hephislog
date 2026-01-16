@@ -6,6 +6,7 @@ from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.services.detectors.chord_detector import ChordDetector
 from hephis_core.services.detectors.raw_detectors import early_advice_raw_input
+from hephis_core.agents.sniffing.sniffing import extract_sniff_text, sniff
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,64 +21,6 @@ class SnifferAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    def extract_sniff_text(self, raw) -> str | None:
-        if isinstance(raw, dict):
-            raw_extracted = (
-                raw.get("text") 
-                or raw.get("lyrics") 
-                or raw.get("content") 
-                )
-            if raw_extracted:
-                return raw_extracted
-        if isinstance(raw, str):
-            return raw
-        else:
-            logger.warning("Unsupported raw type",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"third-sniffing",
-                }
-            )
-            return None
-
-    def sniff(self, raw):
-
-        text = self.extract_sniff_text(raw)
-        
-        if not text:
-            logger.warning("raw is not sniffable",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"first-sniffing",
-                    "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw,dict),
-                },
-            )
-            return
-
-        text = text.lower()
-
-        if"<html" in text or "<div" in text:
-            ENV.add_smell("html",0.9)
-            
-        if "ingrediente" in text:
-            ENV.add_smell("recipe",0.6)
-            
-        if "modo de preparo" in text or "preparo" in text:
-            ENV.add_smell("recipe",0.8)
-            
-        if text.strip().startswith(("{","[")):
-            try:
-                json.loads(text)
-                ENV.add_smell("json",0.9)
-            except:
-                ENV.add_smell("json",0.4)
-
-        if any(chord in text for chord in["am","em","g","c"]):
-            ENV.add_smell("music",0.5)        
-
-        if len(text) > 100_000:
-            ENV.add_smell("huge_input",1.0)
     
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
@@ -98,10 +41,10 @@ class SnifferAgent:
             return
         
         advice = early_advice_raw_input(raw)
-
+        bias = advice.get("smell_bias,{}")
         domain_hint = advice["domain-hint"]
         url_stage = url_state or advice["url_stage"]
-        
+
         if "url" in domain_hint:
 
             run_context.touch(
@@ -134,10 +77,13 @@ class SnifferAgent:
             )
             return
         
-        if domain_hint != "url":
+        if "url" not in domain_hint:
             ENV.reset()
 
-        self.sniff(raw)
+        for smell, weight in bias.items():
+            ENV.add_smell(smell, weight,source="early_advice")
+
+        sniff(raw, agent_name=self.__class__.__name__)
 
         run_context.touch(
                 run_id=run_id,
@@ -205,7 +151,7 @@ class SnifferAgent:
             )
             return
         
-        self.sniff(raw)
+        sniff(raw, agent_name=self.__class__.__name__)
 
         run_context.touch(
                 run_id,
@@ -232,6 +178,7 @@ class SnifferAgent:
                 "raw":raw,
                 "run_id": run_id,
                 "source": payload.get("source"),
+                "domain_hint":payload.get("domain_hint")
             }
         )
     
@@ -266,9 +213,9 @@ class SnifferAgent:
         for k, v in incoming_smells.items():
             ENV.add_smell(k,v)
 
-        self.sniff(raw)
+        sniff(raw, agent_name=self.__class__.__name__)
 
-        text = self.extract_sniff_text(raw)
+        text = extract_sniff_text(raw, agent_name=self.__class__.__name__)
 
         if not text:
             logger.warning("no text on third sniffing to extract")

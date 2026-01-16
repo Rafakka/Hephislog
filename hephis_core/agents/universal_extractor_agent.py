@@ -218,6 +218,7 @@ class UniversalExtractorAgent:
                     "domain":domain,
                     "run_id": run_id,
                     "source":source,
+                    "domain_hint":payload.get("domain_hint")
                 }
             )
             
