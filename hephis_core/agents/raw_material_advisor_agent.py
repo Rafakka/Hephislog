@@ -133,12 +133,13 @@ class RawMaterialAdvisorAgent:
                     "raw":raw,
                     "smells":smells,
                     "source":payload.get("source"),
-                    "domain_hint":payload.get("domain_hint")
+                    "domain_hint":payload.get("domain_hint"),
+                    "semantic_advice":semantic_advice,
+                    "semantic_scores":scores,
+
                 }
             )
 
-        stage = "material_cleaned"
-        
         run_context.touch(
                 run_id,
                 agent="rawmaterialadvisoragent",
@@ -154,13 +155,21 @@ class RawMaterialAdvisorAgent:
             )    
 
         event_bus.emit(
-            "system.cleaner.to.sniffer",
+            "system.advisor.to.html.cleaner",
             {   
+            "run_id":run_id,
+                "stage":stage,
+                "advice" : {
+                    "version":1,
+                    "cleaning":cleaning,
+                    "reason":reason,
+                    "html_smell":html_score,
+                },
                 "raw":raw,
                 "smells":smells,
                 "source":payload.get("source"),
-                "run_id":run_id,
-                "stage":stage,
-                "html_state":"cleaned"
+                "domain_hint":payload.get("domain_hint"),
+                "semantic_advice":semantic_advice,
+                "semantic_scores":scores,
             }
         )

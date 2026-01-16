@@ -42,8 +42,9 @@ class HtmlCleanerAgent:
         smells = payload.get("smells", {})
         run_id = extract_run_id(payload)
         source = payload.get("source")
-        raw = payload["raw"]
+        raw = payload.get("raw")
         stage = payload.get("stage")
+        advice = payload.get("advice",{})
 
         if not run_id:
             logger.warning("run id is missing",
@@ -56,13 +57,20 @@ class HtmlCleanerAgent:
             )
             return
         
+        if not raw:
+            logger.warning("raw is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"cleaning-html",
+                }
+            )
+            return
+        
         if not smells:
             logger.warning("smells are missing",
             extra={
                     "agent":self.__class__.__name__,
-                    "event":"decision",
-                    "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
+                    "event":"cleaning-html",
                 }
             )
             return
@@ -71,13 +79,23 @@ class HtmlCleanerAgent:
             logger.warning("Stage not material raw.",
             extra ={
                     "agent":self.__class__.__name__,
-                    "event":"decision-making",
+                    "event":"cleaning-html",
+                    "payload":list(payload.keys())
+                }
+            )
+            return
+        
+        if not advice:
+            logger.warning("advice not found.",
+            extra ={
+                    "agent":self.__class__.__name__,
+                    "event":"cleaning-html",
                     "payload":list(payload.keys())
                 }
             )
             return
 
-        advice = payload.get("advice",{})
+    
         cleaning = advice.get("cleaning","none")
 
         soup = BeautifulSoup(raw,"html.parser")
@@ -94,6 +112,31 @@ class HtmlCleanerAgent:
             cleaned_text = clean_html_artifacts(clean)
             reason = "no html cleaning applied"
         
+
+        if not cleaned_text:
+            logger.warning("raw failed on cleaning",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"cleaning-html",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            run_context.touch(
+                run_id,
+                agent="htmlcleaneragent",
+                action="declined",
+                reason=reason,
+            )
+            run_context.emit_fact(
+                    run_id,
+                    stage="cleaning",
+                    component="HtmlCleanerAgent",
+                    result="declined",
+                    reason="raw-material-failed",
+                )    
+            return
+        
         stage = "material_cleaned"
 
         run_context.touch(
@@ -106,14 +149,19 @@ class HtmlCleanerAgent:
                 run_id,
                 stage="cleaning",
                 component="HtmlCleanerAgent",
-                result="cleaned",
+                result="completed",
                 reason="raw-material-cleaned",
             )    
 
         event_bus.emit(
             "system.cleaner.to.sniffer",
             {   
-                "raw": {"text":cleaned_text},
+                "raw": 
+                {
+                "text":clean_text,
+                "format":html,
+                "state":cleaned
+                },
                 "smells":smells,
                 "source":source,
                 "run_id":run_id,

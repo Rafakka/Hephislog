@@ -22,6 +22,18 @@ class SnifferAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     
+    def merged_smells(base,new,decay=0.5):
+        merged = {}
+
+        keys = set(base) | set(new)
+        for k in keys:
+            old = base.get(k, 0.0)
+            fresh = new.get(k, 0.0)
+
+            merged[k] = max(old*decay, fresh)
+
+        return merged
+
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
         print("FIRST RAN:",self.__class__.__name__) 
@@ -222,10 +234,36 @@ class SnifferAgent:
     @on_event("system.cleaner.to.sniffer")
     def sniff_after_cleaning(self, payload:dict):
         print("THIRD RAN:",self.__class__.__name__)
-        raw = payload["raw"]
+        raw = payload.get("raw")
         run_id = extract_run_id(payload)
         stage = payload.get("stage")
         incoming_smells = payload.get("smells",{})
+
+        if not raw:
+            logger.error("raw not found!",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"third-sniffing",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+
+        if not incoming_smells:
+            logger.error("smells not found",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"third-sniffing",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+        
+        if payload.get("smell_context") == "post_cleaning":
+            inherited_smells = payload.get("inherited_smells",{})
+            new_smells = sniff(payload["raw"]["text"],agent_name=__class__.__name__)
 
         if stage != "material_cleaned":
             logger.error("Missing cleaning stage.",
@@ -246,31 +284,26 @@ class SnifferAgent:
                 }
             )
             return
+        
+        merged_smells = merged_smells(
+            base=inherited_smells,
+            new=new_smells,
+            decay=0.5
+        )
 
-        for k, v in incoming_smells.items():
+        ENV.reset()
+
+        for k, v in merged_smells.items():
             ENV.add_smell(k,v)
 
-        sniff(raw, agent_name=self.__class__.__name__)
-
-        text = extract_sniff_text(raw, agent_name=self.__class__.__name__)
-
-        if not text:
-            logger.warning("no text on third sniffing to extract")
-            return
-
-        if ChordDetector.block_contains_chords(text):
-
-            ENV.add_smell("music.semantic_confirmed", 1.0)
-            stage = "post_clean_sniffing"
-
-            run_context.touch(
+        run_context.touch(
                 run_id,
                 agent="SnifferAgent",
                 action="re_scented_file",
                 reason="advicing_on_cleaned_file_by_semantic",
                 event="third scenting",
             )
-            run_context.emit_fact(
+        run_context.emit_fact(
                     run_id,
                     stage="sniffing",
                     component="SnifferAgent",
@@ -278,49 +311,19 @@ class SnifferAgent:
                     reason="third-smell-semantic-after-cleaning",
             )
 
-            print(F"CLEANED AND FINAL SCENTED: SMELL:{ENV.smells}")
+        print(F"CLEANED AND FINAL SCENTED: SMELL:{ENV.smells}")
 
-            event_bus.emit(
+        event_bus.emit(
                 "system.smells.to.decisionagent",
                 {   
                     "stage":"post_clean_sniffing",
                     "smells": ENV.smells,
                     "snapshots": ENV.snapshot(),
-                    "raw":raw,
+                    "raw":payload["raw"],
                     "run_id": run_id,
                     "source": payload.get("source"),
-                }
+                    "smell_generation":3,
+                    "smell_context":"post_cleaning",
+                    "merged_smells":merged_smells,
+
             )
-            return
-
-        stage = "post_clean_sniffing"
-
-        run_context.touch(
-                run_id,
-                agent="SnifferAgent",
-                action="re_scented_file",
-                reason="advicing_on_cleaned_file",
-                event="third scenting",
-            )
-
-        run_context.emit_fact(
-                run_id,
-                stage="sniffing",
-                component="SnifferAgent",
-                result="accepted",
-                reason="third-smell-after-cleaning",
-                )
-
-        print(F"CLEANED AND FINAL SCENTED: SMELL:{ENV.smells}")
-
-        event_bus.emit(
-            "system.smells.to.decisionagent",
-            {   
-                "stage":stage,
-                "smells": ENV.smells,
-                "snapshots": ENV.snapshot(),
-                "raw":raw,
-                "run_id": run_id,
-                "source": payload.get("source"),
-            }
-        )
