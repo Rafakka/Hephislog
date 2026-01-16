@@ -19,7 +19,7 @@ class GarbageAnaliserAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     @on_event("system.raw.fetched")
-    def decide(self, payload):
+    def decide(self, payload:dict):
         
         run_id = payload.get("run_id")
         raw_html = payload.get("raw")

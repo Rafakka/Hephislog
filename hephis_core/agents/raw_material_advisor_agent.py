@@ -33,8 +33,10 @@ class RawMaterialAdvisorAgent:
         run_id = extract_run_id(payload)
         raw = payload.get("raw")
         stage = payload.get("stage")
+        domain_hint_extr = payload.get("domain_hint_extr",{})
+        domain_hint = payload.get("domain_hint")
 
-        if stage != "material_raw" or not isinstance(raw, str):
+        if stage != "material_raw" or raw is None:
             logger.warning("payload stage or raw not found.",
             extra ={
                     "agent":self.__class__.__name__,
@@ -54,6 +56,39 @@ class RawMaterialAdvisorAgent:
             )
             return
         
+        scores = {
+            "recipe":0.0,
+            "music":0.0,
+            "article":0.0,
+        }
+
+        if domain_hint_extr:
+            scores[domain_hint_extr["value"]] += domain_hint_extr["confidence"]
+
+        if smells.get("html", 0) > 0.6:
+            scores["recipe"]+= 0.2
+            scores["article"]+= 0.2
+        
+        if smells.get("music",0) > 0.6:
+            scores["music"]+= 0.4
+        
+        if "<li>" in raw and "ingredientes" in raw.lower():
+            scores["recipe"]+= 0.4
+        
+        if "chorus" in raw.lower():
+            scores["music"]+= 0.5
+        
+        if "url" in domain_hint:
+            scores.pop["local_file",None]
+
+        best, confidence = max(scores.items(), key=lambda x:x[1])
+
+        semantic_advice = (
+            ADVISE(best, confidence)
+            if confidence >= 0.6
+            else ADVICE_UNCERTAIN
+        )
+
         html_score = smells.get("html",0)
         tag_count =raw.count("<")
         lenght=len(raw)
@@ -69,6 +104,41 @@ class RawMaterialAdvisorAgent:
             cleaning = CLEAN_LIGHT
             reason = "moderate html structure"
 
+        if cleaning != CLEAN_NONE:
+            run_context.touch(
+                run_id,
+                agent="rawmaterialadvisoragent",
+                action="advising-cleaning-intesity",
+                reason=reason,
+            )
+            run_context.emit_fact(
+                    run_id,
+                    stage="advising",
+                    component="RawMaterialAdvisorAgent",
+                    result="cleaning",
+                    reason="raw-material-advised",
+                )    
+
+            event_bus.emit(
+                "system.advisor.to.html.cleaner",
+                {   
+                    "run_id":run_id,
+                    "stage":stage,
+                    "advice" : {
+                        "version":1,
+                        "cleaning":cleaning,
+                        "reason":reason,
+                        "html_smell":html_score,
+                    },
+                    "raw":raw,
+                    "smells":smells,
+                    "source":payload.get("source"),
+                    "domain_hint":payload.get("domain_hint")
+                }
+            )
+
+        stage = "material_cleaned"
+        
         run_context.touch(
                 run_id,
                 agent="rawmaterialadvisoragent",
@@ -84,19 +154,13 @@ class RawMaterialAdvisorAgent:
             )    
 
         event_bus.emit(
-            "system.advisor.to.html.cleaner",
+            "system.cleaner.to.sniffer",
             {   
-                "run_id":run_id,
-                "stage":stage,
-                "advice" : {
-                    "version":1,
-                    "cleaning":cleaning,
-                    "reason":reason,
-                    "html_smell":html_score,
-                },
                 "raw":raw,
                 "smells":smells,
                 "source":payload.get("source"),
-                "domain_hint":payload.get("domain_hint")
+                "run_id":run_id,
+                "stage":stage,
+                "html_state":"cleaned"
             }
         )

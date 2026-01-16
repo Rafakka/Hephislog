@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class UrlFetcherAgent:
     def __init__(self):
-        print("INIT:",self.__class__.__name__) 
+        print("* - INIT:",self.__class__.__name__) 
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -18,9 +18,10 @@ class UrlFetcherAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     @on_event("system.fetch_url_input")
-    def fetching_from_url(payload):
+    def fetching_from_url(self, payload:dict):
         run_id = payload.get("run_id")
-        url = raw.get("raw")
+        origin = payload.get("origin",{})
+        url = origin.get("value")
         domain_hint= payload.get("domain_hint")
 
         if not run_id or not url:

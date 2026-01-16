@@ -1,6 +1,6 @@
 import re
 import unicodedata
-import BeautifulSoup
+from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlunparse
 
 _MULTI_SPACE = re.compile(r"[ \t]{2,}")
@@ -62,7 +62,7 @@ def clean_light_html(html:str)-> str:
 
     return text.strip()
 
-def clean_agressive_html(html:str)->str:
+def clean_aggressive_html(html:str)->str:
 
     if not html or not isinstance(html, str):
         return html

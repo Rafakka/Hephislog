@@ -66,7 +66,7 @@ class SnifferAgent:
                 {
                     "run_id":run_id,
                     "source": payload.get("source"),
-                    "raw":raw,
+                    "raw":payload.get("input"),
                     "url_state":"unresolved",
                     "domain_hint":domain_hint,
                     "origin":{
@@ -116,9 +116,10 @@ class SnifferAgent:
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
         print("SECOND RAN:",self.__class__.__name__)
-        raw = payload["raw"]
+        raw = payload.get("raw")
         run_id = extract_run_id(payload)
         stage = payload.get("stage")
+        domain_hint = payload.get("domain_hint")
 
         if stage != "material_raw":
             logger.error("Missing material_raw stage.",
@@ -151,6 +152,42 @@ class SnifferAgent:
             )
             return
         
+        if "url" in domain_hint:
+            ENV.add_smell("url",0.0)
+            stage = "material_raw"
+            run_context.touch(
+                run_id,
+                agent="SnifferAgent",
+                action="reinforcing-scent",
+                reason="data-from-url",
+                event="second scenting",
+            )
+            run_context.emit_fact(
+                    run_id,
+                    stage="second-scenting",
+                    component="SnifferAgent",
+                    result="ok",
+                    reason="forwarding-to-advisor",
+                    )
+
+            domain_hint_extr = payload.get("domain_hint_extr")
+            print(f"THIS IS DOMAIN HINT EXTR: {domain_hint_extr}")
+            
+            event_bus.emit(
+                "system.smells.to.advisor",
+                {   
+                    "stage":stage,
+                    "smells": ENV.smells,
+                    "snapshots": ENV.snapshot(),
+                    "raw":raw,
+                    "run_id": run_id,
+                    "source": payload.get("source"),
+                    "domain_hint":domain_hint,
+                    "domain_hint_extr":domain_hint_extr,
+                }
+            )
+            return
+
         sniff(raw, agent_name=self.__class__.__name__)
 
         run_context.touch(

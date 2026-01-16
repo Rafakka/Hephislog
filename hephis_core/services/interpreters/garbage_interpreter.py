@@ -6,7 +6,7 @@ class GarbageAnalysis:
     total_lenght:int
     removable_lenght:int
     removable_ratio:float
-    signals.list[str]
+    signals:list[str]
     recommendation: str
 
         

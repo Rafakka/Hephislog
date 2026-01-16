@@ -82,8 +82,12 @@ class IdentifierAgent:
             {
                 "run_id":run_id,
                 "raw":raw,
+                "identity":{
+                    "type":type_id,
+                    "confidence":confidence,
+                },
                 "raw_type":raw_type,
                 "source":source,
-                "domain_hint":payload.get("domain_hint"),
+                "domain_hint":domain_hint,
             }
         )

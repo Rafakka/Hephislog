@@ -94,6 +94,7 @@ class UniversalExtractorAgent:
         input_type  = payload.get("raw_type")
         source = payload.get("source")
         run_id = extract_run_id(payload)
+        domain_hint = payload.get("domain_hint")
 
         print(f"THIS ARE THE VALUES--{input_value}--{input_type}--{source}--{run_id}")
 
@@ -176,13 +177,21 @@ class UniversalExtractorAgent:
 
             print(f"THIS IS DOMAIN AND RAW: {domain} --- {raw}")
 
+            domain_hint_extr = {
+                "value":domain,
+                "confidence":0.7,
+                "source":"extractor",
+            }
+
             if isinstance(raw, dict):
                 wrapped = {
-                        "stage":"semantic",
+                        "stage":"material_raw",
                         "data":raw,
-                        "domain":domain,
+                        "raw":raw,
+                        "domain_hint_extr":domain_hint_extr,
                         "source":source,
                         "run_id":run_id,
+                        "domain_hint":domain_hint,
                     }
             
             print(f"THIS IS WRAPPED: {wrapped}")
@@ -197,7 +206,7 @@ class UniversalExtractorAgent:
                     run_id,
                     agent="UniversalExtractorAgent",
                     action="extracted_file",
-                    domain=domain,
+                    domain_hint_extr=domain,
                     reason="valid_file_type",
                 )
             run_context.emit_fact(
@@ -215,10 +224,10 @@ class UniversalExtractorAgent:
                 {   
                     "stage":"material_raw",
                     "raw":raw,
-                    "domain":domain,
+                    "domain_hint_extr":domain_hint_extr,
                     "run_id": run_id,
                     "source":source,
-                    "domain_hint":payload.get("domain_hint")
+                    "domain_hint":domain_hint,
                 }
             )
             

@@ -18,7 +18,7 @@ class GarbageCleanerAgent:
                 event_bus.subscribe(fn.__event_name__, attr)
 
     @on_event("system.garbage.analysed")
-    def decide(self, payload):
+    def decide(self, payload:dict):
         domain_hint = payload.get("domain_hint")
         origin = payload.get("origin")
         source = origin.get("value")
