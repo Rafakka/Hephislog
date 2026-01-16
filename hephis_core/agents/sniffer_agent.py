@@ -121,12 +121,11 @@ class SnifferAgent:
             event_bus.emit(
                 "system.fetch_url_input",
                 {
-                    "smells": ENV.smells,
-                    "snapshots": ENV.snapshot(),
                     "run_id":run_id,
                     "source": payload.get("source"),
                     "raw":raw,
                     "url_state":"unresolved",
+                    "domain_hint":domain_hint,
                     "origin":{
                     "type":"url",
                     "value":raw,
@@ -137,9 +136,6 @@ class SnifferAgent:
         
         if domain_hint != "url":
             ENV.reset()
-
-        if payload.get("stage") == "semantic":
-            return
 
         self.sniff(raw)
 
@@ -165,6 +161,7 @@ class SnifferAgent:
                 "snapshots": ENV.snapshot(),
                 "run_id":run_id,
                 "source": payload.get("source"),
+                "domain_hint":domain_hint,
                 "raw":raw,
             }
         )

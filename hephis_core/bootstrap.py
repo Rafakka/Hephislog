@@ -1,6 +1,9 @@
 
 from hephis_core.agents.confidence_agent import ConfidenceAgent
 from hephis_core.agents.sniffer_agent import SnifferAgent
+from hephis_core.agents.url_fetcher_agent import UrlFetcherAgent
+from hephis_core.agents.garbage_analiser_agent import GarbageAnaliserAgent
+from hephis_core.agents.garbage_cleaner_agent import GarbageCleanerAgent
 from hephis_core.agents.gatekeeper_agent import GatekeeperAgent
 from hephis_core.agents.identifier_agent import IdentifierAgent
 from hephis_core.agents.universal_extractor_agent import UniversalExtractorAgent
@@ -21,7 +24,10 @@ print("BOOSTRAP CALLED")
 def bootstrap_agents():
     agents = [
         ConfidenceAgent(),
-        SnifferAgent(),    
+        SnifferAgent(),
+        UrlFetcherAgent(),
+        GarbageAnaliserAgent(),
+        GarbageCleanerAgent(),
         GatekeeperAgent(),
         IdentifierAgent(),
         UniversalExtractorAgent(),

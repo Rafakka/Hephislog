@@ -27,6 +27,7 @@ class IdentifierAgent:
         raw = payload.get("raw") or payload.get("input")
         source = payload.get("source")
         run_id = extract_run_id(payload)
+        domain_hint = payload.get("domain_hint")
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",

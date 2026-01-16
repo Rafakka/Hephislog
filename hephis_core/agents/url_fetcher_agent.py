@@ -17,10 +17,11 @@ class UrlFetcherAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    @on_event("system.url_input")
+    @on_event("system.fetch_url_input")
     def fetching_from_url(payload):
         run_id = payload.get("run_id")
         url = raw.get("raw")
+        domain_hint= payload.get("domain_hint")
 
         if not run_id or not url:
             logger.warning("Source file has no valid run_id or url",
@@ -50,8 +51,6 @@ class UrlFetcherAgent:
                 )
             return
 
-        print(f"OUTPUT TO BE SORTED: {raw_html}")
-
         run_context.touch(
             run_id=run_id,
             agent="UrlFetcherAgent",
@@ -72,6 +71,7 @@ class UrlFetcherAgent:
                     "run_id":run_id,
                     "raw":raw_html,
                     "url_state":"resolved",
+                    "domain_hint":domain_hint,
                     "origin":{
                         "type":"url",
                         "value":url,
