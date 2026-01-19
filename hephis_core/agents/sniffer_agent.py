@@ -53,11 +53,20 @@ class SnifferAgent:
             return
         
         advice = early_advice_raw_input(raw)
-        bias = advice.get("smell_bias,{}")
-        domain_hint = advice["domain-hint"]
-        url_stage = url_state or advice["url_stage"]
+
+        bias = advice.get("smell_bias") or {}
+        domain_hint = advice.get("domain_hint") or []
+
+        url_stage = url_state or advice.get("url_stage")
 
         if "url" in domain_hint:
+
+            for smell, weight in bias.items():
+                ENV.add_smell(smell, weight)
+
+            sniff(raw, agent_name=self.__class__.__name__)
+
+            print(ENV.smells)
 
             run_context.touch(
                     run_id=run_id,
@@ -80,6 +89,7 @@ class SnifferAgent:
                     "source": payload.get("source"),
                     "raw":payload.get("input"),
                     "url_state":"unresolved",
+                    "smells": ENV.smells,
                     "domain_hint":domain_hint,
                     "origin":{
                     "type":"url",
@@ -87,15 +97,15 @@ class SnifferAgent:
                     }
                 }
             )
-            return
-        
-        if "url" not in domain_hint:
+        else:
             ENV.reset()
 
         for smell, weight in bias.items():
-            ENV.add_smell(smell, weight,source="early_advice")
+            ENV.add_smell(smell, weight)
 
         sniff(raw, agent_name=self.__class__.__name__)
+
+        print(ENV.smells)
 
         run_context.touch(
                 run_id=run_id,
@@ -118,12 +128,11 @@ class SnifferAgent:
                 "smells": ENV.smells,
                 "snapshots": ENV.snapshot(),
                 "run_id":run_id,
-                "source": payload.get("source"),
+                "source":payload.get("source"),
                 "domain_hint":domain_hint,
                 "raw":raw,
             }
         )
-        return
 
     @on_event("system.extraction.completed")
     def sniff_after_extraction(self, payload:dict):
@@ -132,7 +141,9 @@ class SnifferAgent:
         run_id = extract_run_id(payload)
         stage = payload.get("stage")
         domain_hint = payload.get("domain_hint")
-        smells = payload.get("smells",{})
+        smells = payload.get("smells")
+
+        print(smells)
 
         if stage != "material_raw":
             logger.error("Missing material_raw stage.",
@@ -219,6 +230,7 @@ class SnifferAgent:
                     "domain_hint":domain_hint,
                     "domain_hint_extr":domain_hint_extr,
                     "scores":scores,
+                    "source":payload.get("source"),
                 }
             )
             return
@@ -261,7 +273,7 @@ class SnifferAgent:
         raw = payload.get("raw")
         run_id = extract_run_id(payload)
         stage = payload.get("stage")
-        incoming_smells = payload.get("smells",{})
+        incoming_smells = payload.get("smells")
 
         if not raw:
             logger.error("raw not found!",

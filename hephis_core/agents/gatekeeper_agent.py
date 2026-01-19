@@ -24,6 +24,9 @@ class GatekeeperAgent:
         raw = payload.get("raw")
         source = payload.get("source")
         domain_hint = payload.get("domain_hint")
+        smells = payload.get("smells")
+
+        print(smells)
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -59,7 +62,7 @@ class GatekeeperAgent:
                 "run_id": run_id,
                 "source": source,
                 "domain_hint":domain_hint,
-                "smells":payload.get("smells",{}),
+                "smells":smells,
             }
         )
         return

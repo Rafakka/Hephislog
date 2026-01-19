@@ -19,10 +19,12 @@ class UrlFetcherAgent:
 
     @on_event("system.fetch_url_input")
     def fetching_from_url(self, payload:dict):
+        print("RAN:",self.__class__.__name__)
         run_id = payload.get("run_id")
-        origin = payload.get("origin",{})
+        origin = payload.get("origin")
         url = origin.get("value")
         domain_hint= payload.get("domain_hint")
+        smells = payload.get("smells")
 
         if not run_id or not url:
             logger.warning("Source file has no valid run_id or url",
@@ -72,6 +74,7 @@ class UrlFetcherAgent:
                     "run_id":run_id,
                     "raw":raw_html,
                     "url_state":"resolved",
+                    "smells":smells,
                     "domain_hint":domain_hint,
                     "origin":{
                         "type":"url",

@@ -96,8 +96,6 @@ class UniversalExtractorAgent:
         run_id = extract_run_id(payload)
         domain_hint = payload.get("domain_hint")
 
-        print(f"THIS ARE THE VALUES--{input_value}--{input_type}--{source}--{run_id}")
-
         if not run_id:
             logger.warning("Source file missing run_id",
             extra={
@@ -192,6 +190,7 @@ class UniversalExtractorAgent:
                         "source":source,
                         "run_id":run_id,
                         "domain_hint":domain_hint,
+                        "smells":payload.get("smells"),
                     }
             
                 print(f"THIS IS WRAPPED: {wrapped}")
@@ -228,7 +227,7 @@ class UniversalExtractorAgent:
                     "run_id": run_id,
                     "source":source,
                     "domain_hint":domain_hint,
-                    "smells":payload.get("smells",{}),
+                    "smells":payload.get("smells"),
                 }
             )
             

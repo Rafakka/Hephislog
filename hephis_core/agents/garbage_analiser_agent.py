@@ -20,6 +20,8 @@ class GarbageAnaliserAgent:
 
     @on_event("system.raw.fetched")
     def decide(self, payload:dict):
+
+        print("RAN:",self.__class__.__name__)
         
         run_id = payload.get("run_id")
         raw_html = payload.get("raw")
@@ -28,6 +30,7 @@ class GarbageAnaliserAgent:
         url = origin.get("value")
 
         domain_hint= payload.get("domain_hint")
+        smells = payload.get("smells")
 
         if not run_id or not raw_html:
             logger.warning("Source file has no valid run_id or raw_url",
@@ -75,5 +78,6 @@ class GarbageAnaliserAgent:
                         "type":"url",
                         "value":url,
                     },
+                    "smells":smells,
                 }
             )

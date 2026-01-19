@@ -28,6 +28,7 @@ class IdentifierAgent:
         source = payload.get("source")
         run_id = extract_run_id(payload)
         domain_hint = payload.get("domain_hint")
+        smells = payload.get("smells")
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -41,8 +42,6 @@ class IdentifierAgent:
             return
 
         raw_type = detect_raw_type(raw, ENV)
-
-        print(f"CONTENTS OF DETECTION:--{raw_type}")
 
         if raw_type in (None, "unknown"):
             logger.warning("Source file has not being identified",
@@ -77,6 +76,8 @@ class IdentifierAgent:
             reason="valid_input_file"
         )
         
+        print(smells)
+
         event_bus.emit(
             f"system.input_identified",
             {
@@ -85,6 +86,6 @@ class IdentifierAgent:
                 "raw_type":raw_type,
                 "source":source,
                 "domain_hint":domain_hint,
-                "smells":payload.get("smells",{})
+                "smells":smells,
             }
         )

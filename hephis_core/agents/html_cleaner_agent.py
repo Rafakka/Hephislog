@@ -1,9 +1,13 @@
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
-from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.services.cleaners.data_cleaner import clean_html_artifacts
-from hephis_core.utils.utils import extract_text
+from hephis_core.contracts.advisor_to_html_cleaner import (
+    AdvisorToHtmlCleanerMessage,
+    HtmlCleaningAdvice,
+)
+
+
 from bs4 import BeautifulSoup
 import re
 import logging
@@ -36,71 +40,25 @@ class HtmlCleanerAgent:
     @on_event("system.advisor.to.html.cleaner")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__) 
-        run_id = extract_run_id(payload)
-        raw = payload.get("raw")
-        text = extract_text(raw)
+        msg = AdvisorToHtmlCleanerMessage.from_event(payload)
 
-        if not isinstance(text, str):
-            logger.warning("Received a non text-payload",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"decision-making",
-                    "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
-                }
-            )
-            return
-
-        stage = payload.get("stage")
-        advice = payload.get("advice",{})
-
-        semantic_type = payload.get("semantic_type",{})
-        signals = semantic_type.get("signals",{})
-        smells = signals.get("smells",{})
-
-        if not run_id:
-            logger.warning("run id is missing",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"decision-making",
-                    "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
-                }
-            )
-            return
+        run_id=msg.run_id
+        raw=msg.raw
+        advice=msg.advice
+        smells=msg.smells
+        cleaning = advice.cleaning
+        html_smell=advice.html_smell
+        reason=advice.reason
         
-        if not raw:
-            logger.warning("raw is missing",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"cleaning-html",
-                }
-            )
-            return
-        
-        
-        if stage != "material_raw":
-            logger.warning("Stage not material raw.",
-            extra ={
-                    "agent":self.__class__.__name__,
-                    "event":"cleaning-html",
-                    "payload":list(payload.keys())
-                }
-            )
-            return
-        
-        if not advice:
-            logger.warning("advice not found.",
-            extra ={
-                    "agent":self.__class__.__name__,
-                    "event":"cleaning-html",
-                    "payload":list(payload.keys())
-                }
-            )
+        text = raw.get("text")
+
+        if not isinstance(text,dict):
+            logger.warning("HtmlCleaner received non-text raw material")
             return
 
+        print(smells)
     
-        cleaning = advice.get("cleaning","none")
+        cleaning = advice.cleaning
 
         soup = BeautifulSoup(text,"html.parser")
 
@@ -109,7 +67,6 @@ class HtmlCleanerAgent:
         if cleaning == "heavy":
             cleaned_text = self.heavy_clean_html(soup)
             reason = "heavy clean applied"
-        
         elif cleaning == "light":
             cleaned_text = self.light_clean_html(soup)
             reason = "light clean applied"
@@ -118,10 +75,8 @@ class HtmlCleanerAgent:
             cleaned_text = clean_html_artifacts(clean)
             reason = "no html cleaning applied"
         
-
-        if not cleaned_text:
-            if attempted_cleaning:
-                logger.warning("raw failed on cleaning",
+        if not attempted_cleaning and not cleaned_text:
+            logger.warning("raw failed on cleaning",
                 extra={
                         "agent":self.__class__.__name__,
                         "event":"cleaning-html",
@@ -129,31 +84,33 @@ class HtmlCleanerAgent:
                         "raw_is_dict":isinstance(raw, dict),
                     }
                 )
-                run_context.touch(
+            run_context.touch(
                 run_id,
                 agent="htmlcleaneragent",
                 action="declined",
                 reason=reason,
                 )
-                run_context.emit_fact(
+            run_context.emit_fact(
                         run_id,
                         stage="cleaning",
                         component="HtmlCleanerAgent",
                         result="declined",
                         reason="raw-material-failed",
                     )    
-                return
-            else:
-                logger.debug("html cleaning skipped(not required)",
-                extra={
-                        "agent":self.__class__.__name__,
-                        "event":"cleaning-html",
-                        "raw_type":type(raw).__name__,
-                        "raw_is_dict":isinstance(raw, dict),
+            return
+        else:
+            logger.debug("html cleaning skipped(not required)",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"cleaning-html",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
                     }
                 )
         
         stage = "material_cleaned"
+
+        print(cleaned_text)
 
         run_context.touch(
                 run_id,
@@ -172,15 +129,13 @@ class HtmlCleanerAgent:
         event_bus.emit(
             "system.cleaner.to.sniffer",
             {   
-                "raw": 
-                {
-                "text":cleaned_text,
+                "raw":{"text":cleaned_text,
                 "format":"text",
                 "state":"cleaned",
+                "source":msg.source,
                 },
-                "inherited_smells":smells,
+                "smells":smells,
                 "smell_context":"post_cleaning",
-                "source":source,
                 "run_id":run_id,
                 "stage":stage,
                 "html_state":"cleaned"

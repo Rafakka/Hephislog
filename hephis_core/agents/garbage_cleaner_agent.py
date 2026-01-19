@@ -19,12 +19,14 @@ class GarbageCleanerAgent:
 
     @on_event("system.garbage.analysed")
     def decide(self, payload:dict):
+        print("RAN:",self.__class__.__name__)
         domain_hint = payload.get("domain_hint")
         origin = payload.get("origin")
         source = origin.get("value")
         analysis = payload.get("analysis")
         raw_html = payload.get("raw")
         run_id = extract_run_id(payload)
+        smells = payload.get("smells")
 
         if not run_id or not raw_html:
             logger.warning("Source file has no valid run_id or raw_url",
@@ -71,5 +73,6 @@ class GarbageCleanerAgent:
                     "source":source,
                     "domain_hint":domain_hint,
                     "cleaning_strategy":analysis.recommendation,
+                    "smells":smells,
                 }
             )

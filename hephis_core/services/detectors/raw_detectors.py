@@ -98,6 +98,9 @@ def infer_smell_bias(claims):
         bias["file"] = 0.8
         bias["text"] = 0.2
 
+    if not claims:
+        return {}
+    
     return bias
 
 RAW_DOMAIN_DETECTOR = [
@@ -126,7 +129,7 @@ def early_advice_raw_input(value):
 
     return {
         "raw":value,
-        "domain-hint":claims,
+        "domain_hint":claims,
         "url_stage":url_stage,
         "smell_bias":smell_bias,
         "confidence":"low",

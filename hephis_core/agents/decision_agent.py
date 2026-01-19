@@ -45,7 +45,7 @@ class DecisionAgent:
         print("RAN:",self.__class__.__name__)
         domain_hint = payload.get("domain_hint")
         stage = payload.get("stage")
-        smells = payload.get("smells", {})
+        smells = payload.get("smells")
         run_id = extract_run_id(payload)
         source = payload.get("source")
         raw = payload["raw"]
