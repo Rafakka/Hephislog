@@ -184,7 +184,6 @@ class UniversalExtractorAgent:
             if isinstance(raw, dict):
                 wrapped = {
                         "stage":"material_raw",
-                        "data":raw,
                         "raw":raw,
                         "domain_hint_extr":domain_hint_extr,
                         "source":source,

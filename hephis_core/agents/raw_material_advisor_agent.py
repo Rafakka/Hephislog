@@ -37,7 +37,7 @@ class RawMaterialAdvisorAgent:
         stage = payload.get("stage")
         domain_hint_extr = payload.get("domain_hint_extr")
         domain_hint = payload.get("domain_hint")
-        scores = payload.get("scores")
+
 
         if stage != "material_raw" or raw is None:
             logger.warning("payload stage or raw not found.",
@@ -59,13 +59,25 @@ class RawMaterialAdvisorAgent:
             )
             return
         
-        print(smells)
+        print("THIS IS RECEIVED: ",raw)
 
-        html_score = get_score(scores,"html")
+        if isinstance(raw, dict):
+            text = extract_text(raw)
+        elif isinstance(raw,str):
+            text = raw
+        else:
+            logger.warning("Unsupported raw type.",
+            extra ={
+                    "agent":self.__class__.__name__,
+                    "event":"advising-cleaning",
+                    "payload":list(payload.keys())
+                }
+            )
+            return
         
-        text = extract_text(raw)
-        tag_count =text.count("<")
         lenght=len(text)
+        tag_count =text.count("<")
+        html_density = tag_count / max(lenght,1)
 
         cleaning = CLEAN_NONE
         reason = "content appears clean"
@@ -74,10 +86,18 @@ class RawMaterialAdvisorAgent:
             cleaning = CLEAN_HEAVY
             reason = "html boilerplate detected"
 
-        elif html_score > 0.4 and tag_count > 50 and lenght > 2000:
+        elif html_density > 0.5 and lenght > 2000:
+            cleaning = CLEAN_HEAVY
+            reason = "dense structure and large document"
+        
+        elif smells.get("html",0) >0.4 and tag_count >50:
             cleaning = CLEAN_LIGHT
             reason = "moderate html structure"
-
+        
+        elif domain_hint_extr and domain_hint_extr.get("source") == "extractor":
+            cleaning = CLEAN_LIGHT
+            reason = "content extracted from url"
+        
         if domain_hint_extr:
             scores[domain_hint_extr["value"]] += domain_hint_extr["confidence"]
 
@@ -109,47 +129,6 @@ class RawMaterialAdvisorAgent:
                     "html_score":html_score,
                 }
             }
-
-        if cleaning != CLEAN_NONE:
-            run_context.touch(
-                run_id,
-                agent="rawmaterialadvisoragent",
-                action="advising-cleaning-intesity",
-                reason=reason,
-            )
-            run_context.emit_fact(
-                    run_id,
-                    stage="advising",
-                    component="RawMaterialAdvisorAgent",
-                    result="cleaning",
-                    reason="raw-material-advised",
-                )    
-            
-            print(semantic_advice)
-            print(semantic_type)
-
-            event_bus.emit(
-                "system.advisor.to.html.cleaner",
-                {   
-                    "run_id":run_id,
-                    "stage":stage,
-                    "advice" : {
-                        "version":1,
-                        "cleaning":cleaning,
-                        "reason":reason,
-                        "html_smell":html_score,
-                    },
-                    "raw":raw,
-                    "semantic_type":semantic_type,
-                    "semantic_advice":semantic_advice,
-                    "source":payload.get("source"),
-                    "semantic_scores":scores,
-
-                }
-            )
-
-        print(semantic_advice)
-        print(semantic_type)
 
         run_context.touch(
                 run_id,

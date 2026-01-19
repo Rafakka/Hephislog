@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 @dataclass(frozen=True)
@@ -18,11 +18,11 @@ class AdvisorToHtmlCleanerMessage:
     advice:HtmlCleaningAdvice
 
     smells:Dict[str, float]
-    semantic_advice:dict
-    semantic_scores:Dict[str, float]
+    semantic_advice:Optional[dict] = None
+    semantic_scores:Dict[str, float] = None
 
-    source:Optional[str]
-    domain_hint:List[str]
+    source:Optional[str] = None
+    domain_hint:List[str] = field(default_factory=list)
 
     @classmethod
     def from_advisor(
@@ -34,8 +34,10 @@ class AdvisorToHtmlCleanerMessage:
         reason:str,
         html_smell:float,
         smells:Dict[str, float],
-        domain_hint:Optional[List[str]],
-        source:Optional[str],
+        semantic_advice:Optional[dict] = None,
+        semantic_scores:Optional[Dict[str, float]] = None,
+        domain_hint:Optional[List[str]] = None,
+        source:Optional[str] = None,
     ):
         cls._validate_inputs(
             run_id,
@@ -89,11 +91,12 @@ class AdvisorToHtmlCleanerMessage:
                     "version":self.advice.version,
                     "cleaning":self.advice.cleaning,
                     "reason":self.advice.reason,
+                    "html_smell":self.advice.html_smell,
                     },
                 "smells":self.smells,
                 "semantic_advice":self.semantic_advice,
                 "semantic_scores":self.semantic_scores,
-                "source":source,
+                "source":self.source,
                 "domain_hint":self.domain_hint,
                 }
 

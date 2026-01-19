@@ -50,73 +50,77 @@ class HtmlCleanerAgent:
         html_smell=advice.html_smell
         reason=advice.reason
         
-        text = raw.get("text")
-
-        if not isinstance(text,dict):
-            logger.warning("HtmlCleaner received non-text raw material")
-            return
-
-        print(smells)
-    
-        cleaning = advice.cleaning
-
-        soup = BeautifulSoup(text,"html.parser")
-
-        attempted_cleaning = cleaning in ("heavy","light")
-
-        if cleaning == "heavy":
-            cleaned_text = self.heavy_clean_html(soup)
-            reason = "heavy clean applied"
-        elif cleaning == "light":
-            cleaned_text = self.light_clean_html(soup)
-            reason = "light clean applied"
-        else:
-            clean = soup.get_text(separator=" ")
-            cleaned_text = clean_html_artifacts(clean)
-            reason = "no html cleaning applied"
-        
-        if not attempted_cleaning and not cleaned_text:
-            logger.warning("raw failed on cleaning",
-                extra={
-                        "agent":self.__class__.__name__,
-                        "event":"cleaning-html",
-                        "raw_type":type(raw).__name__,
-                        "raw_is_dict":isinstance(raw, dict),
-                    }
-                )
-            run_context.touch(
-                run_id,
-                agent="htmlcleaneragent",
-                action="declined",
-                reason=reason,
-                )
-            run_context.emit_fact(
-                        run_id,
-                        stage="cleaning",
-                        component="HtmlCleanerAgent",
-                        result="declined",
-                        reason="raw-material-failed",
-                    )    
-            return
-        else:
-            logger.debug("html cleaning skipped(not required)",
+        if not isinstance(raw,str):
+            logger.debug("HtmlCleaner skipping non-text raw material",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"cleaning-html",
                     "raw_type":type(raw).__name__,
                     "raw_is_dict":isinstance(raw, dict),
-                    }
-                )
+                }
+            )
+            cleaned_text = raw
+            cleaning_applied = "none"
+            reason = "non-text raw material"
+
+        print(smells)
+
+        cleaner_reason = "None"
+
+        if cleaning in ("light","heavy"):
+
+            cleaning = advice.cleaning
+
+            soup = BeautifulSoup(raw,"html.parser")
+
+            attempted_cleaning = cleaning in ("heavy","light")
+
+
+            if cleaning == "heavy":
+                cleaned_text = self.heavy_clean_html(soup)
+                cleaner_reason = "heavy clean applied"
+            elif cleaning == "light":
+                cleaned_text = self.light_clean_html(soup)
+                cleaner_reason = "light clean applied"
+            else:
+                clean = soup.get_text(separator=" ")
+                cleaned_text = clean_html_artifacts(clean)
+                cleaner_reason = "no html cleaning applied"
+        
+            if attempted_cleaning and not cleaned_text:
+                logger.warning("raw failed on cleaning",
+                    extra={
+                            "agent":self.__class__.__name__,
+                            "event":"cleaning-html",
+                            "raw_type":type(raw).__name__,
+                            "raw_is_dict":isinstance(raw, dict),
+                        }
+                    )
+                run_context.touch(
+                    run_id,
+                    agent="htmlcleaneragent",
+                    action="declined",
+                    reason=cleaner_reason,
+                    )
+                run_context.emit_fact(
+                            run_id,
+                            stage="cleaning",
+                            component="HtmlCleanerAgent",
+                            result="declined",
+                            reason="raw-material-failed",
+                        )    
+                return
         
         stage = "material_cleaned"
 
         print(cleaned_text)
+        print(smells)
 
         run_context.touch(
                 run_id,
                 agent="htmlcleaneragent",
                 action="cleaned-material",
-                reason=reason,
+                reason=cleaner_reason,
             )
         run_context.emit_fact(
                 run_id,
@@ -124,15 +128,29 @@ class HtmlCleanerAgent:
                 component="HtmlCleanerAgent",
                 result="completed",
                 reason="raw-material-cleaned",
-            )    
+            )
+
+        if not isinstance(raw,str):
+            event_bus.emit(
+            "system.cleaner.to.sniffer",
+            {   
+                "raw":raw,
+                "smells":smells,
+                "smell_context":"post_cleaning",
+                "run_id":run_id,
+                "stage":stage,
+                "html_state":"skipped"
+            }
+        )
+        return
 
         event_bus.emit(
             "system.cleaner.to.sniffer",
             {   
-                "raw":{"text":cleaned_text,
-                "format":"text",
-                "state":"cleaned",
-                "source":msg.source,
+                "raw":{
+                    "text":cleaned_text,
+                    "format":"text",
+                    "state":"cleaned",
                 },
                 "smells":smells,
                 "smell_context":"post_cleaning",
