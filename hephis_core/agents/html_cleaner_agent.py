@@ -3,13 +3,10 @@ from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.services.cleaners.data_cleaner import clean_html_artifacts
+from hephis_core.utils.utils import extract_text
 from bs4 import BeautifulSoup
 import re
 import logging
-
-from hephis_core.services.cleaners.data_cleaner import (
-    clean_text
-)
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +36,27 @@ class HtmlCleanerAgent:
     @on_event("system.advisor.to.html.cleaner")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__) 
-        smells = payload.get("smells", {})
         run_id = extract_run_id(payload)
-        source = payload.get("source")
         raw = payload.get("raw")
+        text = extract_text(raw)
+
+        if not isinstance(text, str):
+            logger.warning("Received a non text-payload",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"decision-making",
+                    "raw_type":type(raw).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+
         stage = payload.get("stage")
         advice = payload.get("advice",{})
+
+        semantic_type = payload.get("semantic_type",{})
+        signals = semantic_type.get("signals",{})
+        smells = signals.get("smells",{})
 
         if not run_id:
             logger.warning("run id is missing",
@@ -66,14 +78,6 @@ class HtmlCleanerAgent:
             )
             return
         
-        if not smells:
-            logger.warning("smells are missing",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"cleaning-html",
-                }
-            )
-            return
         
         if stage != "material_raw":
             logger.warning("Stage not material raw.",
@@ -98,7 +102,9 @@ class HtmlCleanerAgent:
     
         cleaning = advice.get("cleaning","none")
 
-        soup = BeautifulSoup(raw,"html.parser")
+        soup = BeautifulSoup(text,"html.parser")
+
+        attempted_cleaning = cleaning in ("heavy","light")
 
         if cleaning == "heavy":
             cleaned_text = self.heavy_clean_html(soup)
@@ -114,28 +120,38 @@ class HtmlCleanerAgent:
         
 
         if not cleaned_text:
-            logger.warning("raw failed on cleaning",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"cleaning-html",
-                    "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
-                }
-            )
-            run_context.touch(
+            if attempted_cleaning:
+                logger.warning("raw failed on cleaning",
+                extra={
+                        "agent":self.__class__.__name__,
+                        "event":"cleaning-html",
+                        "raw_type":type(raw).__name__,
+                        "raw_is_dict":isinstance(raw, dict),
+                    }
+                )
+                run_context.touch(
                 run_id,
                 agent="htmlcleaneragent",
                 action="declined",
                 reason=reason,
-            )
-            run_context.emit_fact(
-                    run_id,
-                    stage="cleaning",
-                    component="HtmlCleanerAgent",
-                    result="declined",
-                    reason="raw-material-failed",
-                )    
-            return
+                )
+                run_context.emit_fact(
+                        run_id,
+                        stage="cleaning",
+                        component="HtmlCleanerAgent",
+                        result="declined",
+                        reason="raw-material-failed",
+                    )    
+                return
+            else:
+                logger.debug("html cleaning skipped(not required)",
+                extra={
+                        "agent":self.__class__.__name__,
+                        "event":"cleaning-html",
+                        "raw_type":type(raw).__name__,
+                        "raw_is_dict":isinstance(raw, dict),
+                    }
+                )
         
         stage = "material_cleaned"
 
@@ -158,11 +174,12 @@ class HtmlCleanerAgent:
             {   
                 "raw": 
                 {
-                "text":clean_text,
-                "format":html,
-                "state":cleaned
+                "text":cleaned_text,
+                "format":"text",
+                "state":"cleaned",
                 },
-                "smells":smells,
+                "inherited_smells":smells,
+                "smell_context":"post_cleaning",
                 "source":source,
                 "run_id":run_id,
                 "stage":stage,

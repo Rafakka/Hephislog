@@ -59,6 +59,7 @@ class GatekeeperAgent:
                 "run_id": run_id,
                 "source": source,
                 "domain_hint":domain_hint,
+                "smells":payload.get("smells",{}),
             }
         )
         return

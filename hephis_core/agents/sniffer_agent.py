@@ -7,6 +7,7 @@ from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.services.detectors.chord_detector import ChordDetector
 from hephis_core.services.detectors.raw_detectors import early_advice_raw_input
 from hephis_core.agents.sniffing.sniffing import extract_sniff_text, sniff
+from hephis_core.utils.utils import extract_text
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,6 @@ class SnifferAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    
     def merged_smells(base,new,decay=0.5):
         merged = {}
 
@@ -132,6 +132,7 @@ class SnifferAgent:
         run_id = extract_run_id(payload)
         stage = payload.get("stage")
         domain_hint = payload.get("domain_hint")
+        smells = payload.get("smells",{})
 
         if stage != "material_raw":
             logger.error("Missing material_raw stage.",
@@ -164,6 +165,27 @@ class SnifferAgent:
             )
             return
         
+        scores = {
+            "recipe":0.0,
+            "music":0.0,
+            "article":0.0,
+        }
+        
+        if smells.get("html", 0) > 0.6:
+            scores["recipe"]+= 0.2
+            scores["article"]+= 0.2
+        
+        if smells.get("music",0) > 0.6:
+            scores["music"]+= 0.4
+        
+        text = extract_text(raw).lower()
+
+        if "<li>" in raw and "ingredientes" in text:
+            scores["recipe"]+= 0.4
+
+        if "chorus" in text:
+            scores["music"]+= 0.5
+
         if "url" in domain_hint:
             ENV.add_smell("url",0.0)
             stage = "material_raw"
@@ -189,13 +211,14 @@ class SnifferAgent:
                 "system.smells.to.advisor",
                 {   
                     "stage":stage,
-                    "smells": ENV.smells,
+                    "smells":ENV.smells,
                     "snapshots": ENV.snapshot(),
                     "raw":raw,
                     "run_id": run_id,
                     "source": payload.get("source"),
                     "domain_hint":domain_hint,
                     "domain_hint_extr":domain_hint_extr,
+                    "scores":scores,
                 }
             )
             return
@@ -227,7 +250,8 @@ class SnifferAgent:
                 "raw":raw,
                 "run_id": run_id,
                 "source": payload.get("source"),
-                "domain_hint":payload.get("domain_hint")
+                "domain_hint":payload.get("domain_hint"),
+                "scores":scores,
             }
         )
     
@@ -285,7 +309,7 @@ class SnifferAgent:
             )
             return
         
-        merged_smells = merged_smells(
+        merged_smells = SnifferAgent.merged_smells(
             base=inherited_smells,
             new=new_smells,
             decay=0.5
@@ -325,5 +349,5 @@ class SnifferAgent:
                     "smell_generation":3,
                     "smell_context":"post_cleaning",
                     "merged_smells":merged_smells,
-
+                }
             )

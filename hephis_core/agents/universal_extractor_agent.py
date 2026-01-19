@@ -194,13 +194,13 @@ class UniversalExtractorAgent:
                         "domain_hint":domain_hint,
                     }
             
-            print(f"THIS IS WRAPPED: {wrapped}")
-            
-            event_bus.emit(
-                "system.extraction.completed",
-                wrapped
-            )
-            return
+                print(f"THIS IS WRAPPED: {wrapped}")
+                
+                event_bus.emit(
+                    "system.extraction.completed",
+                    wrapped
+                )
+                return
 
             run_context.touch(
                     run_id,
@@ -228,6 +228,7 @@ class UniversalExtractorAgent:
                     "run_id": run_id,
                     "source":source,
                     "domain_hint":domain_hint,
+                    "smells":payload.get("smells",{}),
                 }
             )
             
