@@ -10,9 +10,11 @@ ensuring that all data sent to or from the database follows the expected format.
 Author: Rafael Kaher
 
 """
-
 from pydantic import BaseModel, StrictStr, StrictFloat, Field, ConfigDict
 from typing import List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 class IngredientSchema(BaseModel):
     """
@@ -146,6 +148,20 @@ UNICODE_FRACTIONS = {
     "⅛": 1/8,
 }
 
+def normalize_raw_text(raw_text) -> str:
+    if raw_text is None:
+        return ""
+    
+    if isinstance(raw_text, str):
+        return raw_text.strip()
+    if isinstance(raw_text, list):
+        return "\n".join(
+            str(x).strip()
+            for x in raw_text
+            if x
+        )
+    return str(raw_text)
+
 def build_recipe_page(
     raw_recipe:dict | str,
     *,
@@ -156,28 +172,66 @@ def build_recipe_page(
 
     warnings:list[str] = []
 
-    if isinstance(raw_recipe, dict):
-        raw_text = (
-            raw_recipe.get("text")
-            or raw_recipe.get("content")
-            or raw_recipe.get("raw")
-        )
+    if isinstance(raw_recipe, dict) and {"title","ingredients","steps"} <= raw_recipe.keys():
+        
+        Recipe_page = {
+        "type":"recipe_page",
+        "title":raw_recipe.get("title"),
+        "ingredients":raw_recipe.get("ingredients",[]),
+        "steps":raw_recipe.get("steps",[]),
+        "raw_text":None,
+
+        "structured":{
+            "ingredients":[],
+            "spices":[],
+        },
+
+        "source":source,
+        "confidence":confidence,
+        "run_id":run_id,
+
+        "metadata": {
+            "language":"pt",
+            "warnings":["Bypassed heuritic parsing(already structured)"],
+            "unit_system":"metric",
+            },
+        }
+
+        return Recipe_page
+    
+    if isinstance(raw_recipe,dict):
+        raw_text = normalize_raw_text(raw_recipe)
     else:
         raw_text = raw_recipe
     
     if not raw_text or not isinstance(raw_text, str):
-        return None
+        logger.warning("Missing raw_text or raw_text not string",
+            extra={
+                    "path":"recipe_schema.py",
+                    "event":"recipe-writing",
+                }
+            )
+        return
     
     lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
 
     title = lines[0] if lines else None
+
+    ingredients = []
+    steps = []
 
     for line in lines[1:]:
         if any(x in line.lower() for x in ["colher", "xicara","g","kg","ml"]):
             ingredients.append(line)
         else:
             steps.append(line)
-        
+    
+    if not ingredients:
+        warnings.append("No ingredients detected.")
+    
+    if not steps:
+        warnings.append("No steps detected.")
+
     structured = {
         "ingredients":[],
         "spices":[]

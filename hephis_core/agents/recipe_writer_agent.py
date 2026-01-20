@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class RecipeWriterAgent:
     def __init__(self):
-        print("* INIT:",self.__class__.__name__)
+        print("* - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -19,6 +19,8 @@ class RecipeWriterAgent:
     @on_event("recipe.organized.to.writer")
     def recipe_writer(self, payload):
         print("RAN:",self.__class__.__name__)
+
+        print("THIS IS PAYLOAD: ",payload)
 
         run_id = extract_run_id(payload)
     
@@ -98,6 +100,8 @@ class RecipeWriterAgent:
                 reason="File softly paged",
                 )
         
+        print("THIS IS RECIPE:",recipe_page)
+        print("THIS IS CONFIDENCE:", confidence)
 
         event_bus.emit("recipe.softly_paged", 
             {

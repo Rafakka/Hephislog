@@ -113,7 +113,9 @@ def parse_ingredient_line(line: str) -> dict:
 
 def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.0"):
 
-    if not isinstance(recipe, dict):
+    recipe_page = recipe
+
+    if not isinstance(recipe_page, dict):
         return {
             "success": False,
             "data": None,
@@ -121,11 +123,11 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
             "message": "Input is not a dictionary. Cannot normalize."
         }
 
-    normalized = {}
+    normalized = []
     warnings = []
 
     try:
-        title = recipe["title"]
+        title = recipe_page.get("title")
         normalized["name"] = title.strip().lower().title()
     except KeyError:
         return {
@@ -136,7 +138,7 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
         }
     
     try:
-        steps_list = recipe["steps"]
+        steps_list = recipe_page.get("steps")
     except KeyError:
         return {
             "success": False,
@@ -157,7 +159,7 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
     normalized["steps"] = "\n\n".join(cleaned_steps)
 
     try:
-        raw_ingredients = recipe["ingredients"]
+        raw_ingredients = recipe_page.get("ingredients")
     except KeyError:
         return {
             "success": False,
@@ -214,7 +216,7 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
         "module_version": module_version,
         "normalized_at": normalized_at,
         "checksum": checksum,
-        "warnings": warnings or None
+        "warnings": warnings,
     }
 
     # ------------------------------------------

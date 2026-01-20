@@ -117,7 +117,7 @@ class NormalizerAgent:
 
         recipe_page = payload.get("recipe")
 
-        if not recipe:
+        if not recipe_page:
             logger.warning("Normalizer received no recipe",
             extra={
                     "agent":self.__class__.__name__,
@@ -151,7 +151,15 @@ class NormalizerAgent:
         module_version="1.0"
         )
 
-        if not normalized:
+        print("THIS IS NORMALIZED DATA: ",normalized)
+
+        if not normalized or not normalized.get("success"):
+            logger.warning("Normalizer not worked.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-recipe",
+                }
+            )
             run_context.touch(
                 run_id,
                 agent="NormalizerAgent",
@@ -168,7 +176,54 @@ class NormalizerAgent:
                 )
             return
         
-        scores = evaluate_recipe(raw_recipe, normalized["data"])
+        data = normalized.get("data")
+        if not isinstance(data, dict):
+            logger.warning("Normalized data not structured.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-recipe",
+                }
+            )
+            run_context.touch(
+                run_id,
+                agent="NormalizerAgent",
+                action="declined",
+                domain="recipe",
+                reason="Failed at structuring",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="normalized",
+                component="NormalizerAgent",
+                result="declined",
+                reason="failed at normalizing",
+                )
+            return
+
+        scores = evaluate_recipe(raw_recipe, data)
+
+        if not scores:
+            logger.warning("Evaluation error.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"evaluating-recipe",
+                }
+            )
+            run_context.touch(
+                run_id,
+                agent="NormalizerAgent",
+                action="declined",
+                domain="recipe",
+                reason="Failed at evaluating",
+            )
+            run_context.emit_fact(
+                run_id,
+                stage="evaluation",
+                component="NormalizerAgent",
+                result="declined",
+                reason="failed at evaluating",
+                )
+            return
 
         run_context.touch(
                 run_id,

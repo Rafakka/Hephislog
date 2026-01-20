@@ -12,6 +12,7 @@ from hephis_core.agents.html_cleaner_agent import HtmlCleanerAgent
 from hephis_core.agents.decision_agent import DecisionAgent
 from hephis_core.agents.normalizer_agent import NormalizerAgent
 from hephis_core.agents.organizer_agent import OrganizerAgent
+from hephis_core.agents.recipe_writer_agent import RecipeWriterAgent
 from hephis_core.agents.universal_packer_agent import UniversalPackerAgent
 from hephis_core.agents.universal_retriever_agent import UniversalRetrieverAgent
 from hephis_core.agents.finalizer_agent import FinalizerAgent
@@ -35,6 +36,7 @@ def bootstrap_agents():
         HtmlCleanerAgent(),
         DecisionAgent(),
         OrganizerAgent(),
+        RecipeWriterAgent(),
         NormalizerAgent(),
         UniversalPackerAgent(),
         FinalizerAgent(),
