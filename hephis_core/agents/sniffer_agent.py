@@ -153,7 +153,6 @@ class SnifferAgent:
         source = payload.get("source")
 
         print("THIS IS RAW: ",raw)
-
         print(smells)
 
         if not run_id or raw is None:
@@ -176,7 +175,7 @@ class SnifferAgent:
             )
             return
         
-        if isinstance(raw, dict) and "text" in raws:
+        if isinstance(raw, dict) and "text" in raw:
             raw_text = raw["text"]
         elif isinstance(raw, str):
             raw_text = raw
@@ -200,7 +199,7 @@ class SnifferAgent:
         if isinstance(raw, dict) and source == "url":
             local_smells["url"] = max(local_smells.get("url",0.0),0.9)
         
-        merged_smells = self.merged_smells(
+        merged_smells = SnifferAgent.merged_smells(
             base=smells or {},
             new=local_smells,
             decay=0.5
@@ -237,18 +236,27 @@ class SnifferAgent:
     @on_event("system.cleaner.to.sniffer")
     def sniff_after_cleaning(self, payload:dict):
         print("THIRD RAN:",self.__class__.__name__)
-        raw = payload.get("raw")
+
+        raw_material = payload.get("raw")
         run_id = extract_run_id(payload)
-        stage = payload.get("stage")
         incoming_smells = payload.get("smells")
 
-        if not raw:
+        if not run_id:
+            logger.error("Dropping event without run_id",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"third-sniffing",
+                    "raw_type":type(raw_material).__name__,
+                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+
+        if not raw_material:
             logger.error("raw not found!",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"third-sniffing",
-                    "raw_type":type(raw).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
                 }
             )
             return
@@ -258,46 +266,44 @@ class SnifferAgent:
             extra={
                     "agent":self.__class__.__name__,
                     "event":"third-sniffing",
-                    "raw_type":type(raw).__name__,
+                    "raw_type":type(raw_material).__name__,
                     "raw_is_dict":isinstance(raw, dict),
                 }
             )
             return
-        
-        if payload.get("smell_context") == "post_cleaning":
-            inherited_smells = payload.get("inherited_smells",{})
-            new_smells = sniff(payload["raw"],agent_name=__class__.__name__)
 
-        if stage != "material_cleaned":
-            logger.error("Missing cleaning stage.",
+        if payload.get("smell_context") != "post_cleaning":
+            logger.error("Third sniff received no smell context, didnt pass post cleaning.",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"third-sniffing",
-                }
-            )
-            return
-
-        if not run_id:
-            logger.error("Dropping event without run_id",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"third-sniffing",
-                    "raw_type":type(raw).__name__,
+                    "raw_type":type(raw_material).__name__,
                     "raw_is_dict":isinstance(raw, dict),
                 }
             )
             return
+
+        print("THIS IS RAW: ",raw_material)
+        print("THIS IS INCOMING SMELLS:",incoming_smells)
+
+        new_smells = sniff(raw_material,agent_name=__class__.__name__)
+
+        print("THIS IS NEW SMELLS:",new_smells)
         
         merged_smells = SnifferAgent.merged_smells(
-            base=inherited_smells,
+            base=incoming_smells,
             new=new_smells,
             decay=0.5
         )
+
+        print("THIS IS MERGED SMELLS:",merged_smells)
 
         ENV.reset()
 
         for k, v in merged_smells.items():
             ENV.add_smell(k,v)
+
+        print("THIS IS UPDATED SMELLS:",ENV.smells)
 
         run_context.touch(
                 run_id,
@@ -322,11 +328,10 @@ class SnifferAgent:
                     "stage":"post_clean_sniffing",
                     "smells": ENV.smells,
                     "snapshots": ENV.snapshot(),
-                    "raw":payload["raw"],
+                    "material":raw_material,
                     "run_id": run_id,
                     "source": payload.get("source"),
                     "smell_generation":3,
                     "smell_context":"post_cleaning",
-                    "merged_smells":merged_smells,
                 }
             )

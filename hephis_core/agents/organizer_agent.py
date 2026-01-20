@@ -166,36 +166,50 @@ class OrganizerAgent:
             "run_id": run_id,
         })
 
-        
     @on_event("intent.organize.recipe")
     def handle_recipe(self, payload):
-        
+        print("RAN:",self.__class__.__name__)
+
         raw = payload.get("raw")
 
         if not raw:
-            run_context.touch(
-                run_id,
-                agent="OrganizerAgent",
-                action="declined",
-                domain="Recipe",
-                reason="No raw",
+            logger.warning("raw id is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"organizing-recipe",
+                }
             )
-            run_context.emit_fact(
-                run_id,
-                stage="organizer",
-                component="OrganizerAgent",
-                result="declined",
-                reason="No raw",
-                )
+            return
+
+        run_id = extract_run_id(payload)
+
+        if not run_id:
+            logger.warning("run id is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"organizing-recipe",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        confidence = payload.get("confidence")
+
+        if not confidence:
+            logger.warning("run id is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"organizing-recipe",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
             return
 
         source = payload.get("source")
 
-        run_id = extract_run_id(payload)
-
-        confidence = payload.get("confidence")
-
-        if not run_id:
+        if not source:
             logger.warning("run id is missing",
             extra={
                     "agent":self.__class__.__name__,
@@ -222,7 +236,8 @@ class OrganizerAgent:
             reason="file_accepted"
             )
 
-        event_bus.emit("recipe.organized", {
+        event_bus.emit("recipe.organized.to.writer", 
+        {
             "domain": "recipe",
             "recipe": raw,
             "source": source,

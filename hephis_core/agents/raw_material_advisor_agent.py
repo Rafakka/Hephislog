@@ -31,13 +31,15 @@ class RawMaterialAdvisorAgent:
     @on_event("system.smells.to.advisor")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__)
+
         smells = payload.get("smells")
         run_id = extract_run_id(payload)
         raw = payload.get("raw")
         stage = payload.get("stage")
         domain_hint_extr = payload.get("domain_hint_extr")
         domain_hint = payload.get("domain_hint")
-
+        source = payload.get("source")
+        
 
         if stage != "material_raw" or raw is None:
             logger.warning("payload stage or raw not found.",
@@ -75,6 +77,8 @@ class RawMaterialAdvisorAgent:
             )
             return
         
+        text_lower = text.lower()
+        
         lenght=len(text)
         tag_count =text.count("<")
         html_density = tag_count / max(lenght,1)
@@ -82,7 +86,7 @@ class RawMaterialAdvisorAgent:
         cleaning = CLEAN_NONE
         reason = "content appears clean"
 
-        if any(marker in text.lower()for marker in HEAVY_HTML_MARKERS):
+        if any(marker in text_lower for marker in HEAVY_HTML_MARKERS):
             cleaning = CLEAN_HEAVY
             reason = "html boilerplate detected"
 
@@ -97,38 +101,33 @@ class RawMaterialAdvisorAgent:
         elif domain_hint_extr and domain_hint_extr.get("source") == "extractor":
             cleaning = CLEAN_LIGHT
             reason = "content extracted from url"
-        
-        if domain_hint_extr:
-            scores[domain_hint_extr["value"]] += domain_hint_extr["confidence"]
-
-        best, confidence = max(scores.items(), key=lambda x:x[1])
 
         semantic_advice = {
-            "type":"confident" if confidence >= 0.6 else "uncertain",
-            "value":best if confidence >= 0.6 else None,
-            "confidence":confidence,
-            "threshold":0.6,
-            "advisor":"RawMaterialAdvisorAgent",  
+            "type":"hint",
+            "value":None,
+            "confidence":0.0,
+            "sources":[],
+            "signals":[],
             }
-
-        if confidence < 0.6:
-            semantic_type = {
-                "value":"unknown",
-                "confidence":confidence,
-                "sources":["advisor"],
-                "signals":scores,
-            }
-        else:
-            semantic_type = {
-                "value":best,
-                "confidence":confidence,
-                "sources":["snifer","extractor","advisor"],
+        
+        if domain_hint_extr:
+            semantic_advice.update({
+                "value":domain_hint_extr.get("value"),
+                "confidence":domain_hint_extr.get("confidence",0.0),
+                "sources":["extractor"],
                 "signals":{
-                    "smells":smells,
                     "domain_hint_extr":domain_hint_extr,
-                    "html_score":html_score,
+                },
+            })
+        elif domain_hint:
+            semantic_advice.update({
+                "value":domain_hint,
+                "confidence":0.3,
+                "sources":["transport"],
+                "signals":{
+                    "domain_hint":domain_hint,
                 }
-            }
+            })
 
         run_context.touch(
                 run_id,
@@ -149,13 +148,10 @@ class RawMaterialAdvisorAgent:
             raw=raw,
             cleaning=cleaning,
             reason=reason,
-            html_smell=html_score,
             smells=smells,
             semantic_advice=semantic_advice,
-            semantic_scores=scores,
-            domain_hint=payload.get("domain_hint"),
-            source=payload.get("source")
-
+            domain_hint=domain_hint,
+            source=source,
         )
         event_bus.emit(
             AdvisorToHtmlCleanerMessage.EVENT,

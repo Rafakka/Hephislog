@@ -2,6 +2,7 @@ from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
 from hephis_core.services.cleaners.data_cleaner import clean_html_artifacts
+from hephis_core.utils.utils import extract_text
 from hephis_core.contracts.advisor_to_html_cleaner import (
     AdvisorToHtmlCleanerMessage,
     HtmlCleaningAdvice,
@@ -47,10 +48,9 @@ class HtmlCleanerAgent:
         advice=msg.advice
         smells=msg.smells
         cleaning = advice.cleaning
-        html_smell=advice.html_smell
         reason=advice.reason
         
-        if not isinstance(raw,str):
+        if isinstance(raw,dict):
             logger.debug("HtmlCleaner skipping non-text raw material",
             extra={
                     "agent":self.__class__.__name__,
@@ -60,21 +60,21 @@ class HtmlCleanerAgent:
                 }
             )
             cleaned_text = raw
+            cleaning = "none"
             cleaning_applied = "none"
             reason = "non-text raw material"
 
         print(smells)
-
+        
         cleaner_reason = "None"
 
         if cleaning in ("light","heavy"):
 
-            cleaning = advice.cleaning
+            text = extract_text(raw)
 
-            soup = BeautifulSoup(raw,"html.parser")
+            soup = BeautifulSoup(text,"html.parser")
 
             attempted_cleaning = cleaning in ("heavy","light")
-
 
             if cleaning == "heavy":
                 cleaned_text = self.heavy_clean_html(soup)
@@ -110,11 +110,24 @@ class HtmlCleanerAgent:
                             reason="raw-material-failed",
                         )    
                 return
-        
-        stage = "material_cleaned"
 
         print(cleaned_text)
         print(smells)
+
+        inherited_smells = smells or {}
+
+        if cleaning == "none":
+            cleaned_raw = raw if isinstance(raw, dict) else {
+                "text":raw,
+                "format":"text",
+                "state":"original",
+            }
+        else:
+            cleaned_raw = {
+                "text":cleaned_text,
+                "format":"text",
+                "state":"original",
+            }
 
         run_context.touch(
                 run_id,
@@ -129,33 +142,15 @@ class HtmlCleanerAgent:
                 result="completed",
                 reason="raw-material-cleaned",
             )
-
-        if not isinstance(raw,str):
-            event_bus.emit(
-            "system.cleaner.to.sniffer",
-            {   
-                "raw":raw,
-                "smells":smells,
-                "smell_context":"post_cleaning",
-                "run_id":run_id,
-                "stage":stage,
-                "html_state":"skipped"
-            }
-        )
-        return
-
+        
         event_bus.emit(
             "system.cleaner.to.sniffer",
             {   
-                "raw":{
-                    "text":cleaned_text,
-                    "format":"text",
-                    "state":"cleaned",
-                },
-                "smells":smells,
-                "smell_context":"post_cleaning",
+                "raw":cleaned_raw,
                 "run_id":run_id,
-                "stage":stage,
-                "html_state":"cleaned"
+                "stage":"material_cleaned",
+                "smells":inherited_smells,
+                "smell_context":"post_cleaning",
+                "source":payload.get("source"),
             }
         )

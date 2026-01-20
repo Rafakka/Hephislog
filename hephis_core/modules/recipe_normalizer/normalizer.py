@@ -3,7 +3,7 @@ import re
 import hashlib
 
 from datetime import datetime, timezone
-from hephis_core.schemas.panaceia_schemas import RecipeSchema, IngredientSchema, UNIT_MAP, UNICODE_FRACTIONS
+from hephis_core.schemas.recipe_schemas import RecipeSchema, IngredientSchema, UNIT_MAP, UNICODE_FRACTIONS
 
 def parse_ingredient_line(line: str) -> dict:
     """

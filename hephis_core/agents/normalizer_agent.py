@@ -1,5 +1,6 @@
 from hephis_core.modules.music_normalizer.normalizer import music_normalizer
 from hephis_core.modules.recipe_normalizer.normalizer import recipe_normalizer
+from hephis_core.modules.recipe_evaluator.evaluator import evaluate_recipe
 from hephis_core.events.bus import event_bus
 from hephis_core.events.decorators import on_event
 from hephis_core.swarm.run_context import run_context
@@ -95,13 +96,13 @@ class NormalizerAgent:
             "run_id": run_id
         })
 
-    @on_event("recipe.organized")
+    @on_event("recipe.softly_paged")
     def normalize_recipe(self, payload):
-        print("RAN:",self.__class__.__name__) 
-        raw = payload["sections"]
-        source = payload.get("source")
-        run_id = extract_run_id(payload)
-        confidence = payload.get("confidence")
+        print("RAN:",self.__class__.__name__)
+
+        print("THIS IS FULL PAYLOAD: ", payload)
+
+        run_id = payload.get("run_id")
 
         if not run_id:
             logger.warning("run id is missing",
@@ -114,8 +115,38 @@ class NormalizerAgent:
             )
             return
 
+        recipe_page = payload.get("recipe")
+
+        if not recipe:
+            logger.warning("Normalizer received no recipe",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-recipe",
+                }
+            )
+            return
+
+        confidence = payload.get("confidence")
+
+        if not confidence:
+            logger.warning("Normalizer received no confidence to save.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"normalizing-recipe",
+                }
+            )
+            return
+        
+        raw_recipe = {
+            "tile":recipe_page.get("title"),
+            "steps":recipe_page.get("steps"),
+            "ingredients":recipe_page.get("ingredients"),
+            "spices":recipe_page.get("structured",{}.get("spices",[])),
+        }
+
+
         normalized = recipe_normalizer(
-        raw,
+        raw_recipe,
         schema_version="1.0",
         module_version="1.0"
         )
@@ -135,6 +166,9 @@ class NormalizerAgent:
                 result="declined",
                 reason="failed at normalizing",
                 )
+            return
+        
+        scores = evaluate_recipe(raw_recipe, normalized["data"])
 
         run_context.touch(
                 run_id,
@@ -151,10 +185,14 @@ class NormalizerAgent:
                 reason="File Normalized",
                 )
 
-        event_bus.emit("recipe.normalized", {
+        event_bus.emit("recipe.normalized", 
+            {
             "domain": "recipe",
-            "normalized": normalized,
+            "normalized":normalized["data"],
+            "metadata":normalized["data"].get("metadata"),
             "source": source,
+            "scores":scores,
             "confidence": confidence,
             "run_id": run_id,
-        })
+            }
+        )

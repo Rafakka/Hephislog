@@ -43,12 +43,21 @@ class DecisionAgent:
     @on_event("system.smells.to.decisionagent")
     def decide(self, payload):
         print("RAN:",self.__class__.__name__)
-        domain_hint = payload.get("domain_hint")
+
         stage = payload.get("stage")
         smells = payload.get("smells")
         run_id = extract_run_id(payload)
         source = payload.get("source")
-        raw = payload["raw"]
+        raw = payload.get("material")
+
+        if not raw:
+            logger.warning("raw is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"decision-making",
+                }
+            )
+            return
 
         if not run_id:
             logger.warning("run id is missing",
@@ -131,6 +140,7 @@ class DecisionAgent:
         decision_store.store(run_id, decision)
 
         print("DECISION STORED:", decision)
+
         run_context.touch(
                 run_id,
                 agent="DecisionAgent",
@@ -146,23 +156,6 @@ class DecisionAgent:
             component="DecisionAgent",
             reason="decision made",
             )    
-        
-        if raw is None:
-            run_context.touch(
-                run_id,
-                agent="DecisionAgent",
-                action="Returned none",
-                domain=domain,
-                reason="No raw payload",
-            )
-            run_context.emit_fact(
-            run_id,
-            stage="decision",
-            component="DecisionAgent",
-            result="declined",
-            reason="no_raw_payload"
-            )
-            return
 
         run_context.touch(
                 run_id,

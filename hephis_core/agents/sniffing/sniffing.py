@@ -4,17 +4,38 @@ import json
 
 logger = logging.getLogger(__name__)
 
+def _flatten_text(value) -> list[str]:
+    texts = []
+
+    if isinstance(value,str):
+        texts.append(value)
+    elif isinstance(value, list):
+        for item in value:
+            texts.extend(_flatten_text(item))
+    elif isinstance(value, dict):
+        for v in value.values():
+            texts.extend(_flatten_text(v))
+    return texts
+
 def extract_sniff_text(raw, *, agent_name:str | None = None) -> str | None:
-        if isinstance(raw, dict):
-            raw_extracted = (
-                raw.get("text") 
-                or raw.get("lyrics") 
-                or raw.get("content") 
-                )
-            if raw_extracted:
-                return raw_extracted
+    
         if isinstance(raw, str):
             return raw
+        
+        if isinstance(raw, dict):
+            texts = _flatten_text(raw)
+
+            if texts:
+                return " ".join(texts)
+
+            logger.warning("Dict contains no sniffable text",
+                extra={
+                        "agent":agent_name,
+                        "event":"third-sniffing",
+                    }
+                )
+            return None
+            
         else:
             logger.warning("Unsupported raw type",
             extra={
@@ -40,26 +61,26 @@ def sniff(raw, *, agent_name:str | None = None) -> str | None:
             return
 
         text = text.lower()
+        smells: dict[str,float] = {}
 
         if"<html" in text or "<div" in text:
-            ENV.add_smell("html",0.9)
-            
-        if "ingrediente" in text:
-            ENV.add_smell("recipe",0.6)
-            
-        if "modo de preparo" in text or "preparo" in text:
-            ENV.add_smell("recipe",0.8)
-            
+            smells["html"] = max(smells.get("html",0),0.9)
+        
         if text.strip().startswith(("{","[")):
             try:
                 json.loads(text)
-                ENV.add_smell("json",0.9)
+                smells["json"] = 0.9
             except:
-                ENV.add_smell("json",0.4)
+                smells["json"] = 0.4
+            
+        if "modo de preparo" in text or "preparo" in text or "steps" in text:
+            smells["recipe"] = max(smells.get("recipe",0),0.8)
+        
+        elif "ingrediente" in text or "ingredients" in text:
+            smells["recipe"] = max(smells.get("recipe",0),0.6)
+        
+        elif any(chord in text for chord in["am","em","g","c"]):
+            smells["music"] = 0.5
 
-        if any(chord in text for chord in["am","em","g","c"]):
-            ENV.add_smell("music",0.5)        
-
-        if len(text) > 100_000:
-            ENV.add_smell("huge_input",1.0)
+        return smells or None
     
