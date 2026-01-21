@@ -138,12 +138,14 @@ class NormalizerAgent:
             return
         
         raw_recipe = {
-            "tile":recipe_page.get("title"),
+            "title":recipe_page.get("title"),
             "steps":recipe_page.get("steps"),
             "ingredients":recipe_page.get("ingredients"),
             "spices":recipe_page.get("structured",{}.get("spices",[])),
+            "source":recipe_page.get("source"),
         }
 
+        print("THIS IS RAW RECIPE: ",raw_recipe)
 
         normalized = recipe_normalizer(
         raw_recipe,
@@ -151,7 +153,7 @@ class NormalizerAgent:
         module_version="1.0"
         )
 
-        print("THIS IS NORMALIZED DATA: ",normalized)
+        print("THIS IS NORMALIZED DATA: ",normalized["data"])
 
         if not normalized or not normalized.get("success"):
             logger.warning("Normalizer not worked.",
@@ -242,12 +244,12 @@ class NormalizerAgent:
 
         event_bus.emit("recipe.normalized", 
             {
-            "domain": "recipe",
+            "domain":"recipe",
             "normalized":normalized["data"],
-            "metadata":normalized["data"].get("metadata"),
-            "source": source,
+            "metadata":normalized["data"].get("_metadata"),
+            "source":raw_recipe.get("source"),
             "scores":scores,
-            "confidence": confidence,
+            "confidence":confidence,
             "run_id": run_id,
             }
         )

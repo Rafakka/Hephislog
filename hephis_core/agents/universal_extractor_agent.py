@@ -42,11 +42,11 @@ class UniversalExtractorAgent:
             print("HTML EXTRACTORS",EXTRACTOR_REGISTRY.get("html"))
 
             extractors = EXTRACTOR_REGISTRY.get(type_, {})
-
+            
             if not extractors:
-                logger.warning("No extractors found!!!")
+                logger.warning("No extractors matched input, skipping extraction.")
                 return None
-                
+
             for domain, fns in extractors.items():
                 for fn in fns:
                     try:

@@ -33,6 +33,6 @@ def evaluate_recipe(raw_recipe:dict, normalized:dict) -> dict:
         "schema_fit":round(schema_fit, 3),
         "ingredients_fit":round(ingredients_fit,3),
         "steps_fit":round(steps_fit,3),
-        "warning_penalty":round(warnings_penaltym, 3),
+        "warning_penalty":round(warnings_penalty, 3),
         "overall":round(max(0.0, overall),3)
     }

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Environment:
     def __init__(self):
@@ -7,7 +7,7 @@ class Environment:
     def reset(self):
         self.source = None
         self.mode = "prod"
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
         self.flags = set()
         self.metadata = {}
         self.smells = {}

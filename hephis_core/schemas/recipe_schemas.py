@@ -71,6 +71,7 @@ class RecipeSchema(BaseModel):
     steps: StrictStr
     ingredients: List[IngredientSchema]
     spices: List[StrictStr] = []
+    source: str
     
 
 

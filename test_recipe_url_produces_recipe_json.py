@@ -1,10 +1,9 @@
 import json
 from pathlib import Path
-
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.decision_store import decision_store
-from hephis_core.infra.observability.report_store import reset_report
+from hephis_core.infra.observability.report_store import reset_report, get_report
 from hephis_core.bootstrap import bootstrap_agents
 
 def test_music_url_produces_recipe_json(tmp_path):
@@ -30,25 +29,25 @@ def test_music_url_produces_recipe_json(tmp_path):
 
     event_bus.emit("system.input_received", payload)
 
-    decison = decision_store.get(run_id)
-    assert decison is not None, "No decision was stored"
-    assert decision["domain"] == "recipe"
-    
-    output_dir = Path("data/recipes") / run_id
-    assert output_dir.exists(), "Recipe output directory was no created"
+    report = get_report(run_id)
+    assert report["veredict"] == "Flow Completed"
+
+    base_dir = Path("data/recipe")
+    assert base_dir.exists()
 
     json_files = list(base_dir.rglob("*.json"))
-    assert json_files, "No recipe JSON files produced"
+    assert json_files, "No recipe json files produced"
 
-    with json_files[0].open() as f:
+    with json_files[0].open(encoding="utf-8") as f:
         data = json.load(f)
 
-    assert "title" in data
-
-    assert "ingredients" in data
-    assert isinstance (data["ingredients"],list)
+    assert "name" in data
+    assert isinstance(data["name"],str)
 
     assert "steps" in data
-    assert isinstance (data["steps"],list)
+    assert isinstance(data["steps"], str)
 
-    assert "url" in data
+    assert "ingredients" in data
+    assert isinstance(data["ingredients"], list)
+
+    assert "source" in data

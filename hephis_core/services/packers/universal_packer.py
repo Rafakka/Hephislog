@@ -2,7 +2,7 @@ from hephis_core.utils.json_handler import serialize_json, extract_json_data
 from hephis_core.utils.output_manager import write_processed_json
 
 
-def pack_data(domain: str, validated_object):
+def pack_data(domain: str, title:str, validated_object):
     """
     Serialize, extract metadata, and save processed JSON using the new output manager.
     """
@@ -15,7 +15,7 @@ def pack_data(domain: str, validated_object):
     # Write using the unified output manager
     file_path = write_processed_json(
         domain=domain,
-        title=metadata["title"],
+        title=title,
         json_dict=json_dict
     )
 

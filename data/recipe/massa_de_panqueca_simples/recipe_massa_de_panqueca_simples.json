@@ -1,0 +1,40 @@
+{
+  "name": "Massa De Panqueca Simples",
+  "steps": "Bata todos os ingredientes no liquidificador at&amp;eacute; obter uma consist&amp;ecirc;ncia cremosa.\n\nUnte uma frigideira com &amp;oacute;leo e despeje uma concha de massa.\n\nFa&amp;ccedil;a movimentos circulares para que a massa se espalhe por toda a frigideira.\n\nEspere at&amp;eacute; a massa se soltar do fundo, vire e deixe fritar do outro lado.\n\nAcrescente o recheio de sua prefer&amp;ecirc;ncia, enrole e est&amp;aacute; pronta para servir.",
+  "ingredients": [
+    {
+      "name": "ovo",
+      "quantity": 1.0,
+      "unit": null
+    },
+    {
+      "name": "xícara de farinha de trio",
+      "quantity": 1.0,
+      "unit": "g"
+    },
+    {
+      "name": "xícara de eite",
+      "quantity": 1.0,
+      "unit": "L"
+    },
+    {
+      "name": "sal",
+      "quantity": 1.0,
+      "unit": "Pt"
+    },
+    {
+      "name": "óleo",
+      "quantity": 1.0,
+      "unit": "Cl"
+    }
+  ],
+  "spices": [],
+  "source": "url",
+  "_metadata": {
+    "schema_version": "1.0",
+    "module_version": "1.0",
+    "normalized_at": "2026-01-21T15:49:23.393391Z",
+    "checksum": "97e2708a2001e8d7db4a2ab9b75947bd4c4b4a2e",
+    "warnings": []
+  }
+}

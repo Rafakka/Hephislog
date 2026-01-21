@@ -4,6 +4,9 @@ import hashlib
 
 from datetime import datetime, timezone
 from hephis_core.schemas.recipe_schemas import RecipeSchema, IngredientSchema, UNIT_MAP, UNICODE_FRACTIONS
+import logging
+
+logger = logging.getLogger(__name__)
 
 def parse_ingredient_line(line: str) -> dict:
     """
@@ -111,35 +114,75 @@ def parse_ingredient_line(line: str) -> dict:
     }
 
 
-def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.0"):
+def recipe_normalizer(incoming_obj: dict, schema_version="1.0.0", module_version="1.0.0"):
 
-    recipe_page = recipe
+    print("THIS IS INCOMING OBJ:",incoming_obj)
 
-    if not isinstance(recipe_page, dict):
+    recipe_page = None
+
+    if isinstance(incoming_obj, str):
+        return {
+            "success": False,
+            "data": None,
+            "error": "DataTypeError",
+            "message": "recipe normalizer received strings to normalize."
+        }
+    elif isinstance(incoming_obj, dict):
+        if "title" in incoming_obj:
+            recipe_page = incoming_obj
+        elif "recipe" in incoming_obj and isinstance(incoming_obj["recipe"],dict):
+            recipe_page = incoming_obj["recipe"]
+        elif "raw_text" in incoming_obj and isinstance(incoming_obj["raw_text"],str):
+            recipe_page = {
+                "raw_text":incoming_obj["raw_text"]
+            }
+    else:
         return {
             "success": False,
             "data": None,
             "error": "DataFormatError",
             "message": "Input is not a dictionary. Cannot normalize."
         }
+    
+    if recipe_page is None:
+        return {
+            "success": False,
+            "data": None,
+            "error": "DataFormatError",
+            "message": "recipe_page , couldnt be parsed."
+        }
+    
+    source = recipe_page.get("source")
 
-    normalized = []
+    if isinstance(source, str):
+        pass
+    else:
+        return {
+            "success": False,
+            "data": None,
+            "error": "MissingField",
+            "message": "Recipe is missing required field: source"
+        }
+
+    normalized = {}
     warnings = []
 
-    try:
-        title = recipe_page.get("title")
-        normalized["name"] = title.strip().lower().title()
-    except KeyError:
-        return {
+    title = recipe_page.get("title")
+
+    if not isinstance(title,str) or not title.strip():
+            return {
             "success": False,
             "data": None,
             "error": "MissingField",
             "message": "Recipe is missing required field: title"
         }
-    
-    try:
-        steps_list = recipe_page.get("steps")
-    except KeyError:
+
+    normalized["name"] = title.strip().lower().title()
+   
+        
+    steps_list = recipe_page.get("steps")
+
+    if not isinstance(steps_list, list) or not steps_list:
         return {
             "success": False,
             "data": None,
@@ -157,10 +200,9 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
 
     # Join list into a single text block
     normalized["steps"] = "\n\n".join(cleaned_steps)
-
-    try:
-        raw_ingredients = recipe_page.get("ingredients")
-    except KeyError:
+   
+    raw_ingredients = recipe_page.get("ingredients")
+    if not isinstance(raw_ingredients, list) or not raw_ingredients:
         return {
             "success": False,
             "data": None,
@@ -185,11 +227,13 @@ def recipe_normalizer(recipe: dict, schema_version="1.0.0", module_version="1.0.
         cleaned_ingredients.append(ingredient_obj)
 
     normalized["ingredients"] = cleaned_ingredients
-
     normalized["spices"] = []
+    normalized["source"] = source
+
+    print("THIS IS NORMALIZED TO BE PASSED: ",normalized)
 
     try:
-        allowed_keys = {"name", "steps", "ingredients", "spices"}
+        allowed_keys = {"name", "steps", "ingredients", "spices","source"}
         normalized = {k: v for k, v in normalized.items() if k in allowed_keys}
         model = RecipeSchema(**normalized)
     except Exception as e:

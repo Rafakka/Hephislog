@@ -3,13 +3,20 @@ import json
 from hephis_core.services.cleaners.data_cleaner import slugify
 
 
-def serialize_json(validated_object):
-    json_dict = validated_object.model_dump()
-    return json_dict
+def serialize_json(obj):
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if isinstance(obj, dict):
+        return obj
+    raise TypeError(f"Cannot serialize object of type{type(obj)}")
 
-def resolve_output_path(title, domain, base_path):
-    slug = slugify(title)
-    dir = base_path / domain / slug
+def resolve_output_path(title, domain, base_path, fallback):
+    if isinstance(title, str) and title.strip():
+        slug = slugify(title)
+    else:
+        slug = fallback
+
+    dir = base_path / domain
     file = dir / f"{domain}_{slug}.json"
     return file
 

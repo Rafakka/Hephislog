@@ -15,29 +15,34 @@ class UniversalPackerAgent:
             fn = getattr(attr,"__func__", None)
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
+    
+    def data_assembler(run_id, source, normalized, confidence, domain):
+
+        packed_data = {
+            "normalized":normalized,
+            "source":source,
+            "confidence":confidence,
+            "domain":domain,
+            "run_id":run_id,
+        }
+
+        return packed_data
+
                 
     @on_event("music.normalized")
     def handle_music(self, payload):
-        print("PACKER MUSIC HANDLER CALLED",payload)
-        self._pack_domain("music", payload)
+        print("MUSIC PACKING PAYLOAD")
 
-    @on_event("recipe.normalized")
-    def handle_recipe(self, payload):
-        print("PACKER RECIPE HANDLER CALLED",payload)
-        self._pack_domain("recipe", payload)
-
-    def _pack_domain(self, domain: str, payload: dict):
-        print("RAN:",self.__class__.__name__) 
         sheet =  payload.get("sheet")
 
         if not sheet:
             logger.warning("Normalizer received event without sheet.")
             return
 
-        run_id = sheet["run_id"]
+        run_id = payload.get("run_id")
 
         if not run_id:
-            logger.warning("run id is missing",
+            logger.warning("run id from sheet is missing",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"normalizing-music",
@@ -48,12 +53,9 @@ class UniversalPackerAgent:
             return
 
         normalized = sheet["normalized"]
-        source = sheet["source"]
-        confidence = payload.get("confidence")
-        domain = payload.get("domain")
 
-        if not run_id:
-            logger.warning("run id is missing",
+        if not normalized:
+            logger.warning("data from sheet is missing",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"universal-packer",
@@ -62,6 +64,125 @@ class UniversalPackerAgent:
                 }
             )
             return
+
+        
+        source = sheet["source"]
+
+        if not source:
+            logger.warning("source from sheet is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"universal-packer",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        confidence = payload.get("confidence")
+
+        if not confidence:
+            logger.warning("confidence from sheet is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"universal-packer",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        domain = payload.get("domain")
+
+        if not domain:
+            logger.warning("domain from sheet is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"universal-packer",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+        
+        packed_data = UniversalPackerAgent.data_assembler(run_id, normalized, source, confidence, domain)
+
+        self._pack_domain(domain="music", packed_data=packed_data)
+
+    @on_event("recipe.normalized")
+    def handle_recipe(self, payload):
+        print("PACKER RECIPE HANDLER CALLED",payload)
+
+        normalized = payload.get("normalized")
+        
+        if not normalized:
+            logger.warning("normalized failed delivering",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"packer-recipe",
+                }
+            )
+            return
+
+        run_id = payload.get("run_id")
+        if not run_id:
+            logger.warning("run id is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"packer-recipe",
+                }
+            )
+            return
+    
+
+        confidence = payload.get("confidence")
+        
+        if not confidence:
+            logger.warning("confidence is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"packer-recipe",
+                }
+            )
+            return
+        
+        domain = payload.get("domain")
+
+        if not domain:
+            logger.warning("domain is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"packer-recipe",
+                }
+            )
+            return
+
+        source = payload.get("source")
+
+        if not source:
+            logger.warning("source is missing",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"packer-recipe",
+                }
+            )
+            return
+        
+        scores = payload.get("scores")
+        metadata = payload.get("metadata")
+        
+        packed_data = UniversalPackerAgent.data_assembler(run_id, source, normalized, confidence, domain)
+
+        self._pack_domain(domain="recipe", packer_data= packed_data)
+
+    def _pack_domain(self, domain: str, packer_data: dict):
+        print("RAN:",self.__class__.__name__)
+
+        normalized = packer_data.get("normalized")
+        source = packer_data.get("source")
+        confidence = packer_data.get("confidence")
+        domain = packer_data.get("domain")
+        run_id = packer_data.get("run_id")
 
         if isinstance(normalized, dict) and "data" in normalized:
             normalized_content = normalized["data"]
@@ -73,7 +194,9 @@ class UniversalPackerAgent:
         else:
             serialized = normalized_content
 
-        packed = pack_data(domain, normalized_content)
+        title = normalized.get("name")
+
+        packed = pack_data(domain, title, normalized_content)
 
         if not packed:
             run_context.touch(
