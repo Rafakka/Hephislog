@@ -1,4 +1,4 @@
-
+from hephis_core.constants.signal_severity import SIGNAL_SEVERITY
 
 class FakeFact:
     def __init__(self, stage, component, result):
@@ -29,3 +29,14 @@ def _flatten_text(value) -> list[str]:
         for v in value.values():
             texts.extend(_flatten_text(v))
     return texts
+
+def normalize_signals(raw_signals:list[str]) -> list[dict]:
+    normalized = []
+
+    for sig in raw_signals:
+        normalized.append({
+            "name":sig,
+            "severity": SIGNAL_SEVERITY.get(sig,"soft")
+        })
+        
+    return normalized

@@ -5,6 +5,8 @@ from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.services.cleaners.data_cleaner import clean_light_html, clean_aggressive_html
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class GarbageCleanerAgent:
 
@@ -51,6 +53,8 @@ class GarbageCleanerAgent:
 
         cleaned_html = strategy(pre_cleaned_html)
 
+        print("THIS IS CLEAN FOR GARBAGE: ",cleaned_html)
+
         run_context.touch(
             run_id=run_id,
             agent="GarbageCleanerAgent",
@@ -73,6 +77,7 @@ class GarbageCleanerAgent:
                     "source":source,
                     "domain_hint":domain_hint,
                     "cleaning_strategy":analysis.recommendation,
+                    "signals":analysis.signals,
                     "smells":smells,
                 }
             )

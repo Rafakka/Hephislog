@@ -178,17 +178,37 @@ class ChordDetector:
 
         lines = text.splitlines()
 
-        chord_lines = [
-            line for line in lines
+        chord_indexes = [
+            i for i, lin in enumerate(lines)
             if ChordDetector.looks_like_chord_line(line)
         ]
 
-        if not chord_lines:
+        if not chord_indexes:
             return None
+        
+        raw_blocks = []
+
+        for i in chord_indexes:
+            raw_blocks.append({
+                "type":"chord",
+                "line":lines[i],
+                "index":i,
+            })
+
+        if i + 1 < len(lines):
+            next_line = lines[i+1].strip()
+            if next_line and not ChordDetector.looks_like_chord_line(next_line):
+                raw_blocks.append({
+                    "type":"text",
+                    "line":next_line,
+                    "index": i + 1,
+                })
 
         chords = []
-        for line in chord_lines:
-            chords.extend(ChordDetector.extract_chords_from_tokens(line))
+
+        for block in raw_blocks:
+            if block["type"] == "chord":
+                chords.extend (ChordDetector.extract_chords_from_tokens(block["line"]))
 
         if not chords:
             return None
@@ -196,8 +216,10 @@ class ChordDetector:
         return {
             "title": title,
             "chords": chords,
-            "raw_lines": chord_lines,
-            "material_source": source
+            "raw_blocks":raw_blocks,
+            "material_source": source,
+            "unclassified_text":True,
+
         }
     
     @staticmethod

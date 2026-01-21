@@ -6,6 +6,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+DOMAIN_CONFLICTS = {
+    "recipe":{"chord-notation","lyric-block"},
+    "music":{"ingredient-list", "cooking-steps"},
+}
+
+HARD_SIGNAL_DOMAIN_VETO = {
+    "recipe" : {
+        "chord-notation",
+        "structured-music-page",
+    },
+    "music" : {
+        "ingredient-list",
+        "step-list",
+    }
+}
+
 class GatekeeperAgent:
 
     def __init__(self):
@@ -25,8 +41,9 @@ class GatekeeperAgent:
         source = payload.get("source")
         domain_hint = payload.get("domain_hint")
         smells = payload.get("smells")
+        signals = payload.get("signals")
 
-        print(smells)
+        print(payload)
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -38,6 +55,30 @@ class GatekeeperAgent:
                 }
             )
             return
+
+        vetoed_domains = set()
+
+        for domain, hard_signals in HARD_SIGNAL_DOMAIN_VETO.items():
+            if any(sig in signals for sig in hard_signals):
+                vetoed_domains.add(domain)
+        
+        domain_hints = domain_hint if isinstance(domain_hint, list) else [domain_hint]
+        
+        if any(hint in vetoed_domains for hint in domain_hint):
+            logger.warning("domain vetoed by hard signal.",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "domain":domain_hint,
+                    "signals":signals,
+                    "vetoed_by":list(vetoed_domains),
+
+                }
+            )
+            return {
+                "allowed":False,
+                "reason":"hard-signal-veto",
+                "vetoed_domains":list(vetoed_domains),
+            }
 
         run_context.touch(
         run_id, 

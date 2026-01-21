@@ -1,6 +1,6 @@
 import re
 import unicodedata
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from urllib.parse import urlparse, urlunparse
 
 _MULTI_SPACE = re.compile(r"[ \t]{2,}")
@@ -19,7 +19,10 @@ BASELINE_JUNK_TAGS = {
     "footer",
     "header",
     "aside",
+    "nav",
+    "xml",
 }
+
 
 BASELINE_JUNK_PATTERNS = [
     r"googletagmanager",
@@ -29,7 +32,39 @@ BASELINE_JUNK_PATTERNS = [
     r"hotjar",
     r"clarity\.ms",
     r"pixel",
+
+    "transpose",
+    "settings",
+    "advancedUI",
+    "semitones",
+    "capo",
+    "actionHyperlink",
+    "settingsCogs",
+    "about",
+    "fieldsetDesiredBorder",
+
+    "dummy",
+
+    "mso-",
+    "word.document",
+    "office:",
 ]
+
+def _flatten_attrs(el) -> str:
+    attrs = getattr(el,"attrs",None)
+
+    if not isinstance(attrs, dict):
+        return ""
+    
+    values = []
+
+    for v in attrs.values():
+        if isinstance(v,list):
+            values.extend(map(str,v))
+        elif isinstance(v,str):
+            values.append(v)
+    return " ".join(values).lower()
+
 
 def clean_light_html(html:str)-> str:
 
@@ -42,16 +77,18 @@ def clean_light_html(html:str)-> str:
         tag.decompose()
     
     for el in soup.find_all(True):
-        attrs =" ".join(
-            str(v) for v in el.attrs.values() if isinstance(v,(str, list))).lower()
+        if not isinstance(el, Tag):
+            continue
+        attrs = _flatten_attrs(el)
 
-        if any(p in attrs for p in BASELINE_JUNK_PATTERNS):
+        if el.name in BASELINE_JUNK_PATTERNS:
             el.decompose()
             continue
 
-        for attr in list(el.attrs):
-            if attr.lower().startswith("on"):
-                del el.attrs[attr]
+        if isinstance(el.attrs, dict):
+            for attr in list(el.attrs):
+                if attr.lower().startswith("on"):
+                    del el.attrs[attr]
 
     for comment in soup.find_all(string=lambda t:isinstance(t, type(soup.comment))):
         comment.extract()
