@@ -4,7 +4,7 @@ from datetime import datetime
 
 @dataclass
 class SniffResult:
-    stage: str  # "pre_extract" | "post_extract"
+    stage: str
     smells: Dict[str, float] = field(default_factory=dict)
     evidence: Dict[str, List[str]] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
@@ -21,8 +21,9 @@ class SniffResult:
 
     def snapshot(self) -> dict:
         return {
-            "stage": self.stage,
-            "smells": self.smells,
-            "evidence": self.evidence,
+            "stage":self.stage,
+            "smells": dict(self.smells),
+            "evidence": dict(self.evidence),
             "timestamp": self.timestamp.isoformat(),
         }
+

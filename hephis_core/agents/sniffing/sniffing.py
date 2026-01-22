@@ -72,6 +72,9 @@ def sniff(raw, *, agent_name:str | None = None) -> str | None:
                 smells["json"] = 0.9
             except:
                 smells["json"] = 0.4
+        
+        if text.startswith("http://") or text.startswith("https://"):
+            smells["url"] = 1.0
             
         if "modo de preparo" in text or "preparo" in text or "steps" in text:
             smells["recipe"] = max(smells.get("recipe",0),0.8)

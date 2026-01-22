@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class IdentifierAgent:
     
-    def __init__(self):
+    def __init__(self, identifier_core):
         print("3 - INIT:",self.__class__.__name__)
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
@@ -41,7 +41,10 @@ class IdentifierAgent:
             )
             return
 
-        raw_type = detect_raw_type(raw, ENV)
+        belief = self.identifier_core.identify(raw=raw, smells=smells,domain_hint=domain_hint)
+
+        raw_type = belief["primary"]
+        confidence = belief["confidence"]
 
         if raw_type in (None, "unknown"):
             logger.warning("Source file has not being identified",

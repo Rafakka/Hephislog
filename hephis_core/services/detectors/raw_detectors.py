@@ -3,87 +3,128 @@ import json
 from urllib.parse import urlparse
 from pathlib import Path
 
+def normalize_claims(
+        claims:dict[str,float],
+        *,
+        min_threshold: float = 0.05,
+        max_score:float =1.0,
+    ) -> dict[str, float]:
+        
+        if not claims:
+            return {}
+        
+        clamped = {
+            k: min(max(v,0.0), max_score)
+            for k, v in claims.items()
+            if v >= min_threshold
+        }
 
+        if not clamped:
+            return {}
+        
+        strongest = max(clamped.values())
 
-def is_str(value) -> bool:
-    return isinstance(value, str)
+        if strongest == 0:
+            return
+        
+        normalized = {
+            k: round(v /strongest, 4)
+            for k, v in clamped.items()
+        }
 
-def is_url(value: str) -> bool:
+        return normalized
 
-    if not is_str(value):
-        return False
+def safe_score(value)->float:
+    return float(value) if isinstance(value,(int, float)) else 0.0
+
+def claim_str(value) -> float:
+    score = 0.0
+    if isinstance(value, str):
+        score += 0.4
+    return min(score, 1.0)
+
+def claim_url(value: str) -> float:
+
+    if not claim_str(value):
+        return 0.0
+
+    score = 0.0
 
     text = value.strip()
-
     result = urlparse(text)
 
-    return all([result.scheme in ("http", "https"), result.netloc])
+    url = all([result.scheme in ("http", "https"), result.netloc])
 
-def is_html(value):
+    if url:
+        score += 0.4
+    
+    return min(score, 1.0)
+    
 
-    if not is_str(value):
-        return False
+def claim_html(value) -> float:
 
-    text = value.strip()
-    lower = text.lower()
+    if not claim_str(value):
+        return 0.0
 
-    if lower.endswith((".html",".htm")):
-        return True
+    score = 0.0
+    text = value.lower()
+
+    if text.endswith((".html","html")):
+        score += 0.4
     
     if "<" not in text and ">" not in text:
-        return False
-    
-    common_tags = ["<html", "<div","<p","<span","<body","<head",
-    "<script","<section","<article"]
+        score += 0.4
 
-    for tag in common_tags:
-        if tag in text.lower():
-            return True
+    return min(score, 1.0)
 
-    return False
+def claim_file(value):
 
-def is_file(value):
+    if not claim_str(value):
+        return 0.0
 
-    if not is_str(value):
-        return False
+    score = 0.0
 
     path = value.strip()
 
-    if is_url(path):
-        return False
+    url_hint = claim_url(path)
     
-    if is_html(path):
-        return False
-
+    html_hint = claim_html(path)
+    
     try:
         file_path = Path(path)
         if file_path.exists() and file_path.is_file():
-            return True
+            score += 0.4
     except:
-        return False
+            score += 0.0
 
-    return False
+    score -= safe_score(url_hint)
+    score -= safe_score(html_hint)
 
-def is_json(value):
+    return min(score, 1.0)
+
+def claim_json(value):
+
+    score = 0.0
+
     if not isinstance(value, str):
-        return False
+        return 0.0
     try:
         json.loads(value)
-        return True
+        score = 0.4
     except:
-        return False
+        return min(score, 1.0)
 
-def is_text(value):
+def claim_text(value):
 
     if not isinstance(value, str):
-        return False
+        return 0.0
 
-    if is_url(value): return False
-    if is_html(value): return False
-    if is_json(value): return False
-    if is_file(value): return False
+    if claim_url(value): return 0.0
+    if claim_html(value): return 0.0
+    if claim_json(value): return 0.0
+    if claim_file(value): return 0.0
 
-    return True
+    return 0.4
 
 def infer_smell_bias(claims):
     bias = {}
@@ -103,61 +144,32 @@ def infer_smell_bias(claims):
     
     return bias
 
-RAW_DOMAIN_DETECTOR = [
+RAW_DOMAIN_DETECTOR = {
 
-        ("file", is_file),
-        ("url", is_url),
-        ("json", is_json),
-        ("html", is_html),
-        ("text", is_text),
+    "file": claim_file,
+    "url":claim_url,
+    "json":claim_json,
+    "html":claim_html,
+    "text":claim_text,
+}
 
-        ]
 
-def early_advice_raw_input(value):
-    claims = []
+def early_advice_raw_input(value, env):
+    claims = {}
 
-    for domain, detector in RAW_DOMAIN_DETECTOR:
-            if detector(value):
-                claims.append(domain)
+    for domain, fn in RAW_DOMAIN_DETECTOR.items():
+            score = fn(value)
+            if score > 0:
+                claims[domain] =score
+    for domain, smell_score in env.smells.items():
+        claims[domain] = claims.get(domain, 0) + smell_score * 0.5
 
-            if "url" in claims:
-                url_stage = "unresolved"
-            else:
-                url_stage = None
-
-    smell_bias = infer_smell_bias(claims)
-
-    return {
-        "raw":value,
-        "domain_hint":claims,
-        "url_stage":url_stage,
-        "smell_bias":smell_bias,
-        "confidence":"low",
-        }
+    return normalize_claims(claims)
 
 def detect_raw_type(value, env):
+    claims = early_advice_raw_input(value, env)
 
-    smells = env.smells
-
-    if smells.get("html", 0) > 0.8 and is_html(value):
-        return "html"
-
-    if smells.get("json", 0) > 0.8 and is_json(value):
-        return "json"
-
-    if is_url(value):
-        return "url"
-
-    if is_html(value):
-        return "html"
-
-    if is_json(value):
-        return "json"
-
-    if is_file(value):
-        return "file"
-
-    if is_text(value):
-        return "text"
-
-    return "unknown"
+    if not claims:
+        return "unknown"
+    
+    return max(claims.items(),key=lambda x:x[1])[0]

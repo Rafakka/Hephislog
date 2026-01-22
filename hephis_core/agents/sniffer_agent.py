@@ -44,6 +44,7 @@ class SnifferAgent:
     @on_event("system.input_received")
     def sniff_input(self, payload: dict):
         print("FIRST RAN:",self.__class__.__name__) 
+
         raw = payload.get("input")
         url_state = payload.get("url_state")
         run_id = extract_run_id(payload)
@@ -58,23 +59,25 @@ class SnifferAgent:
                 }
             )
             return
-        
-        advice = early_advice_raw_input(raw)
 
-        bias = advice.get("smell_bias") or {}
+        advice = early_advice_raw_input(raw, ENV)
         domain_hint = advice.get("domain_hint") or []
+        bias = advice.get("smell_bias") or {}
 
-        url_stage = url_state or advice.get("url_stage")
+        ENV.reset()
 
+        print("SNIFFER ENV: ",id(ENV))
+
+        for smell, weight in bias.items():
+            ENV.add_smell(smell, weight)
+
+        sniff(raw, agent_name=self.__class__.__name__)
+
+        snapshots = ENV.snapshot()
+
+        print(snapshots["smells"])
+    
         if "url" in domain_hint:
-
-            for smell, weight in bias.items():
-                ENV.add_smell(smell, weight)
-
-            sniff(raw, agent_name=self.__class__.__name__)
-
-            print(ENV.smells)
-
             run_context.touch(
                     run_id=run_id,
                     agent="SnifferAgent",
@@ -96,7 +99,8 @@ class SnifferAgent:
                     "source": payload.get("source"),
                     "raw":payload.get("input"),
                     "url_state":"unresolved",
-                    "smells": ENV.smells,
+                    "smells":snapshots["smells"],
+                    "snapshots":snapshots,
                     "domain_hint":domain_hint,
                     "origin":{
                     "type":"url",
@@ -104,15 +108,6 @@ class SnifferAgent:
                     }
                 }
             )
-        else:
-            ENV.reset()
-
-        for smell, weight in bias.items():
-            ENV.add_smell(smell, weight)
-
-        sniff(raw, agent_name=self.__class__.__name__)
-
-        print(ENV.smells)
 
         run_context.touch(
                 run_id=run_id,
@@ -128,12 +123,11 @@ class SnifferAgent:
                 result="scented_file",
                 reason="advicing_type_of_file",
                 )
-
         event_bus.emit(
             "system.external_input",
             {
-                "smells": ENV.smells,
-                "snapshots": ENV.snapshot(),
+                "smells":snapshots["smells"],
+                "snapshots":snapshots,
                 "run_id":run_id,
                 "source":payload.get("source"),
                 "domain_hint":domain_hint,
