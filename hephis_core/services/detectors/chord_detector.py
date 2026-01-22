@@ -53,6 +53,22 @@ class ChordDetector:
     @staticmethod
     def is_bass(token: str) -> bool:
         return bool(re.match(r"^[A-G](?:[#b])?$", token.strip(), re.IGNORECASE))
+    
+    @staticmethod
+    def chord_ratio(text:str) -> float:
+        if not text:
+            return 0.0
+        
+        s = ChordDetector._PAREN_REM.sub("",text)
+        s = ChordDetector._SEP.sub(" ",s)
+        s = re.sub(r"\s*-\s*","",s)
+
+        tokens = [t for t in s.split() if t.strip()]
+        if not tokens:
+            return 0.0
+        
+        chord_count = sum(1 for t in tokens if ChordDetector.is_chord(t))
+        return chord_count/len(tokens)
 
 
     ########## MAIN FUNCTIONS #########################################

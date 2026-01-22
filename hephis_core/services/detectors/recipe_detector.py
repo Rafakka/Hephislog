@@ -3,7 +3,28 @@ import json
 import re
 from typing import Optional, List, Dict
 
+
 class RecipeDetector:
+
+
+    INGREDIENTS_KEYWORDS = {
+    "sal","açucar","oleo","azeite","farinha",
+    "manteiga","margarina","ovos","cebola","fermento",
+    "agua","leite","batatas","alho"
+    }
+
+    COOKING_VERBS = {
+        "misturar","assar","sovar","adicionar","cortar",
+        "esquentar","grelhar","cozinhar","fritar","ferver",
+        "mexer","amassar",
+        }
+
+    QUANTITY_RE = re.compile (
+        r"\b\d+(?:[.,]\d+)?\s*(?:copo|copos|pitada|colher|colheres|kg|g|ml|l)\b",
+        re.IGNORECASE
+    )
+
+
     # -------------------------------
     #  KEY FINDER
     # -------------------------------
@@ -335,3 +356,54 @@ class RecipeDetector:
                 return raw
         
         return None
+
+    # -------------------------------
+    #  TEXT DETECTOR
+    # -------------------------------
+    @staticmethod
+    def ingredient_signal(obj:dict) -> dict | None:
+        key = RecipeDetector._find_key(obj, ["ingredients", "ingredientes", "itens", "items",
+            "ingredientLines", "ingredient_lines", "components"])
+        
+        if not key:
+            return None
+        
+        value = obj.get(key)
+        
+        if not value:
+            return None
+        
+        return {
+            "key":key,
+            "type":type(value).__name__,
+            "count":len(value) if isinstance(value, list) else 1
+        }
+
+    @staticmethod
+    def recipe_ratio(text:str) -> float:
+        if not text or not isinstance(text, str):
+            return 0.0
+        
+        score = 0.0
+        lowered = text.lower()
+
+        ingredient_hint = sum(
+            1 for k in RecipeDetector.INGREDIENTS_KEYWORDS if k in lowered
+        )
+        score += min(ingredient_hint*0.1, 0.4)
+
+        quantity_hints =len(RecipeDetector.QUANTITY_RE.findall(lowered))
+        score += min(quantity_hints * 0.2,0.4)
+
+        verb_hints = sum (
+            1 for v in RecipeDetector.COOKING_VERBS if v in lowered
+        )
+        score += min (verb_hints*0.1,0.3)
+
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        if len(lines) >= 3:
+            avg_len = sum(len(l) for l in lines) / len(lines)
+            if avg_len <60:
+                score += 0.1
+                
+        return min(score, 1.0)
