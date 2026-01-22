@@ -4,9 +4,7 @@ from hephis_core.environment import ENV
 from hephis_core.events.bus import event_bus
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
-from hephis_core.services.detectors.chord_detector import ChordDetector
-from hephis_core.services.detectors.raw_detectors import early_advice_raw_input
-from hephis_core.agents.sniffing.sniffing import extract_sniff_text, sniff
+from hephis_core.agents.sniffing.sniffer_core import SnifferCore
 from hephis_core.utils.utils import extract_text
 import logging
 
@@ -48,6 +46,8 @@ class SnifferAgent:
         raw = payload.get("input")
         url_state = payload.get("url_state")
         run_id = extract_run_id(payload)
+        prior_smells = ENV.smells
+        domain_hint = payload.get("domain_hint") or []
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -60,24 +60,19 @@ class SnifferAgent:
             )
             return
 
-        advice = early_advice_raw_input(raw, ENV)
-        domain_hint = advice.get("domain_hint") or []
-        bias = advice.get("smell_bias") or {}
+        sniffer_result = SnifferCore.sniffing(self,raw=raw,prior_smells=ENV.smells,domain_hint=domain_hint)
 
         ENV.reset()
-
-        print("SNIFFER ENV: ",id(ENV))
-
-        for smell, weight in bias.items():
+        for smell, weight in sniffer_result.smells.items():
             ENV.add_smell(smell, weight)
-
-        sniff(raw, agent_name=self.__class__.__name__)
 
         snapshots = ENV.snapshot()
 
         print(snapshots["smells"])
+
+        print(sniffer_result)
     
-        if "url" in domain_hint:
+        if sniffer_result.dominant == "url":
             run_context.touch(
                     run_id=run_id,
                     agent="SnifferAgent",

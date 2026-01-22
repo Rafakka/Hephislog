@@ -154,17 +154,17 @@ RAW_DOMAIN_DETECTOR = {
 }
 
 
-def early_advice_raw_input(value, env):
+def early_advice_raw_input(raw) -> dict[str, float]:
     claims = {}
 
-    for domain, fn in RAW_DOMAIN_DETECTOR.items():
-            score = fn(value)
-            if score > 0:
-                claims[domain] =score
-    for domain, smell_score in env.smells.items():
-        claims[domain] = claims.get(domain, 0) + smell_score * 0.5
+    if isinstance(raw,str):
+        if raw.startswith("http"):
+            claims["url"] = 0.2
+            
+        if "\n" in raw and len(raw) > 500:
+            claims["text"] = 0.1
 
-    return normalize_claims(claims)
+    return claims
 
 def detect_raw_type(value, env):
     claims = early_advice_raw_input(value, env)

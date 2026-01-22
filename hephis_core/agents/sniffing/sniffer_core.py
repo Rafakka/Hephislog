@@ -1,19 +1,19 @@
 
 from hephis_core.agents.sniffing.inference import SniffInference
-from hephis_core.services.detectors.raw_detectors import normalize_claims
 from hephis_core.services.detectors.raw_detectors import (
     claim_file,
     claim_html,
     claim_json,
     claim_text,
     claim_url,
+    normalize_claims,
 )
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
+from hephis_core.services.detectors.raw_detectors import early_advice_raw_input
 
 class SnifferCore:
-
     @staticmethod
-    def _raw_claims(self, raw:Any)-> Dict[str, float]:
+    def _raw_claims(raw:Any)-> Dict[str, float]:
         claims = {}
 
         for domain, fn in {
@@ -30,7 +30,6 @@ class SnifferCore:
 
     @staticmethod
     def _merge_prior_smells(
-        self,
         claims:Dict[str, float],
         prior_smells:Dict[str, float],
     ) -> Dict[str, float]:
@@ -43,7 +42,6 @@ class SnifferCore:
     
     @staticmethod
     def _apply_domain_hints(
-        self,
         claims:Dict[str, float],
         domain_hint:List[str],
     ) -> Dict[str, float]:
@@ -59,7 +57,6 @@ class SnifferCore:
 
     @staticmethod
     def _infer_dominance(
-        self,
         smells:Dict[str, float],
     ) -> tuple[Optional[str], float]:
         
@@ -76,6 +73,17 @@ class SnifferCore:
         confidence = max(0.0, top_score - second_score)
 
         return domain, confidence
+    
+    def _merge_claims( base:dict[str,float], incoming:dict[str,float],*,weight:float =1.0) -> dict[str,float]:
+        
+        merged=dict(base)
+
+        for domain, score in incoming.items():
+            if domain in merged:
+                merged[domain] = max(merged[domain], score*weight)
+            else:
+                merged[domain] =score*weight
+        return merged
 
     @staticmethod
     def sniffing(
@@ -89,13 +97,19 @@ class SnifferCore:
         prior_smells = prior_smells or {}
         domain_hint = domain_hint or []
 
-        claims = self._raw_claims(raw)
-        claims = self._merge_prior_smells(claims, prior_smells)
-        claims = self._apply_domain_hints(claims, domain_hint)
+        claims = SnifferCore._raw_claims(raw=raw)
+        claims = SnifferCore._merge_claims(base=claims,incoming=prior_smells,weight=0.7)
+
+        if not domain_hint:
+            early_claims = early_advice_raw_input(raw)
+            claims = SnifferCore._merge_claims(base=claims,incoming=early_claims,weight=0.3)
+
+        claims = SnifferCore._apply_domain_hints(claims=claims, domain_hint=domain_hint)
+        claims = SnifferCore._merge_prior_smells(claims=claims, prior_smells=prior_smells)
 
         smells = normalize_claims(claims)
 
-        dominant, confidence = self._infer_dominance(smells)
+        dominant, confidence = SnifferCore._infer_dominance(smells=smells)
 
         return SniffInference (
             smells=smells,
