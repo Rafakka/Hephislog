@@ -133,24 +133,6 @@ class ChordDetector:
 
         return final
 
-    @staticmethod
-    def looks_like_chord_line(text: str, min_ratio: float = 0.6) -> bool:
-        """
-        Optional helper if you want chord detection with ratio threshold.
-        """
-        if not text:
-            return False
-
-        s = ChordDetector._PAREN_REM.sub("", text)
-        s = ChordDetector._SEP.sub(" ", s)
-        s = re.sub(r"\s*-\s*", " ", s)
-
-        tokens = [t for t in s.split() if t.strip()]
-        if not tokens:
-            return False
-
-        chord_count = sum(1 for t in tokens if ChordDetector.is_chord(t))
-        return (chord_count / len(tokens)) >= min_ratio
 
     @staticmethod
     def block_contains_chords(text:str) -> bool:
@@ -246,3 +228,24 @@ class ChordDetector:
             return ChordDetector.detect_from_text(data)
 
         return None
+    
+    @staticmethod
+    def chord_ratio(text:str) -> float:
+        if not text:
+            return 0.0
+        
+        s = ChordDetector._PAREN_REM.sub("",text)
+        s = ChordDetector._SEP.sub(" ",s)
+        s = re.sub(r"\s*-\s"," ",s)
+
+        tokens = [t for t in s.split() if t.strip()]
+        if not tokens:
+            return 0.0
+        
+        chord_count = sum(1 for t in tokens if ChordDetector.is_chord(t))
+
+        return chord_count / len(tokens)
+    
+    @staticmethod
+    def looks_like_chord_line(text: str, min_ratio: float = 0.6) -> bool:
+        return ChordDetector.chord_ratio(text) >= min_ratio

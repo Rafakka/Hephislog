@@ -37,21 +37,26 @@ class GatekeeperAgent:
         print("RAN:",self.__class__.__name__) 
 
         run_id = extract_run_id(payload)
-        raw = payload.get("raw")
+        raw = payload.get("raw") or payload.get("cleaned_raw_v1")
         source = payload.get("source")
         domain_hint = payload.get("domain_hint")
         smells = payload.get("smells")
         signals = payload.get("signals")
-
-        print(payload)
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
             extra={
                     "agent":self.__class__.__name__,
                     "event":"reception-by-gatekeeper",
-                    "raw_type":type(payload).__name__,
-                    "raw_is_dict":isinstance(raw, dict),
+                }
+            )
+            return
+        
+        if not raw:
+            logger.warning("Source file has no valid raw",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"reception-by-gatekeeper",
                 }
             )
             return
@@ -80,6 +85,15 @@ class GatekeeperAgent:
                 "vetoed_domains":list(vetoed_domains),
             }
 
+        logger.info(
+            "domain_hint lifecycle ended at gatekeeper",
+            extra={
+                "agent":self.__class__.__name__,
+                "domain":domain_hint,
+                "run_id":run_id,
+            }
+        )
+
         run_context.touch(
         run_id, 
         agent="GatekeeperAgent", 
@@ -98,12 +112,10 @@ class GatekeeperAgent:
         event_bus.emit(
             "system.input_to_be_identified",
             {
-                "input": payload,
                 "raw":raw,
                 "run_id": run_id,
                 "source": source,
-                "domain_hint":domain_hint,
                 "smells":smells,
+                "cleaning_strategy":payload.get("cleaning_strategy"),
             }
         )
-        return

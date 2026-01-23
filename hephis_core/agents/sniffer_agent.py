@@ -6,6 +6,7 @@ from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
 from hephis_core.agents.sniffing.sniffer_core import SnifferCore
 from hephis_core.utils.utils import extract_text
+from hephis_core.modules.common_normalizer import normalize_domain_hint
 import logging
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,8 @@ class SnifferAgent:
         prior_smells = ENV.smells
         domain_hint = payload.get("domain_hint") or []
 
+        domain_hint = normalize_domain_hint(domain_hint)
+
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
             extra={
@@ -68,7 +71,7 @@ class SnifferAgent:
 
         snapshots = ENV.snapshot()
 
-        print(snapshots["smells"])
+        print("THIS IS SNAPSHOTS: ",snapshots)
 
         print(sniffer_result)
     
@@ -94,7 +97,7 @@ class SnifferAgent:
                     "source": payload.get("source"),
                     "raw":payload.get("input"),
                     "url_state":"unresolved",
-                    "smells":snapshots["smells"],
+                    "smells":sniffer_result.smells,
                     "snapshots":snapshots,
                     "domain_hint":domain_hint,
                     "origin":{
@@ -103,6 +106,7 @@ class SnifferAgent:
                     }
                 }
             )
+            return
 
         run_context.touch(
                 run_id=run_id,

@@ -145,26 +145,36 @@ def infer_smell_bias(claims):
     return bias
 
 RAW_DOMAIN_DETECTOR = {
-
-    "file": claim_file,
+    "file":claim_file,
     "url":claim_url,
     "json":claim_json,
     "html":claim_html,
     "text":claim_text,
 }
 
+EARLY_SMELL_MAX = 0.05
+EARLY_SMELL_FACTOR = 0.5
+
+def _cap_early_smell(value:float) -> float:
+    return min(value*EARLY_SMELL_FACTOR, EARLY_SMELL_MAX )
 
 def early_advice_raw_input(raw) -> dict[str, float]:
     claims = {}
 
     if isinstance(raw,str):
         if raw.startswith("http"):
-            claims["url"] = 0.2
+            raw_score = 0.2
+            claims["url"] = _cap_early_smell(raw_score)
             
         if "\n" in raw and len(raw) > 500:
             claims["text"] = 0.1
 
-    return claims
+    capped = {
+        domain: _cap_early_smell(score)
+        for domain, score in claims.items()
+    }
+
+    return capped
 
 def detect_raw_type(value, env):
     claims = early_advice_raw_input(value, env)

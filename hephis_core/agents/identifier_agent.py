@@ -14,6 +14,8 @@ class IdentifierAgent:
     
     def __init__(self, identifier_core):
         print("3 - INIT:",self.__class__.__name__)
+        self.identifier_core = identifier_core
+        print("* -  IDENTIFIER CORE - RUNNING")
         for attr_name in dir(self):
             attr = getattr(self,attr_name)
             fn = getattr(attr,"__func__", None)
@@ -24,11 +26,7 @@ class IdentifierAgent:
     def identify_input(self,payload):
         print("RAN:",self.__class__.__name__) 
         
-        raw = payload.get("raw") or payload.get("input")
-        source = payload.get("source")
         run_id = extract_run_id(payload)
-        domain_hint = payload.get("domain_hint")
-        smells = payload.get("smells")
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -41,7 +39,59 @@ class IdentifierAgent:
             )
             return
 
-        belief = self.identifier_core.identify(raw=raw, smells=smells,domain_hint=domain_hint)
+        smells = payload.get("smells")
+
+        if not smells:
+            logger.warning("Source file has no valid smell",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"identifing-agent",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        raw = payload.get("raw") or payload.get("input")
+
+        if not raw:
+            logger.warning("Source file has no valid raw",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"identifing-agent",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        source = payload.get("source")
+
+        if not source:
+            logger.warning("Source file has no source",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"identifing-agent",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+        
+        field_stats = payload.get("field_stats")
+
+        if not field_stats:
+            logger.warning("Source file has no fields ratios",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"identifing-agent",
+                    "raw_type":type(payload).__name__,
+                    "raw_is_dict":isinstance(payload, dict),
+                }
+            )
+            return
+
+        belief = self.identifier_core.evaluate(raw,smells)
 
         raw_type = belief["primary"]
         confidence = belief["confidence"]
@@ -88,7 +138,8 @@ class IdentifierAgent:
                 "raw":raw,
                 "raw_type":raw_type,
                 "source":source,
-                "domain_hint":domain_hint,
                 "smells":smells,
+                "confidence":confidence,
+                "cleaning_strategy":payload.get("cleaning_strategy"),
             }
         )

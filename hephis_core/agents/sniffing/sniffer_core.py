@@ -1,29 +1,29 @@
 
 from hephis_core.agents.sniffing.inference import SniffInference
 from hephis_core.services.detectors.raw_detectors import (
-    claim_file,
-    claim_html,
-    claim_json,
-    claim_text,
-    claim_url,
+    RAW_DOMAIN_DETECTOR,
     normalize_claims,
 )
 from typing import Dict, Any, Optional, Tuple, List
 from hephis_core.services.detectors.raw_detectors import early_advice_raw_input
+from hephis_core.utils.utils import extract_text
 
 class SnifferCore:
+
     @staticmethod
-    def _raw_claims(raw:Any)-> Dict[str, float]:
+    def normalize_text_for_sniffing(raw) -> str:
+        if isinstance(raw,dict):
+            return extract_text(raw)
+        if isinstance(raw, list):
+            return " ".join(map(str,raw))
+        return str(raw)
+
+    @staticmethod
+    def _raw_claims(text:Any)-> Dict[str, float]:
         claims = {}
 
-        for domain, fn in {
-            "url":claim_url,
-            "html":claim_html,
-            "file":claim_file,
-            "json":claim_json,
-            "text":claim_text,
-        }.items():
-            score = fn(raw)
+        for domain, fn in RAW_DOMAIN_DETECTOR.items():
+            score = fn(text)
             if score > 0:
                 claims[domain] = score
         return claims
@@ -97,7 +97,9 @@ class SnifferCore:
         prior_smells = prior_smells or {}
         domain_hint = domain_hint or []
 
-        claims = SnifferCore._raw_claims(raw=raw)
+        normalized_raw = SnifferCore.normalize_text_for_sniffing(raw)
+
+        claims = SnifferCore._raw_claims(normalized_raw)
         claims = SnifferCore._merge_claims(base=claims,incoming=prior_smells,weight=0.7)
 
         if not domain_hint:
@@ -107,12 +109,18 @@ class SnifferCore:
         claims = SnifferCore._apply_domain_hints(claims=claims, domain_hint=domain_hint)
         claims = SnifferCore._merge_prior_smells(claims=claims, prior_smells=prior_smells)
 
-        smells = normalize_claims(claims)
+        smells = claims
 
-        dominant, confidence = SnifferCore._infer_dominance(smells=smells)
+        dominance_score = normalize_claims(claims)
+
+        dominant, confidence = SnifferCore._infer_dominance(smells=dominance_score)
+
+        if confidence > 0.6:
+            claims[dominant] *= 0.2
 
         return SniffInference (
             smells=smells,
+            dominace_score=dominance_score, 
             dominant=dominant,
             confidence=confidence,
             domain_hints=domain_hint,

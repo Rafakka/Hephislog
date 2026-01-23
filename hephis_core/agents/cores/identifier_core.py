@@ -9,7 +9,7 @@ class IdentifierCore:
             return {}
         return {k: v / total for k, v in claims.items()}
 
-    def evaluate(self, value, smells=None, early=None):
+    def evaluate(self, value, smells, field_stats):
         claims = {}
 
         for domain, fn in self.detectors.items():
@@ -17,10 +17,6 @@ class IdentifierCore:
             if score > 0:
                 claims[domain] = score
             
-        if early:
-            for domain, score in early.items():
-                claims[domain] = claims.get(domain,0) +score*0.5
-
         if smells:
             for domain, score in smells.items():
                 claims[domain] = claims.get(domain,0) +score*0.3

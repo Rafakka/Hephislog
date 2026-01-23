@@ -53,7 +53,7 @@ class GarbageCleanerAgent:
 
         cleaned_html = strategy(pre_cleaned_html)
 
-        print("THIS IS CLEAN FOR GARBAGE: ",cleaned_html)
+        print("THIS IS SMELLS AND ADVICE FOR CLEANING: ", smells, analysis.recommendation)
 
         run_context.touch(
             run_id=run_id,
@@ -73,11 +73,10 @@ class GarbageCleanerAgent:
                 "system.external_input",
                 {
                     "run_id":run_id,
-                    "raw":cleaned_html,
+                    "cleaned_raw_v1":cleaned_html,
                     "source":source,
                     "domain_hint":domain_hint,
                     "cleaning_strategy":analysis.recommendation,
-                    "signals":analysis.signals,
                     "smells":smells,
                 }
             )
