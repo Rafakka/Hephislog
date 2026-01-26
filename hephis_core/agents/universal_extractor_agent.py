@@ -2,19 +2,15 @@ from hephis_core.events.decorators import on_event
 from hephis_core.events.bus import event_bus
 from hephis_core.infra.extractors.registry import EXTRACTOR_REGISTRY
 from hephis_core.infra.extractors.validators import RECIPE, MUSIC
-from hephis_core.infra.fetchers.html_fetcher import fetch_url_as_html
 from hephis_core.swarm.run_context import run_context
 from hephis_core.swarm.run_id import extract_run_id
+from hephis_core.infra.extractors.main_extractor import _try_domain
 import logging
 
 logger = logging.getLogger(__name__)
 
 class UniversalExtractorAgent:
 
-    validators = {
-        "recipe": RECIPE,
-        "music": MUSIC,
-    }
 
     def __init__(self):
         print("4 - INIT:",self.__class__.__name__)
@@ -24,77 +20,13 @@ class UniversalExtractorAgent:
             if fn and hasattr(fn,"__event_name__"):
                 event_bus.subscribe(fn.__event_name__, attr)
 
-    def extract_any(self, value, raw_type):
-
-        print("REGISTRY KEYS:",EXTRACTOR_REGISTRY.keys())
-
-        tried_types = set()
-
-        def try_type(value, type_):
-            if not value or not type_:
-                return None
-
-            if type_ in tried_types:
-                return None
-
-            tried_types.add(type_)
-
-            print("HTML EXTRACTORS",EXTRACTOR_REGISTRY.get("html"))
-
-            extractors = EXTRACTOR_REGISTRY.get(type_, {})
-            
-            if not extractors:
-                logger.warning("No extractors matched input, skipping extraction.")
-                return None
-
-            for domain, fns in extractors.items():
-                for fn in fns:
-                    try:
-                        raw = fn(value)
-                    except Exception as exc:
-                        logger.debug("Extraction function failed",
-                        extra={
-                                "agent":self.__class__.__name__,
-                                "event":"extraction-by-universal-extractor",
-                                "raw_type":type_,
-                                "domain":domain,
-                                "error":repr(exc),
-                            }
-                        )
-                        continue
-
-                    if raw is None:
-                        continue
-
-                    validator = self.validators.get(domain)
-
-                    if not validator or validator(raw):
-                        return domain, raw
-
-            return None
-        
-        result = None
-
-        result = try_type(value, raw_type)
-        if result:
-            return result
-
-        if raw_type == "url":
-            html_value = fetch_url_as_html(value)
-            if not html_value:
-                return None
-            return self.extract_any(html_value,"html")
-        
-        return None
-
     @on_event("system.input_identified")
     def handle_input(self, payload):
         print("RAN:",self.__class__.__name__) 
-        input_value = payload.get("raw")
-        input_type  = payload.get("raw_type")
+        raw = payload.get("raw")
+        primary  = payload.get("raw_type")
         source = payload.get("source")
         run_id = extract_run_id(payload)
-        domain_hint = payload.get("domain_hint")
 
         if not run_id:
             logger.warning("Source file missing run_id",
@@ -106,7 +38,7 @@ class UniversalExtractorAgent:
             )
             return
 
-        if not input_value and not input_type:
+        if not primary and not raw:
             logger.warning("Source file has no valid data or nor type",
             extra={
                     "agent":self.__class__.__name__,
@@ -123,83 +55,44 @@ class UniversalExtractorAgent:
             )
             return
 
-        try: 
-            result = self.extract_any(input_value, input_type)
+
+        result = _try_domain(raw, primary)
             
-            if not result:
-                run_context.touch(
+        if not result:
+            run_context.touch(
                     run_id,
                     agent="UniversalExtractorAgent",
                     action="extract_file",
                     reason="no_result",
                 )
-                run_context.emit_fact(
+            run_context.emit_fact(
                         run_id,
                         stage="extractor",
                         component="UniversalExtractorAgent",
                         result="declined",
                         reason="no_result_extracted",
                         )
-                return
+            return
             
-            if result:
-                domain, raw = result
+        domain, material_raw = result
 
-
-            if not domain or not raw:
-                run_context.touch(
+        if not domain or not material_raw:
+            run_context.touch(
                     run_id,
                     agent="UniversalExtractorAgent",
                     action="extract_file",
                     reason="no_domain_or_and_no_raw",
                 )
-                run_context.emit_fact(
+            run_context.emit_fact(
                     run_id,
                     stage="extractor",
                     component="UniversalExtractorAgent",
                     result="declined",
                     reason="no_domain_or_and_no_raw",
                     )
-                return
+            return
 
-            if not run_id:
-                logger.warning("Source file has no valid id or run_id",
-                extra={
-                        "agent":self.__class__.__name__,
-                        "event":"extraction-by-universal-extractor",
-                        "raw_type":type(payload).__name__,
-                        "raw_is_dict":isinstance(payload, dict),
-                        }
-                )
-                return
-
-            print(f"THIS IS DOMAIN AND RAW: {domain} --- {raw}")
-
-            domain_hint_extr = {
-                "value":domain,
-                "confidence":0.7,
-                "source":"extractor",
-            }
-
-            if isinstance(raw, dict):
-                wrapped = {
-                        "stage":"material_raw",
-                        "raw":raw,
-                        "domain_hint_extr":domain_hint_extr,
-                        "source":source,
-                        "run_id":run_id,
-                        "domain_hint":domain_hint,
-                        "smells":payload.get("smells"),
-                    }
-            
-                print(f"THIS IS WRAPPED: {wrapped}")
-                
-                event_bus.emit(
-                    "system.extraction.completed",
-                    wrapped
-                )
-                return
-
+ 
             run_context.touch(
                     run_id,
                     agent="UniversalExtractorAgent",
@@ -215,7 +108,7 @@ class UniversalExtractorAgent:
                     reason="valid_file_type",
                     )
             
-            print(f"THIS IS RAW: {raw}")
+    
 
             event_bus.emit(
                 "system.extraction.completed",

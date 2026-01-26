@@ -25,7 +25,7 @@ class IdentifierAgent:
     @on_event("system.input_to_be_identified")
     def identify_input(self,payload):
         print("RAN:",self.__class__.__name__) 
-        
+
         run_id = extract_run_id(payload)
 
         if not run_id:
@@ -78,25 +78,21 @@ class IdentifierAgent:
             )
             return
         
-        field_stats = payload.get("field_stats")
-
-        if not field_stats:
-            logger.warning("Source file has no fields ratios",
-            extra={
-                    "agent":self.__class__.__name__,
-                    "event":"identifing-agent",
-                    "raw_type":type(payload).__name__,
-                    "raw_is_dict":isinstance(payload, dict),
-                }
-            )
-            return
 
         belief = self.identifier_core.evaluate(raw,smells)
 
-        raw_type = belief["primary"]
-        confidence = belief["confidence"]
+        print("BELIEFS: ", belief)
 
-        if raw_type in (None, "unknown"):
+        raw_type = belief["beliefs"]
+        ranked = belief["ranked"]
+        primary = ranked[0][0] if ranked else None
+        
+        confidence = smells.confidence
+
+        print("BELIEFS: ", raw_type)
+        print("RANKED :", ranked)
+
+        if not raw_type:
             logger.warning("Source file has not being identified",
             extra={
                     "agent":self.__class__.__name__,

@@ -91,7 +91,6 @@ class SnifferCore:
         raw:any,
         prior_smells:Optional[Dict[str,float]] = None,
         domain_hint:Optional[list[str]] = None,
-        url_state:Optional[str] = None,
     )-> SniffInference:
     
         prior_smells = prior_smells or {}
@@ -120,11 +119,10 @@ class SnifferCore:
 
         return SniffInference (
             smells=smells,
-            dominace_score=dominance_score, 
+            dominance_score=dominance_score, 
             dominant=dominant,
             confidence=confidence,
             domain_hints=domain_hint,
-            url_stage=url_state,
             evidence={
                 "raw_claims":claims,
                 "prior_smells":prior_smells,

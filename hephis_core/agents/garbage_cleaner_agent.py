@@ -22,7 +22,6 @@ class GarbageCleanerAgent:
     @on_event("system.garbage.analysed")
     def decide(self, payload:dict):
         print("RAN:",self.__class__.__name__)
-        domain_hint = payload.get("domain_hint")
         origin = payload.get("origin")
         source = origin.get("value")
         analysis = payload.get("analysis")
@@ -75,7 +74,6 @@ class GarbageCleanerAgent:
                     "run_id":run_id,
                     "cleaned_raw_v1":cleaned_html,
                     "source":source,
-                    "domain_hint":domain_hint,
                     "cleaning_strategy":analysis.recommendation,
                     "smells":smells,
                 }

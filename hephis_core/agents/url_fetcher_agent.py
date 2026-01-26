@@ -23,7 +23,6 @@ class UrlFetcherAgent:
         run_id = payload.get("run_id")
         origin = payload.get("origin")
         url = origin.get("value")
-        domain_hint= payload.get("domain_hint")
         smells = payload.get("smells")
 
         if not run_id or not url:
@@ -67,7 +66,7 @@ class UrlFetcherAgent:
             run_id,
             stage="fetching-url",
             component="UrlFetcherAgent",
-            result="completed",
+            result="url-resolved",
             reason="data-fetched-from-url",
             )
         event_bus.emit(
@@ -75,9 +74,7 @@ class UrlFetcherAgent:
                 {
                     "run_id":run_id,
                     "raw":raw_html,
-                    "url_state":"resolved",
                     "smells":smells,
-                    "domain_hint":domain_hint,
                     "origin":{
                         "type":"url",
                         "value":url,

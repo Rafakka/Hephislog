@@ -96,10 +96,7 @@ class SnifferAgent:
                     "run_id":run_id,
                     "source": payload.get("source"),
                     "raw":payload.get("input"),
-                    "url_state":"unresolved",
-                    "smells":sniffer_result.smells,
-                    "snapshots":snapshots,
-                    "domain_hint":domain_hint,
+                    "smells":sniffer_result,
                     "origin":{
                     "type":"url",
                     "value":raw,
@@ -125,7 +122,7 @@ class SnifferAgent:
         event_bus.emit(
             "system.external_input",
             {
-                "smells":snapshots["smells"],
+                "smells":sniffer_result,
                 "snapshots":snapshots,
                 "run_id":run_id,
                 "source":payload.get("source"),

@@ -6,11 +6,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DOMAIN_CONFLICTS = {
-    "recipe":{"chord-notation","lyric-block"},
-    "music":{"ingredient-list", "cooking-steps"},
-}
-
 HARD_SIGNAL_DOMAIN_VETO = {
     "recipe" : {
         "chord-notation",
@@ -37,11 +32,6 @@ class GatekeeperAgent:
         print("RAN:",self.__class__.__name__) 
 
         run_id = extract_run_id(payload)
-        raw = payload.get("raw") or payload.get("cleaned_raw_v1")
-        source = payload.get("source")
-        domain_hint = payload.get("domain_hint")
-        smells = payload.get("smells")
-        signals = payload.get("signals")
 
         if not run_id:
             logger.warning("Source file has no valid id or run_id",
@@ -51,7 +41,8 @@ class GatekeeperAgent:
                 }
             )
             return
-        
+
+        raw = payload.get("raw") or payload.get("cleaned_raw_v1")
         if not raw:
             logger.warning("Source file has no valid raw",
             extra={
@@ -61,20 +52,51 @@ class GatekeeperAgent:
             )
             return
 
-        vetoed_domains = set()
 
-        for domain, hard_signals in HARD_SIGNAL_DOMAIN_VETO.items():
-            if any(sig in signals for sig in hard_signals):
-                vetoed_domains.add(domain)
+        smells = payload.get("smells")
+        if not smells:
+            logger.warning("Source file has no valid smells",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"reception-by-gatekeeper",
+                }
+            )
+            return
         
-        domain_hints = domain_hint if isinstance(domain_hint, list) else [domain_hint]
+        print("THIS IS SMELLS: ", smells)
         
-        if any(hint in vetoed_domains for hint in domain_hint):
+        source = payload.get("source")
+        if not source:
+            logger.warning("Source file has no valid source",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"reception-by-gatekeeper",
+                }
+            )
+            return
+
+        dominance_score = smells.dominance_score or {}
+        
+        if not dominance_score:
+            logger.warning("Source file has no dominance_score",
+            extra={
+                    "agent":self.__class__.__name__,
+                    "event":"reception-by-gatekeeper",
+                }
+            )
+            return
+
+        vetoed_domains = {
+            domain        
+            for domain, hard_signals in HARD_SIGNAL_DOMAIN_VETO.items()
+            if any(sig in dominance_score for sig in hard_signals)
+            }
+        
+        if vetoed_domains: 
             logger.warning("domain vetoed by hard signal.",
             extra={
                     "agent":self.__class__.__name__,
                     "domain":domain_hint,
-                    "signals":signals,
                     "vetoed_by":list(vetoed_domains),
 
                 }
@@ -84,15 +106,15 @@ class GatekeeperAgent:
                 "reason":"hard-signal-veto",
                 "vetoed_domains":list(vetoed_domains),
             }
-
-        logger.info(
-            "domain_hint lifecycle ended at gatekeeper",
+        
+        if payload.get("domain_hint") is not None:
+            logger.info("domain_hint life_cycle at gatekeeper.",
             extra={
-                "agent":self.__class__.__name__,
-                "domain":domain_hint,
-                "run_id":run_id,
-            }
-        )
+                    "agent":self.__class__.__name__,
+                    "domain":payload.get("domain_hint"),
+                    "run_id":run_id,
+                }
+            )
 
         run_context.touch(
         run_id, 
@@ -113,9 +135,9 @@ class GatekeeperAgent:
             "system.input_to_be_identified",
             {
                 "raw":raw,
-                "run_id": run_id,
-                "source": source,
+                "run_id":run_id,
+                "source":source,
                 "smells":smells,
                 "cleaning_strategy":payload.get("cleaning_strategy"),
-            }
+            },
         )

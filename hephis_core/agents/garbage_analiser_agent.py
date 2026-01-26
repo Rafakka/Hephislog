@@ -29,7 +29,6 @@ class GarbageAnaliserAgent:
         origin = payload.get("origin",{})
         url = origin.get("value")
 
-        domain_hint= payload.get("domain_hint")
         smells = payload.get("smells")
 
         if not run_id or not raw_html:
@@ -72,8 +71,6 @@ class GarbageAnaliserAgent:
                     "run_id":run_id,
                     "raw":raw_html,
                     "analysis":analysis,
-                    "url_state":"resolved",
-                    "domain_hint":domain_hint,
                     "origin":{
                         "type":"url",
                         "value":url,
